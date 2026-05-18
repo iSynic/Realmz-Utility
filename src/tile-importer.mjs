@@ -5,7 +5,8 @@ import { extractResourceFork } from "./resource-fork.mjs";
 
 const TILE_ATLAS_WIDTH = 640;
 const TILE_ATLAS_HEIGHT = 320;
-const TILE_RESOURCE_FILE = "The Family Jewels.rsrc";
+const TILE_RESOURCE_STEM = "The Family Jewels";
+const TILE_RESOURCE_FILE = `${TILE_RESOURCE_STEM}.rsrc`;
 
 const standardLandlooks = new Map([
   [0, { pictId: 300, metadataFile: "Data P BD" }],
@@ -275,13 +276,25 @@ function encodePngRgba(width, height, rgba) {
   ]);
 }
 
-async function baseResourcePath(referenceRoot) {
+async function baseResourcePath(referenceRoot, assetRoot) {
   const candidates = [
     path.join(referenceRoot, "base", "Realmz", "Data Files", TILE_RESOURCE_FILE),
     path.join(referenceRoot, "out_win_clang", "Data Files", TILE_RESOURCE_FILE),
+    path.join(referenceRoot, "base", "Realmz", "Data Files", `${TILE_RESOURCE_STEM}.rsf`),
+    path.join(referenceRoot, "out_win_clang", "Data Files", `${TILE_RESOURCE_STEM}.rsf`),
+    path.join(referenceRoot, "base", "Realmz", "Data Files", TILE_RESOURCE_STEM),
+    path.join(referenceRoot, "out_win_clang", "Data Files", TILE_RESOURCE_STEM),
     path.join(referenceRoot, "base", "Realmz", "Data Files", `${TILE_RESOURCE_FILE}.rsf`),
     path.join(referenceRoot, "out_win_clang", "Data Files", `${TILE_RESOURCE_FILE}.rsf`),
   ];
+  if (assetRoot) {
+    candidates.push(
+      path.join(assetRoot, "assets", "realmz", "resources", "binary", `${TILE_RESOURCE_STEM}.rsf`),
+      path.join(assetRoot, "assets", "realmz", "resources", "binary", TILE_RESOURCE_STEM),
+      path.join(assetRoot, "assets", "realmz", "resources", "binary", `${TILE_RESOURCE_FILE}.rsf`),
+      path.join(assetRoot, "assets", "realmz", "resources", "binary", TILE_RESOURCE_FILE),
+    );
+  }
   for (const candidate of candidates) {
     if (await exists(candidate)) {
       return candidate;
@@ -306,13 +319,16 @@ async function customResourcePath(scenarioPath) {
   return null;
 }
 
-async function metadataPath(referenceRoot, scenarioPath, landlook, metadataFile) {
+async function metadataPath(referenceRoot, scenarioPath, landlook, metadataFile, assetRoot) {
   const baseCandidates = customLandlooks.has(landlook)
     ? [path.join(scenarioPath, metadataFile)]
     : [
         path.join(referenceRoot, "base", "Realmz", "Data Files", metadataFile),
         path.join(referenceRoot, "out_win_clang", "Data Files", metadataFile),
       ];
+  if (assetRoot && !customLandlooks.has(landlook)) {
+    baseCandidates.push(path.join(assetRoot, "assets", "realmz", "resources", "binary", metadataFile));
+  }
   for (const candidate of baseCandidates) {
     if (await exists(candidate)) {
       return candidate;
@@ -321,8 +337,8 @@ async function metadataPath(referenceRoot, scenarioPath, landlook, metadataFile)
   return null;
 }
 
-async function metadataSummary(referenceRoot, scenarioPath, landlook, metadataFile) {
-  const filePath = await metadataPath(referenceRoot, scenarioPath, landlook, metadataFile);
+async function metadataSummary(referenceRoot, scenarioPath, landlook, metadataFile, assetRoot) {
+  const filePath = await metadataPath(referenceRoot, scenarioPath, landlook, metadataFile, assetRoot);
   if (!filePath) {
     return null;
   }
@@ -337,14 +353,14 @@ async function referenceExtractedPicturePath(rootDir, pictId) {
   return await exists(extractedPath) ? extractedPath : null;
 }
 
-export async function tilemapSourceForLandlook(referenceRoot, scenarioPath, landlook) {
+export async function tilemapSourceForLandlook(referenceRoot, scenarioPath, landlook, assetRoot = null) {
   const standard = standardLandlooks.get(landlook);
   const custom = customLandlooks.get(landlook);
   if (!standard && !custom) {
     return null;
   }
 
-  const resourcePath = custom ? await customResourcePath(scenarioPath) : await baseResourcePath(referenceRoot);
+  const resourcePath = custom ? await customResourcePath(scenarioPath) : await baseResourcePath(referenceRoot, assetRoot);
   const pictId = (standard || custom).pictId;
   const metadataFile = (standard || custom).metadataFile;
   return {
@@ -354,7 +370,7 @@ export async function tilemapSourceForLandlook(referenceRoot, scenarioPath, land
     resourceType: "PICT",
     resourcePath,
     metadataFile,
-    metadata: await metadataSummary(referenceRoot, scenarioPath, landlook, metadataFile),
+    metadata: await metadataSummary(referenceRoot, scenarioPath, landlook, metadataFile, assetRoot),
   };
 }
 
@@ -364,7 +380,7 @@ export async function exportTileAtlas({ rootDir, assetRoot = rootDir, referenceR
     return { available: true, created: false, path: targetPath, landlook };
   }
 
-  const source = await tilemapSourceForLandlook(referenceRoot, scenarioPath, landlook);
+  const source = await tilemapSourceForLandlook(referenceRoot, scenarioPath, landlook, assetRoot);
   if (!source) {
     throw new Error(`No tilemap source is known for landlook ${landlook}`);
   }

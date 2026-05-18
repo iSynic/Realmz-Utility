@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare bundled runtime assets
+        run: npm run prepare:runtime
+
       - name: Build and release Tauri app
         uses: tauri-apps/tauri-action@v0
         env:

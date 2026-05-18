@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Realmz Scenario Utility",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "identifier": "local.realmz.scenario-utility",
   "build": {
     "frontendDist": "../public"
@@ -28,6 +28,8 @@
     "resources": {
       "../src/": "src/",
       "../public/": "public/",
+      "../vendor/runtime/": "runtime/",
+      "../assets/realmz/resources/binary/": "assets/realmz/resources/binary/",
       "../assets/realmz/resources/icons/": "assets/realmz/resources/icons/",
       "../assets/realmz/resources/pictures/": "assets/realmz/resources/pictures/",
       "../package.json": "package.json"

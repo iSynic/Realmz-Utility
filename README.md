@@ -43,7 +43,7 @@ Run the Tauri desktop launcher in development:
 npm run desktop
 ```
 
-The Tauri launcher starts the existing local Node server on a private localhost port, then opens the native system webview. This avoids bundling Chromium with the app, but it still expects Node.js 20 or newer to be available on `PATH`.
+The Tauri launcher starts the existing local Node server on a private localhost port, then opens the native system webview. This avoids bundling Chromium with the app. Packaged desktop builds include a bundled Node runtime, so end users do not need to install Node.js separately. Source/development runs still require Node.js 20 or newer on `PATH`.
 
 Build a Windows installer:
 
@@ -57,7 +57,7 @@ Build a Linux AppImage from a Linux machine:
 npm run dist:linux
 ```
 
-The repository also includes a GitHub Actions release workflow that builds Windows NSIS and Linux AppImage bundles on native hosted runners when a `v*` tag is pushed, or when the workflow is run manually. The packaged app includes extracted Realmz icon and picture PNGs under `assets\realmz\resources`.
+The repository also includes a GitHub Actions release workflow that builds Windows NSIS and Linux AppImage bundles on native hosted runners when a `v*` tag is pushed, or when the workflow is run manually. The packaged app includes a generated Node runtime under `vendor\runtime`, extracted Realmz icon and picture PNGs, and the standard Family Jewels resource fallback under `assets\realmz\resources`.
 
 The desktop launcher remembers the last successfully loaded scenarios folder. If there is no remembered folder, it first looks for a `Scenarios` folder one directory above the utility install folder, which supports installing the utility in its own folder inside a Realmz directory. It then falls back to a `Scenarios` folder next to the launcher.
 

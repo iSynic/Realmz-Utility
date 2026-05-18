@@ -12,6 +12,10 @@ use tauri::{path::BaseDirectory, Manager, WebviewUrl, WebviewWindowBuilder};
 
 type LauncherResult<T> = Result<T, Box<dyn std::error::Error>>;
 const LAST_SCENARIO_ROOT_FILE: &str = "last-scenario-root.txt";
+#[cfg(target_os = "windows")]
+const BUNDLED_NODE_RELATIVE_PATH: &str = "runtime/node/node.exe";
+#[cfg(not(target_os = "windows"))]
+const BUNDLED_NODE_RELATIVE_PATH: &str = "runtime/node/bin/node";
 
 struct ServerProcess {
     child: Mutex<Option<Child>>,
@@ -173,7 +177,13 @@ fn start_node_server(app: &tauri::App) -> LauncherResult<StartedServer> {
         .map(PathBuf::from)
         .unwrap_or_else(|| default_launcher_scenario_root(app, &app_data_dir));
 
-    let mut command = Command::new("node");
+    let node_program = find_node_program(app);
+    write_launcher_log(format!(
+        "starting Realmz server with Node runtime '{}'",
+        node_program.display()
+    ));
+
+    let mut command = Command::new(&node_program);
     command
         .arg(&server_script)
         .current_dir(server_root)
@@ -191,8 +201,8 @@ fn start_node_server(app: &tauri::App) -> LauncherResult<StartedServer> {
 
     let mut child = command.spawn().map_err(|error| {
         io_error(format!(
-            "Unable to start the Realmz Node server with '{}': {error}. Make sure Node.js 20 or newer is available on PATH.",
-            server_script.display()
+            "Unable to start the Realmz Node server with '{}': {error}. Packaged builds include Node.js; source and development runs need Node.js 20 or newer on PATH.",
+            node_program.display()
         ))
     })?;
 
@@ -234,6 +244,20 @@ fn start_node_server(app: &tauri::App) -> LauncherResult<StartedServer> {
     };
 
     Ok(StartedServer { child, url })
+}
+
+fn find_node_program(app: &tauri::App) -> PathBuf {
+    if let Ok(path) = app
+        .path()
+        .resolve(BUNDLED_NODE_RELATIVE_PATH, BaseDirectory::Resource)
+    {
+        let path = normalize_windows_verbatim_path(path);
+        if path.exists() {
+            return path;
+        }
+    }
+
+    PathBuf::from("node")
 }
 
 fn find_server_script(app: &tauri::App) -> LauncherResult<PathBuf> {

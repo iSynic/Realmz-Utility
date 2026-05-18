@@ -141,7 +141,7 @@ async function serveTileAtlasMeta(res, url) {
   }
 
   const atlasPath = tileAtlasCachePath(dataDir(), scenarioPath, landlook);
-  const source = await tilemapSourceForLandlook(defaultReferenceRoot, scenarioPath, landlook);
+  const source = await tilemapSourceForLandlook(defaultReferenceRoot, scenarioPath, landlook, rootDir);
   let cached = null;
   try {
     cached = JSON.parse(await fs.readFile(`${atlasPath}.json`, "utf8"));

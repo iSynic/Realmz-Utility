@@ -8,3 +8,5 @@ src-tauri/target/
 src-tauri/gen/
 
 references/
+
+vendor/runtime/node/
