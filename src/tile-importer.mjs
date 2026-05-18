@@ -349,6 +349,7 @@ export async function tilemapSourceForLandlook(referenceRoot, scenarioPath, land
   const metadataFile = (standard || custom).metadataFile;
   return {
     landlook,
+    custom: Boolean(custom),
     pictId,
     resourceType: "PICT",
     resourcePath,
@@ -364,12 +365,12 @@ export async function exportTileAtlas({ rootDir, assetRoot = rootDir, referenceR
   }
 
   const source = await tilemapSourceForLandlook(referenceRoot, scenarioPath, landlook);
-  if (!source?.resourcePath) {
-    throw new Error(`No tilemap resource file was found for landlook ${landlook}`);
+  if (!source) {
+    throw new Error(`No tilemap source is known for landlook ${landlook}`);
   }
 
   const extractedPath = await referenceExtractedPicturePath(assetRoot, source.pictId);
-  if (extractedPath) {
+  if (extractedPath && !source.custom) {
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
     await fs.copyFile(extractedPath, targetPath);
     const metadata = {
@@ -382,6 +383,10 @@ export async function exportTileAtlas({ rootDir, assetRoot = rootDir, referenceR
     };
     await fs.writeFile(`${targetPath}.json`, JSON.stringify(metadata, null, 2));
     return { available: true, created: true, path: targetPath, width: 640, height: 320, ...source, importedFrom: metadata.importedFrom };
+  }
+
+  if (!source.resourcePath) {
+    throw new Error(`No tilemap resource file was found for landlook ${landlook}`);
   }
 
   const pict = await readResource(source.resourcePath, "PICT", source.pictId);

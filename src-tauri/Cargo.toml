@@ -1,6 +1,6 @@
 [package]
 name = "realmz-scenario-utility"
-version = "0.1.1"
+version = "0.1.2"
 description = "Desktop utility for inspecting Realmz scenario data."
 authors = ["Realmz Scenario Utility contributors"]
 edition = "2021"
