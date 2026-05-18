@@ -1,4 +1,8 @@
-const APP_COMMANDS: &[&str] = &["pick_scenarios_folder", "save_exported_map_png"];
+const APP_COMMANDS: &[&str] = &[
+    "pick_scenarios_folder",
+    "remember_scenarios_folder",
+    "save_exported_map_png",
+];
 
 fn main() {
     let attributes = tauri_build::Attributes::new()

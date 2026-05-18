@@ -6,5 +6,5 @@
   "remote": {
     "urls": ["http://127.0.0.1:*", "http://localhost:*"]
   },
-  "permissions": ["allow-pick-scenarios-folder", "allow-save-exported-map-png"]
+  "permissions": ["allow-pick-scenarios-folder", "allow-remember-scenarios-folder", "allow-save-exported-map-png"]
 }

@@ -2,6 +2,8 @@
 
 Local read-only tools for inspecting Realmz scenario folders.
 
+![Realmz Scenario Utility cartographer workbench](docs/screenshots/cartographer-workbench.jpg)
+
 ## Run
 
 ```powershell
@@ -55,7 +57,9 @@ Build a Linux AppImage from a Linux machine:
 npm run dist:linux
 ```
 
-The repository also includes a GitHub Actions release workflow that builds Windows NSIS and Linux AppImage bundles on native hosted runners when a `v*` or `app-v*` tag is pushed, or when the workflow is run manually. The packaged app includes extracted Realmz icon and picture PNGs under `assets\realmz\resources`.
+The repository also includes a GitHub Actions release workflow that builds Windows NSIS and Linux AppImage bundles on native hosted runners when a `v*` tag is pushed, or when the workflow is run manually. The packaged app includes extracted Realmz icon and picture PNGs under `assets\realmz\resources`.
+
+The desktop launcher remembers the last successfully loaded scenarios folder. If there is no remembered folder, it first looks for a `Scenarios` folder one directory above the utility install folder, which supports installing the utility in its own folder inside a Realmz directory. It then falls back to a `Scenarios` folder next to the launcher.
 
 The build outputs land under `src-tauri\target\release\bundle`. On Windows, the NSIS installer is under:
 

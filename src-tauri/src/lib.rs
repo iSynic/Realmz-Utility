@@ -11,6 +11,7 @@ use base64::Engine;
 use tauri::{path::BaseDirectory, Manager, WebviewUrl, WebviewWindowBuilder};
 
 type LauncherResult<T> = Result<T, Box<dyn std::error::Error>>;
+const LAST_SCENARIO_ROOT_FILE: &str = "last-scenario-root.txt";
 
 struct ServerProcess {
     child: Mutex<Option<Child>>,
@@ -47,6 +48,7 @@ pub fn run() {
     if let Err(error) = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             pick_scenarios_folder,
+            remember_scenarios_folder,
             save_exported_map_png
         ])
         .setup(|app| {
@@ -75,6 +77,30 @@ pub fn run() {
     {
         write_launcher_log(format!("failed to run Realmz Scenario Utility: {error:?}"));
     }
+}
+
+#[tauri::command]
+fn remember_scenarios_folder(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return Err("Scenario folder path is empty.".to_string());
+    }
+
+    let scenario_root = normalize_windows_verbatim_path(PathBuf::from(trimmed));
+    if !scenario_root.is_dir() {
+        return Err(format!(
+            "'{}' is not an available scenario folder.",
+            scenario_root.display()
+        ));
+    }
+
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("Unable to resolve app data folder: {error}"))?;
+    std::fs::create_dir_all(&app_data_dir)
+        .map_err(|error| format!("Unable to create app data folder: {error}"))?;
+    write_last_scenario_root(&app_data_dir, &scenario_root)
 }
 
 #[tauri::command]
@@ -145,7 +171,7 @@ fn start_node_server(app: &tauri::App) -> LauncherResult<StartedServer> {
         .ok_or_else(|| io_error("Unable to resolve the Realmz server root."))?;
     let scenario_root = std::env::var_os("REALMZ_SCENARIO_ROOT")
         .map(PathBuf::from)
-        .unwrap_or_else(|| default_launcher_scenario_root(app));
+        .unwrap_or_else(|| default_launcher_scenario_root(app, &app_data_dir));
 
     let mut command = Command::new("node");
     command
@@ -243,8 +269,23 @@ fn extract_server_url(line: &str) -> Option<String> {
     Some(line[start..].trim().trim_end_matches('/').to_string() + "/")
 }
 
-fn default_launcher_scenario_root(app: &tauri::App) -> PathBuf {
-    launcher_dir(app).join("Scenarios")
+fn default_launcher_scenario_root(app: &tauri::App, app_data_dir: &Path) -> PathBuf {
+    if let Some(path) = read_last_scenario_root(app_data_dir) {
+        return path;
+    }
+
+    let launcher = launcher_dir(app);
+    let parent_scenarios = launcher.parent().map(|parent| parent.join("Scenarios"));
+    if let Some(path) = parent_scenarios.as_ref().filter(|path| path.is_dir()) {
+        return path.clone();
+    }
+
+    let same_folder_scenarios = launcher.join("Scenarios");
+    if same_folder_scenarios.is_dir() {
+        return same_folder_scenarios;
+    }
+
+    parent_scenarios.unwrap_or(same_folder_scenarios)
 }
 
 fn launcher_dir(app: &tauri::App) -> PathBuf {
@@ -272,6 +313,22 @@ fn dialog_initial_directory(initial_path: &str) -> Option<PathBuf> {
         .map(Path::to_path_buf)
 }
 
+fn read_last_scenario_root(app_data_dir: &Path) -> Option<PathBuf> {
+    let path = app_data_dir.join(LAST_SCENARIO_ROOT_FILE);
+    let value = std::fs::read_to_string(path).ok()?;
+    let remembered = normalize_windows_verbatim_path(PathBuf::from(value.trim()));
+    remembered.is_dir().then_some(remembered)
+}
+
+fn write_last_scenario_root(app_data_dir: &Path, scenario_root: &Path) -> Result<(), String> {
+    let remembered = std::fs::canonicalize(scenario_root)
+        .map(normalize_windows_verbatim_path)
+        .unwrap_or_else(|_| normalize_windows_verbatim_path(scenario_root.to_path_buf()));
+    let path = app_data_dir.join(LAST_SCENARIO_ROOT_FILE);
+    std::fs::write(path, remembered.to_string_lossy().as_ref())
+        .map_err(|error| format!("Unable to remember scenario folder: {error}"))
+}
+
 fn sanitize_export_filename(filename: &str) -> String {
     let mut output = String::with_capacity(filename.len());
     for character in filename.trim().chars() {
@@ -288,7 +345,9 @@ fn sanitize_export_filename(filename: &str) -> String {
     }
 
     let mut output = output
-        .trim_matches(|character: char| character.is_whitespace() || character == '.' || character == '-')
+        .trim_matches(|character: char| {
+            character.is_whitespace() || character == '.' || character == '-'
+        })
         .to_string();
     if output.is_empty() {
         output = "realmz-map".to_string();

@@ -121,6 +121,17 @@ async function apiPost(path) {
   return response.json();
 }
 
+async function rememberScenarioRoot(root) {
+  const invoke = getTauriInvoke();
+  if (!invoke || !root) return;
+
+  try {
+    await invoke("remember_scenarios_folder", { path: root });
+  } catch (error) {
+    console.warn("Unable to remember scenario folder", error);
+  }
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -2061,6 +2072,9 @@ async function loadScenarios() {
   setStatus("Reading scenario folders...");
   const result = await api(`/api/scenarios?root=${encodeURIComponent(root)}`);
   state.scenarios = result.scenarios;
+  if (state.scenarios.length) {
+    await rememberScenarioRoot(result.root || root);
+  }
   if (!state.scenarios.some((scenario) => scenario.path === state.selectedScenarioPath)) {
     state.selectedScenarioPath = null;
     state.data = null;
