@@ -1,0 +1,24 @@
+{
+  "name": "realmz-scenario-utility",
+  "productName": "Realmz Scenario Utility",
+  "version": "0.1.0",
+  "description": "Desktop utility for inspecting Realmz scenario data.",
+  "author": "Realmz Scenario Utility contributors",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "tauri dev",
+    "tauri": "tauri",
+    "desktop": "tauri dev",
+    "dist": "tauri build",
+    "dist:win": "tauri build --bundles nsis",
+    "dist:linux": "tauri build --bundles appimage"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

@@ -1,0 +1,18 @@
+[package]
+name = "realmz-scenario-utility"
+version = "0.1.0"
+description = "Desktop utility for inspecting Realmz scenario data."
+authors = ["Realmz Scenario Utility contributors"]
+edition = "2021"
+
+[lib]
+name = "realmz_scenario_utility_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+base64 = "0.22"
+rfd = "0.15"
+tauri = { version = "2", features = [] }

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Realmz Scenario Utility</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-title">
+            <h1>Realmz Scenario Utility</h1>
+            <button id="sidebarToggle" class="icon-button" type="button" title="Collapse scenarios" aria-label="Collapse scenarios" aria-expanded="true">&lt;</button>
+          </div>
+          <div id="status" class="status">Starting...</div>
+        </div>
+
+        <form id="rootForm" class="path-form">
+          <label for="rootPath">Scenario root</label>
+          <div class="inline-row">
+            <input id="rootPath" type="text" autocomplete="off" spellcheck="false" />
+            <button id="locateScenarios" class="tool-button path-browse" type="button" title="Locate scenarios folder" hidden>Browse</button>
+            <button class="icon-button" title="Load scenario folders" aria-label="Load scenario folders">↻</button>
+          </div>
+        </form>
+
+        <div class="scenario-list" id="scenarioList"></div>
+      </aside>
+
+      <main class="main">
+        <section class="topbar">
+          <div>
+            <div class="eyebrow">Scenario</div>
+            <h2 id="scenarioTitle">No scenario loaded</h2>
+            <div id="scenarioPath" class="subtle"></div>
+          </div>
+          <div id="summary" class="summary"></div>
+        </section>
+
+        <section class="workspace">
+          <div class="map-panel">
+            <div class="toolbar">
+              <div class="toolbar-primary">
+                <label class="level-picker" for="levelSelect">
+                  <span>Map</span>
+                  <select id="levelSelect"></select>
+                </label>
+              </div>
+              <div class="controls">
+                <div class="control-group map-source" aria-label="Map source controls">
+                  <label class="toggle"><input type="checkbox" id="toggleRealTiles" checked /> Real tiles</label>
+                  <label class="toggle"><input type="checkbox" id="toggleDecodedColors" /> Decoded colors</label>
+                  <label class="toggle" title="Use the original Realmz field[x][y] map cell order"><input type="checkbox" id="toggleRealmzOrder" checked /> Realmz XY</label>
+                </div>
+                <div class="control-group overlay-filters" aria-label="Overlay filters">
+                  <label class="toggle"><input type="checkbox" id="toggleDoors" checked /> Triggers</label>
+                  <label class="toggle"><input type="checkbox" id="toggleRandom" checked /> Random</label>
+                  <label class="toggle"><input type="checkbox" id="toggleEncounters" checked /> Encounters</label>
+                  <label class="toggle"><input type="checkbox" id="toggleQuest" checked /> Quest</label>
+                  <label class="toggle"><input type="checkbox" id="toggleMapMutation" checked /> Map</label>
+                  <label class="toggle"><input type="checkbox" id="toggleBattle" checked /> Battle</label>
+                  <label class="toggle"><input type="checkbox" id="toggleText" checked /> Text</label>
+                  <label class="toggle"><input type="checkbox" id="toggleUnknown" checked /> Unknown</label>
+                  <label class="toggle" title="Show decoded secret markers and passable secret-path tiles"><input type="checkbox" id="toggleSecrets" /> Secrets</label>
+                </div>
+                <div class="control-group tool-cluster" aria-label="Map tools">
+                  <button class="tool-button" id="importTiles" type="button">Import tilemaps</button>
+                  <button class="tool-button" id="exportMap" type="button" hidden>Export PNG</button>
+                  <label class="zoom">Zoom <input type="range" id="zoom" min="2" max="64" value="8" /><span id="zoomValue" class="zoom-value">8px</span></label>
+                </div>
+              </div>
+            </div>
+
+            <div id="mapScroller" class="map-scroller">
+              <div id="tileStatus" class="tile-status"></div>
+              <div id="mapHud" class="map-hud"></div>
+              <div id="mapStage" class="map-stage">
+                <canvas id="mapCanvas" width="90" height="90"></canvas>
+                <svg id="overlaySvg" viewBox="0 0 90 90" preserveAspectRatio="none"></svg>
+              </div>
+            </div>
+          </div>
+
+          <aside class="inspector">
+            <div class="inspector-nav" aria-label="Selection history">
+              <button id="inspectorBack" class="icon-button" type="button" title="Back" aria-label="Back" disabled>&lt;</button>
+              <button id="inspectorForward" class="icon-button" type="button" title="Forward" aria-label="Forward" disabled>&gt;</button>
+            </div>
+            <div class="tabs" role="tablist">
+              <button class="tab active" data-panel="selection">Selection</button>
+              <button class="tab" data-panel="script">Script</button>
+              <button class="tab" data-panel="flags">Flags</button>
+              <button class="tab" data-panel="data">Data</button>
+              <button class="tab" data-panel="files">Files</button>
+            </div>
+            <div id="selectionPanel" class="panel active"></div>
+            <div id="scriptPanel" class="panel"></div>
+            <div id="flagsPanel" class="panel"></div>
+            <div id="dataPanel" class="panel"></div>
+            <div id="filesPanel" class="panel"></div>
+          </aside>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

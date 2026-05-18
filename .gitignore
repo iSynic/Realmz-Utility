@@ -1,0 +1,10 @@
+node_modules/
+build/
+tmp/
+server.log
+server.err.log
+
+src-tauri/target/
+src-tauri/gen/
+
+references/

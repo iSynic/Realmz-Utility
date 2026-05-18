@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Realmz Scenario Utility",
+  "version": "0.1.0",
+  "identifier": "local.realmz.scenario-utility",
+  "build": {
+    "frontendDist": "../public"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "resources": {
+      "../src/": "src/",
+      "../public/": "public/",
+      "../assets/realmz/resources/icons/": "assets/realmz/resources/icons/",
+      "../assets/realmz/resources/pictures/": "assets/realmz/resources/pictures/",
+      "../package.json": "package.json"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}
