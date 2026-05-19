@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { decodeIconPng } from "./icon-importer.mjs";
 import { analyzeScenario, discoverScenarios } from "./realmz-parser.mjs";
 import { exportTileAtlas, exportTileAtlases, tileAtlasCachePath, tilemapSourceForLandlook } from "./tile-importer.mjs";
 
@@ -166,6 +167,23 @@ async function serveIcon(res, url) {
     return;
   }
 
+  const scenarioPath = url.searchParams.get("scenarioPath") || url.searchParams.get("path");
+  const decoded = await decodeIconPng({
+    referenceRoot: defaultReferenceRoot,
+    scenarioPath,
+    assetRoot: rootDir,
+    id,
+  });
+  if (decoded) {
+    res.writeHead(200, {
+      "content-type": "image/png",
+      "cache-control": "public, max-age=3600",
+      "x-realmz-icon-source": decoded.source,
+    });
+    res.end(decoded.png);
+    return;
+  }
+
   const iconPath = path.join(referenceIconDir, `icon_${id}.png`);
   const resolved = path.resolve(iconPath);
   if (!resolved.startsWith(path.resolve(referenceIconDir))) {
@@ -182,6 +200,22 @@ async function serveIcon(res, url) {
     res.end(data);
   } catch (error) {
     if (error && error.code === "ENOENT") {
+      const baseDecoded = await decodeIconPng({
+        referenceRoot: defaultReferenceRoot,
+        scenarioPath: null,
+        assetRoot: rootDir,
+        id,
+        includeBase: true,
+      });
+      if (baseDecoded) {
+        res.writeHead(200, {
+          "content-type": "image/png",
+          "cache-control": "public, max-age=3600",
+          "x-realmz-icon-source": "base-runtime",
+        });
+        res.end(baseDecoded.png);
+        return;
+      }
       sendJson(res, 404, { available: false, id, status: "No extracted realmz_tools icon PNG is available." });
       return;
     }

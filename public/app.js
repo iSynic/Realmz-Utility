@@ -350,10 +350,11 @@ function loadAtlasImage(atlas) {
 
 function loadIconImage(iconId) {
   if (!Number.isInteger(iconId)) return null;
-  const cached = state.iconCache.get(iconId);
+  const cacheKey = `${state.selectedScenarioPath || ""}:${iconId}`;
+  const cached = state.iconCache.get(cacheKey);
   if (cached) return cached;
   const entry = { status: "loading", image: null, error: null, promise: null };
-  state.iconCache.set(iconId, entry);
+  state.iconCache.set(cacheKey, entry);
   const image = new Image();
   entry.promise = new Promise((resolve) => {
     image.onload = () => {
@@ -369,7 +370,11 @@ function loadIconImage(iconId) {
       resolve(entry);
     };
   });
-  image.src = `/api/asset/icon?id=${encodeURIComponent(iconId)}`;
+  const params = new URLSearchParams({ id: String(iconId) });
+  if (state.selectedScenarioPath) {
+    params.set("scenarioPath", state.selectedScenarioPath);
+  }
+  image.src = `/api/asset/icon?${params.toString()}`;
   return entry;
 }
 
@@ -394,23 +399,14 @@ function hasSecretPath(value) {
   return Math.abs(value) >= 1000;
 }
 
-function isSecretPassageGlyph(value) {
+function isSecretWalkableGlyph(value) {
   const base = normalizedTileBase(value);
-  return hasSecretMarker(value) || (base >= 160 && base <= 179);
+  return base === 169;
 }
 
-function secretMarkerSeeds(level) {
-  const seeds = [];
-  if (!level) return seeds;
-  for (let y = 0; y < level.height; y += 1) {
-    for (let x = 0; x < level.width; x += 1) {
-      const value = tileValueAt(level, x, y);
-      if (hasSecretMarker(value)) {
-        seeds.push({ x, y });
-      }
-    }
-  }
-  return seeds;
+function isSecretWalkableTile(value) {
+  const base = normalizedTileBase(value);
+  return isSecretWalkableGlyph(value) || (hasSecretMarker(value) && (base === 169 || base === 181));
 }
 
 function secretWalkableTileSet(level) {
@@ -420,22 +416,11 @@ function secretWalkableTileSet(level) {
   const output = new Set();
   if (!level) return output;
   const keyFor = (x, y) => `${x},${y}`;
-  const seeds = secretMarkerSeeds(level);
-  const queue = seeds.map(({ x, y }) => ({ x, y }));
-  const seen = new Set();
 
-  while (queue.length) {
-    const point = queue.shift();
-    const key = keyFor(point.x, point.y);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    if (!isSecretPassageGlyph(tileValueAt(level, point.x, point.y))) continue;
-    output.add(keyFor(point.x, point.y));
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const x = point.x + dx;
-      const y = point.y + dy;
-      if (x >= 0 && y >= 0 && x < level.width && y < level.height) {
-        queue.push({ x, y });
+  for (let y = 0; y < level.height; y += 1) {
+    for (let x = 0; x < level.width; x += 1) {
+      if (isSecretWalkableTile(tileValueAt(level, x, y))) {
+        output.add(keyFor(x, y));
       }
     }
   }
