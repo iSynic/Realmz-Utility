@@ -12,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const publicDir = path.join(rootDir, "public");
 const referenceIconDir = path.join(rootDir, "assets", "realmz", "resources", "icons");
+const referencePictureDir = path.join(rootDir, "assets", "realmz", "resources", "pictures");
 const localScenarioRootCandidates = [
   path.join(process.cwd(), "Scenarios"),
   path.join(rootDir, "Scenarios"),
@@ -223,6 +224,36 @@ async function serveIcon(res, url) {
   }
 }
 
+async function servePicture(res, url) {
+  const id = Number(url.searchParams.get("id"));
+  if (!Number.isInteger(id)) {
+    sendError(res, 400, "Missing integer picture id");
+    return;
+  }
+
+  const picturePath = path.join(referencePictureDir, `picture_${id}.png`);
+  const resolved = path.resolve(picturePath);
+  if (!resolved.startsWith(path.resolve(referencePictureDir))) {
+    sendError(res, 403, "Invalid picture path");
+    return;
+  }
+
+  try {
+    const data = await fs.readFile(resolved);
+    res.writeHead(200, {
+      "content-type": "image/png",
+      "cache-control": "public, max-age=3600",
+    });
+    res.end(data);
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      sendJson(res, 404, { available: false, id, status: "No extracted Realmz picture PNG is available." });
+      return;
+    }
+    throw error;
+  }
+}
+
 async function importTileAtlases(res, url) {
   const scenarioPath = url.searchParams.get("scenarioPath") || url.searchParams.get("path");
   if (!scenarioPath) {
@@ -283,6 +314,11 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/asset/icon") {
     await serveIcon(res, url);
+    return;
+  }
+
+  if (url.pathname === "/api/asset/picture") {
+    await servePicture(res, url);
     return;
   }
 

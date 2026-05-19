@@ -85,11 +85,13 @@ The parser is read-only and decodes these source scenario files:
 - `Data ED3`: macro/action door records.
 - `Data EDCD`: five-short extra-code records.
 - `Data ED` / `Data ED2`: simple and complex encounter records, including the legacy partial-record behavior used by the game cache builder.
+- Scenario resource forks: resource inventory by type/id/name, plus `STR#` map-name lists when present.
 
 The UI currently provides:
 
 - Scenario folder discovery and per-file size/hash inventory.
 - Abstract map rendering from decoded field grids, plus a real-tile toggle that imports/caches atlas PNGs from Realmz resource forks through `/api/asset/tile-atlas`.
+- Separate raw level metadata from render paths. In particular, `Data DL` dungeon levels render through Realmz's top-down dungeon mini-sprites from `PICT 302`, rather than through outdoor landlook atlases.
 - Normalized bounding-box overlays for trigger, random, encounter, quest, map mutation, battle, text, and unknown content categories.
 - Door/action inspection with opcode labels and EDCD links.
 - A Script tab with graph nodes for map triggers, macros, EDCD rows, and simple/complex encounters.
@@ -111,7 +113,9 @@ Tilemap import endpoint:
 POST /api/asset/import-tile-atlases?scenarioPath=F:\Realmz\base\Realmz\Scenarios\War in the Sword Lands
 ```
 
-This imports every landlook used by the scenario. Standard landlooks come from `F:\Realmz\base\Realmz\Data Files\The Family Jewels.rsrc`; custom landlooks `6`, `7`, and `8` come from the scenario's `Scenario.rsrc` when present. The importer writes only under this utility's `tmp\tile-atlases` cache.
+This imports every render landlook used by the scenario, plus raw metadata landlooks that are useful for comparison. Standard landlooks come from `F:\Realmz\base\Realmz\Data Files\The Family Jewels.rsrc`; custom landlooks `6`, `7`, and `8` come from the scenario's `Scenario.rsrc` when present. Dungeon overhead maps use shared `PICT 302` art and do not need per-scenario tilemap import. The importer writes only under this utility's `tmp\tile-atlases` cache.
+
+See `docs/format-decoder-roadmap.md` for the current resource-decoding model and next evidence targets.
 
 ## Next Format Passes
 

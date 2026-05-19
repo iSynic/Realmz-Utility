@@ -15,6 +15,7 @@ const state = {
   useRealmzOrder: true,
   tileAtlasCache: new Map(),
   iconCache: new Map(),
+  pictureCache: new Map(),
   secretWalkableCache: new Map(),
   zoom: 8,
   pan: {
@@ -40,6 +41,14 @@ const state = {
     secrets: false,
   },
 };
+
+const DUNGEON_TINY_PICTURE_ID = 302;
+const DUNGEON_TINY_SIZE = 16;
+const DUNGEON_TINY_COLUMNS = 4;
+const DUNGEON_TINY_SOURCE_X = 576;
+const DUNGEON_TINY_SOURCE_Y = 320;
+const DUNGEON_NATIVE_TILE_PIXELS = 16;
+const DUNGEON_SECRET_DIRECTION_MASK = 0x0f00;
 
 const els = {
   status: document.querySelector("#status"),
@@ -185,6 +194,25 @@ function atlasForLandlook(landlook) {
   return state.data?.assets?.tileAtlases?.find((atlas) => atlas.landlook === landlook) || null;
 }
 
+function isDungeonTopdownLevel(level) {
+  return level?.renderKind === "dungeon-topdown" || (level?.type === "dungeon" && level?.renderPictureId === DUNGEON_TINY_PICTURE_ID);
+}
+
+function renderLandlookForLevel(level) {
+  if (isDungeonTopdownLevel(level)) {
+    return null;
+  }
+  const rand = randLevelFor(level);
+  if (Number.isInteger(level?.renderLandlook)) {
+    return level.renderLandlook;
+  }
+  return Number.isInteger(rand?.landlook) ? rand.landlook : null;
+}
+
+function atlasForLevel(level) {
+  return atlasForLandlook(renderLandlookForLevel(level));
+}
+
 function atlasCacheKey(landlook) {
   return `${state.selectedScenarioPath || ""}:${landlook}`;
 }
@@ -195,6 +223,39 @@ function atlasStatusForLandlook(landlook) {
   if (cached?.status === "loading") return "loading";
   if (cached?.status === "missing") return "fallback colors";
   return atlasForLandlook(landlook)?.available ? "available" : "not loaded";
+}
+
+function atlasStatusForLevel(level) {
+  if (isDungeonTopdownLevel(level)) {
+    const entry = loadDungeonSpriteSheet();
+    if (entry?.status === "loaded") return "available";
+    if (entry?.status === "loading") return "loading";
+    return "not loaded";
+  }
+  return atlasStatusForLandlook(renderLandlookForLevel(level));
+}
+
+function renderTilesetLabel(level) {
+  if (isDungeonTopdownLevel(level)) {
+    return `${level?.renderTileset || "top-down dungeon"} (PICT ${level?.renderPictureId || DUNGEON_TINY_PICTURE_ID})`;
+  }
+  const renderLandlook = renderLandlookForLevel(level);
+  const label = level?.renderTileset || (Number.isInteger(renderLandlook) ? `look ${renderLandlook}` : "decoded colors");
+  return Number.isInteger(renderLandlook) && !label.includes(String(renderLandlook))
+    ? `${label} (landlook ${renderLandlook})`
+    : label;
+}
+
+function levelLookMeta(level) {
+  const rand = randLevelFor(level);
+  if (!rand) return "";
+  if (isDungeonTopdownLevel(level)) {
+    return `, ${renderTilesetLabel(level)}`;
+  }
+  if (level?.type === "dungeon" && Number.isInteger(level.renderLandlook) && level.renderLandlook !== rand.landlook) {
+    return `, ${renderTilesetLabel(level)}`;
+  }
+  return `, look ${rand.landlook}`;
 }
 
 function doorsFor(level) {
@@ -378,7 +439,79 @@ function loadIconImage(iconId) {
   return entry;
 }
 
+function loadPictureImage(pictureId) {
+  if (!Number.isInteger(pictureId)) return null;
+  const cacheKey = String(pictureId);
+  const cached = state.pictureCache.get(cacheKey);
+  if (cached) return cached;
+  const entry = { status: "loading", image: null, error: null, promise: null };
+  state.pictureCache.set(cacheKey, entry);
+  const image = new Image();
+  entry.promise = new Promise((resolve) => {
+    image.onload = () => {
+      entry.status = "loaded";
+      entry.image = image;
+      drawMap();
+      renderSelectionPanel();
+      resolve(entry);
+    };
+    image.onerror = () => {
+      entry.status = "missing";
+      entry.error = "picture unavailable";
+      drawMap();
+      renderSelectionPanel();
+      resolve(entry);
+    };
+  });
+  image.src = `/api/asset/picture?id=${encodeURIComponent(pictureId)}`;
+  return entry;
+}
+
+function loadDungeonSpriteSheet() {
+  const entry = loadPictureImage(DUNGEON_TINY_PICTURE_ID);
+  if (!entry) return null;
+  if (!entry.sprites) {
+    entry.sprites = new Map();
+  }
+  return entry;
+}
+
+function dungeonSpriteCanvas(entry, index) {
+  if (!entry?.image || entry.status !== "loaded") return null;
+  if (entry.sprites.has(index)) {
+    return entry.sprites.get(index);
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = DUNGEON_TINY_SIZE;
+  canvas.height = DUNGEON_TINY_SIZE;
+  const context = canvas.getContext("2d");
+  context.imageSmoothingEnabled = false;
+  const sx = DUNGEON_TINY_SOURCE_X + (index % DUNGEON_TINY_COLUMNS) * DUNGEON_TINY_SIZE;
+  const sy = DUNGEON_TINY_SOURCE_Y + Math.floor(index / DUNGEON_TINY_COLUMNS) * DUNGEON_TINY_SIZE;
+  context.drawImage(entry.image, sx, sy, DUNGEON_TINY_SIZE, DUNGEON_TINY_SIZE, 0, 0, DUNGEON_TINY_SIZE, DUNGEON_TINY_SIZE);
+
+  if (index !== 15) {
+    const image = context.getImageData(0, 0, DUNGEON_TINY_SIZE, DUNGEON_TINY_SIZE);
+    for (let offset = 0; offset < image.data.length; offset += 4) {
+      const r = image.data[offset];
+      const g = image.data[offset + 1];
+      const b = image.data[offset + 2];
+      if (r > 245 && g > 245 && b > 245) {
+        image.data[offset + 3] = 0;
+      }
+    }
+    context.putImageData(image, 0, 0);
+  }
+
+  entry.sprites.set(index, canvas);
+  return canvas;
+}
+
 function tileValueAt(level, x, y) {
+  if (isDungeonTopdownLevel(level)) {
+    return level.values[y * level.width + x] ?? 0;
+  }
   const index = state.useRealmzOrder
     ? x * level.height + y
     : y * level.width + x;
@@ -391,11 +524,25 @@ function normalizedTileBase(value) {
   return out;
 }
 
-function hasSecretMarker(value) {
+function hasDungeonSecretDirection(value) {
+  return Boolean((value & 0xffff) & DUNGEON_SECRET_DIRECTION_MASK);
+}
+
+function hasDungeonShownSecretMarker(value) {
+  return dungeonFieldHasBit(value, 9);
+}
+
+function hasSecretMarker(value, level = null) {
+  if (isDungeonTopdownLevel(level)) {
+    return hasDungeonSecretDirection(value) || hasDungeonShownSecretMarker(value);
+  }
   return Math.abs(value) >= 3000;
 }
 
-function hasSecretPath(value) {
+function hasSecretPath(value, level = null) {
+  if (isDungeonTopdownLevel(level)) {
+    return hasDungeonSecretDirection(value);
+  }
   return Math.abs(value) >= 1000;
 }
 
@@ -404,9 +551,12 @@ function isSecretWalkableGlyph(value) {
   return base === 169;
 }
 
-function isSecretWalkableTile(value) {
+function isSecretWalkableTile(value, level = null) {
+  if (isDungeonTopdownLevel(level)) {
+    return hasDungeonSecretDirection(value);
+  }
   const base = normalizedTileBase(value);
-  return isSecretWalkableGlyph(value) || (hasSecretMarker(value) && (base === 169 || base === 181));
+  return isSecretWalkableGlyph(value) || (hasSecretMarker(value, level) && (base === 169 || base === 181));
 }
 
 function secretWalkableTileSet(level) {
@@ -419,7 +569,7 @@ function secretWalkableTileSet(level) {
 
   for (let y = 0; y < level.height; y += 1) {
     for (let x = 0; x < level.width; x += 1) {
-      if (isSecretWalkableTile(tileValueAt(level, x, y))) {
+      if (isSecretWalkableTile(tileValueAt(level, x, y), level)) {
         output.add(keyFor(x, y));
       }
     }
@@ -494,6 +644,37 @@ function drawRealTileMap(context, level, atlasEntry) {
   }
 }
 
+function dungeonFieldHasBit(value, bit) {
+  return Boolean((value & 0xffff) & (1 << (15 - bit)));
+}
+
+function drawDungeonSprite(context, spriteEntry, index, x, y, tilePixels = DUNGEON_NATIVE_TILE_PIXELS) {
+  const sprite = dungeonSpriteCanvas(spriteEntry, index);
+  if (!sprite) return false;
+  context.drawImage(sprite, x * tilePixels, y * tilePixels, tilePixels, tilePixels);
+  return true;
+}
+
+function drawDungeonTopdownMap(context, level, spriteEntry, tilePixels = DUNGEON_NATIVE_TILE_PIXELS) {
+  context.imageSmoothingEnabled = false;
+  context.fillStyle = "#000";
+  context.fillRect(0, 0, level.width * tilePixels, level.height * tilePixels);
+
+  for (let y = 0; y < level.height; y += 1) {
+    for (let x = 0; x < level.width; x += 1) {
+      const value = tileValueAt(level, x, y);
+      drawDungeonSprite(context, spriteEntry, 15, x, y, tilePixels);
+      // Realmz uses bit 8 as an explored/hidden flag in normal play.
+      // The utility is a full-map viewer, so reveal terrain but avoid drawing marker/editor bits.
+      for (let index = 0; index <= 6; index += 1) {
+        if (dungeonFieldHasBit(value, 15 - index)) {
+          drawDungeonSprite(context, spriteEntry, index, x, y, tilePixels);
+        }
+      }
+    }
+  }
+}
+
 function drawMap() {
   const level = currentLevel();
   const canvas = els.mapCanvas;
@@ -515,26 +696,36 @@ function drawMap() {
     return;
   }
 
-  const rand = randLevelFor(level);
-  const atlas = atlasForLandlook(rand?.landlook);
-  const atlasEntry = state.renderMode === "real" ? loadAtlasImage(atlas) : null;
+  const renderLandlook = renderLandlookForLevel(level);
+  const useDungeonTopdown = state.renderMode === "real" && isDungeonTopdownLevel(level);
+  const dungeonSpriteEntry = useDungeonTopdown ? loadDungeonSpriteSheet() : null;
+  const canDrawDungeonTopdown = Boolean(dungeonSpriteEntry?.status === "loaded" && dungeonSpriteEntry.image);
+  const atlas = useDungeonTopdown ? null : atlasForLandlook(renderLandlook);
+  const atlasEntry = state.renderMode === "real" && !useDungeonTopdown ? loadAtlasImage(atlas) : null;
   const canDrawReal = Boolean(atlasEntry?.status === "loaded" && atlasEntry.image);
-  const tilePixels = canDrawReal ? 32 : 1;
+  const tilePixels = canDrawDungeonTopdown ? DUNGEON_NATIVE_TILE_PIXELS : canDrawReal ? 32 : 1;
   canvas.width = level.width * tilePixels;
   canvas.height = level.height * tilePixels;
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (canDrawReal) {
+  if (canDrawDungeonTopdown) {
+    drawDungeonTopdownMap(context, level, dungeonSpriteEntry);
+    els.tileStatus.textContent = `Dungeon overhead renderer: ${renderTilesetLabel(level)}, Data DL bitfield sprites.`;
+  } else if (canDrawReal) {
     drawRealTileMap(context, level, atlasEntry);
     const sourceLabel = atlasEntry.metadata?.cached?.importedFrom || "exported PICT";
     const baseTile = atlasEntry.metadata?.metadata?.baseTile ?? atlasEntry.metadata?.cached?.metadata?.baseTile;
-    els.tileStatus.textContent = `Real tile atlas: landlook ${rand?.landlook}, ${sourceLabel}${baseTile ? `, base tile ${baseTile}` : ""}.`;
+    els.tileStatus.textContent = `Real tile atlas: ${renderTilesetLabel(level)}, ${sourceLabel}${baseTile ? `, base tile ${baseTile}` : ""}.`;
   } else {
     drawColorMap(context, level);
-    if (state.renderMode === "real" && atlasEntry?.status === "loading") {
-      els.tileStatus.textContent = `Loading real tile atlas for landlook ${rand?.landlook}...`;
+    if (useDungeonTopdown && dungeonSpriteEntry?.status === "loading") {
+      els.tileStatus.textContent = `Loading dungeon overhead sprites from PICT ${DUNGEON_TINY_PICTURE_ID}...`;
+    } else if (useDungeonTopdown) {
+      els.tileStatus.textContent = `Dungeon overhead sprites missing for PICT ${DUNGEON_TINY_PICTURE_ID}; using decoded colors.`;
+    } else if (state.renderMode === "real" && atlasEntry?.status === "loading") {
+      els.tileStatus.textContent = `Loading real tile atlas for ${renderTilesetLabel(level)}...`;
     } else if (state.renderMode === "real") {
-      els.tileStatus.textContent = `Real tile atlas missing for landlook ${rand?.landlook}; using decoded colors.`;
+      els.tileStatus.textContent = `Real tile atlas missing for ${renderTilesetLabel(level)}; using decoded colors.`;
     } else {
       els.tileStatus.textContent = "Decoded color map mode.";
     }
@@ -767,9 +958,9 @@ function renderMapHud() {
   const hoverIsSecretWalkable = hover ? secretWalkable.has(`${hover.x},${hover.y}`) : false;
   const hoverSecrets = hover
     ? [
-        hasSecretMarker(hoverValue) ? "secret marker" : "",
+        hasSecretMarker(hoverValue, level) ? (isDungeonTopdownLevel(level) ? "dungeon secret" : "secret marker") : "",
         hoverIsSecretWalkable ? "hidden walkable tile" : "",
-        hasSecretPath(hoverValue) && !hoverIsSecretWalkable ? "encoded passability flag" : "",
+        hasSecretPath(hoverValue, level) && !hoverIsSecretWalkable ? "encoded passability flag" : "",
       ].filter(Boolean)
     : [];
   const legend = [
@@ -813,7 +1004,7 @@ function renderSecretTileOverlay(root, level) {
           class: "secret-path-tile",
         }));
       }
-      if (hasSecretMarker(value)) {
+      if (hasSecretMarker(value, level)) {
         const marker = svgEl("text", {
           x: x + 0.5,
           y: y + 0.78,
@@ -886,6 +1077,10 @@ function renderOverlay() {
 
 const EXPORT_TILE_PIXELS = 32;
 
+function exportTilePixelsForLevel(level) {
+  return isDungeonTopdownLevel(level) ? DUNGEON_NATIVE_TILE_PIXELS : EXPORT_TILE_PIXELS;
+}
+
 function resolveCanvasColor(value, fallback = "#ffffff") {
   const color = String(value ?? "").trim();
   const variable = color.match(/^var\((--[^),\s]+)\)$/);
@@ -931,7 +1126,7 @@ function drawSecretExportOverlay(context, level, tilePixels) {
         context.fillRect(x * tilePixels, y * tilePixels, tilePixels, tilePixels);
         context.strokeRect(x * tilePixels + 0.5, y * tilePixels + 0.5, tilePixels - 1, tilePixels - 1);
       }
-      if (hasSecretMarker(value)) {
+      if (hasSecretMarker(value, level)) {
         drawExportText(context, "S", (x + 0.5) * tilePixels, (y + 0.78) * tilePixels, {
           align: "center",
           fill: "#ff523b",
@@ -1017,13 +1212,22 @@ function drawExportOverlays(context, level, tilePixels) {
 
 async function atlasEntryForExport(level) {
   if (state.renderMode !== "real") return null;
-  const rand = randLevelFor(level);
-  const atlas = atlasForLandlook(rand?.landlook);
+  if (isDungeonTopdownLevel(level)) return null;
+  const atlas = atlasForLevel(level);
   const atlasEntry = loadAtlasImage(atlas);
   if (atlasEntry?.status === "loading" && atlasEntry.promise) {
     await atlasEntry.promise;
   }
   return atlasEntry?.status === "loaded" && atlasEntry.image ? atlasEntry : null;
+}
+
+async function dungeonSpriteEntryForExport(level) {
+  if (state.renderMode !== "real" || !isDungeonTopdownLevel(level)) return null;
+  const entry = loadDungeonSpriteSheet();
+  if (entry?.status === "loading" && entry.promise) {
+    await entry.promise;
+  }
+  return entry?.status === "loaded" && entry.image ? entry : null;
 }
 
 async function preloadIconImagesForLevel(level) {
@@ -1051,19 +1255,23 @@ async function renderCurrentMapExportCanvas() {
   }
 
   const canvas = document.createElement("canvas");
-  canvas.width = level.width * EXPORT_TILE_PIXELS;
-  canvas.height = level.height * EXPORT_TILE_PIXELS;
+  const exportTilePixels = exportTilePixelsForLevel(level);
+  canvas.width = level.width * exportTilePixels;
+  canvas.height = level.height * exportTilePixels;
   const context = canvas.getContext("2d");
   context.imageSmoothingEnabled = false;
 
-  const atlasEntry = await atlasEntryForExport(level);
-  if (atlasEntry) {
+  const dungeonSpriteEntry = await dungeonSpriteEntryForExport(level);
+  const atlasEntry = dungeonSpriteEntry ? null : await atlasEntryForExport(level);
+  if (dungeonSpriteEntry) {
+    drawDungeonTopdownMap(context, level, dungeonSpriteEntry, exportTilePixels);
+  } else if (atlasEntry) {
     await preloadIconImagesForLevel(level);
     drawRealTileMap(context, level, atlasEntry);
   } else {
-    drawColorMap(context, level, EXPORT_TILE_PIXELS);
+    drawColorMap(context, level, exportTilePixels);
   }
-  drawExportOverlays(context, level, EXPORT_TILE_PIXELS);
+  drawExportOverlays(context, level, exportTilePixels);
   return canvas;
 }
 
@@ -1163,8 +1371,7 @@ function renderLevelTabs() {
   els.levelSelect.disabled = false;
   els.levelSelect.innerHTML = state.data.levels
     .map((level) => {
-      const rand = randLevelFor(level);
-      const meta = rand ? `, look ${rand.landlook}` : "";
+      const meta = levelLookMeta(level);
       return `<option value="${escapeHtml(level.id)}">${escapeHtml(`${levelTitle(level)}${meta}`)}</option>`;
     })
     .join("");
@@ -1571,7 +1778,6 @@ function renderSelectionPanel() {
     const questDoors = doors.filter(isQuestDoor).length;
     const encounterDoors = doors.filter(isEncounterDoor).length;
     const overlays = overlayForLevel(level);
-    const atlas = atlasForLandlook(rand?.landlook);
     els.selectionPanel.innerHTML = `
       <div class="section">
         <h3>${escapeHtml(levelTitle(level, { long: true }))}</h3>
@@ -1580,8 +1786,10 @@ function renderSelectionPanel() {
         ${level?.nameHints?.length ? kv("map name hints", level.nameHints.map((hint) => hint.name).slice(0, 5).join(" / ")) : ""}
         ${kv("tiles", level ? `${level.width} x ${level.height}` : "-")}
         ${kv("tile range", level ? `${level.min} to ${level.max}` : "-")}
-        ${kv("landlook", rand ? rand.landlook : "-")}
-        ${kv("tile atlas", atlasStatusForLandlook(rand?.landlook))}
+        ${kv("landlook metadata", rand ? rand.landlook : "-")}
+        ${kv("render tileset", level ? renderTilesetLabel(level) : "-")}
+        ${level?.renderTilesetSource ? kv("render source", level.renderTilesetSource) : ""}
+        ${kv(isDungeonTopdownLevel(level) ? "render art" : "tile atlas", level ? atlasStatusForLevel(level) : "-")}
         ${kv("dark/LOS", rand ? `${rand.isdark ? "dark" : "lit"} / ${rand.uselos ? "LOS" : "no LOS"}` : "-")}
         ${kv("triggers", doors.length)}
         ${kv("overlay boxes", overlays.length)}

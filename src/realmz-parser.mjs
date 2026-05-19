@@ -26,6 +26,7 @@ const CONTACT_BYTES = 4608;
 const SOLIDS_BYTES = 1024;
 const MENU_BYTES = 502;
 const MAP_NAME_RESOURCE_IDS = [-102, -101];
+const DUNGEON_TINY_PICT_ID = 302;
 
 const knownLevelNames = new Map([
   ["city of bywater", {
@@ -237,10 +238,12 @@ function shaPrefix(buffer) {
 
 function decodeDoorCoordinate(doorid) {
   if (!Number.isInteger(doorid) || doorid <= 0) return null;
-  const x = doorid % 100;
-  const y = Math.floor(doorid / 100);
+  const level = Math.floor(doorid / 10000);
+  const position = doorid % 10000;
+  const x = position % 100;
+  const y = Math.floor(position / 100);
   if (x < 0 || y < 0 || x >= MAP_SIZE || y >= MAP_SIZE) return null;
-  return { x, y };
+  return { level, x, y };
 }
 
 function parseDoor(buffer, source, levelType, levelIndex, recordIndex) {
@@ -261,6 +264,7 @@ function parseDoor(buffer, source, levelType, levelIndex, recordIndex) {
   const storedX = u8(buffer, 5);
   const storedY = u8(buffer, 6);
   const packedCoordinate = source === MACRO_SOURCE ? null : decodeDoorCoordinate(doorid);
+  const coordinateMatchesLevel = packedCoordinate && (levelIndex == null || packedCoordinate.level === levelIndex);
   const door = {
     id: `${source}:${levelIndex ?? "macro"}:${recordIndex}`,
     source,
@@ -269,8 +273,10 @@ function parseDoor(buffer, source, levelType, levelIndex, recordIndex) {
     recordIndex,
     doorid,
     landid: u8(buffer, 4),
-    x: packedCoordinate?.x ?? storedX,
-    y: packedCoordinate?.y ?? storedY,
+    x: coordinateMatchesLevel ? packedCoordinate.x : null,
+    y: coordinateMatchesLevel ? packedCoordinate.y : null,
+    packedLevelIndex: packedCoordinate?.level ?? null,
+    hasMapCoordinate: Boolean(coordinateMatchesLevel),
     targetLandId: u8(buffer, 4),
     targetX: storedX,
     targetY: storedY,
@@ -281,7 +287,9 @@ function parseDoor(buffer, source, levelType, levelIndex, recordIndex) {
     ids,
     actions,
   };
-  door.active = door.doorid !== 0 || door.percent !== 0 || actions.length > 0;
+  door.active = source === MACRO_SOURCE
+    ? actions.length > 0
+    : Boolean(door.hasMapCoordinate && (door.percent !== 0 || actions.length > 0 || door.doorid !== 0));
   return door;
 }
 
@@ -687,6 +695,42 @@ function parseStringListResource(buffer) {
   return strings;
 }
 
+function buildResourceCatalog(resources) {
+  const byType = new Map();
+  for (const resource of resources) {
+    const entry = byType.get(resource.type) || {
+      type: resource.type,
+      count: 0,
+      totalBytes: 0,
+      minId: resource.id,
+      maxId: resource.id,
+      named: 0,
+      ids: [],
+      names: [],
+    };
+    entry.count += 1;
+    entry.totalBytes += resource.data?.length || 0;
+    entry.minId = Math.min(entry.minId, resource.id);
+    entry.maxId = Math.max(entry.maxId, resource.id);
+    if (resource.name) {
+      entry.named += 1;
+      if (entry.names.length < 8) {
+        entry.names.push({ id: resource.id, name: resource.name });
+      }
+    }
+    if (entry.ids.length < 24) {
+      entry.ids.push(resource.id);
+    }
+    byType.set(resource.type, entry);
+  }
+
+  return {
+    typeCount: byType.size,
+    resourceCount: resources.length,
+    types: [...byType.values()].sort((a, b) => a.type.localeCompare(b.type)),
+  };
+}
+
 function cleanResourceName(name) {
   const trimmed = (name || "").trim();
   return /^-+$/.test(trimmed) ? "" : trimmed;
@@ -712,7 +756,7 @@ async function parseScenarioResources(scenarioPath) {
   const resourcePath = await scenarioResourcePath(scenarioPath);
   const buffer = resourcePath ? await readFileIfExists(resourcePath) : null;
   if (!buffer) {
-    return { resourcePath: null, mapNames: [] };
+    return { resourcePath: null, mapNames: [], catalog: buildResourceCatalog([]) };
   }
   const resources = parseResourceFork(buffer);
   const lists = new Map();
@@ -730,7 +774,7 @@ async function parseScenarioResources(scenarioPath) {
     primaryName: cleanResourceName(primary[id]),
     secondaryName: cleanResourceName(secondary[id]),
   })).filter((entry) => entry.name || entry.primaryName || entry.secondaryName);
-  return { resourcePath, mapNames };
+  return { resourcePath, mapNames, catalog: buildResourceCatalog(resources) };
 }
 
 function parseMapRecord(buffer, index) {
@@ -1295,7 +1339,7 @@ function buildOverlayBoxes(activeDoors, randLevels, actions) {
     }
   }
   for (const door of activeDoors) {
-    if (door.source === MACRO_SOURCE || !Number.isInteger(door.levelIndex)) {
+    if (door.source === MACRO_SOURCE || !door.hasMapCoordinate || !Number.isInteger(door.levelIndex)) {
       continue;
     }
     const doorActions = actionsByDoor.get(door.id) || [];
@@ -1317,8 +1361,34 @@ function buildOverlayBoxes(activeDoors, randLevels, actions) {
   return boxes;
 }
 
-function buildAssetManifest(scenarioPath, randLevels) {
-  const landlooks = [...new Set(randLevels.map((level) => level.landlook).filter((id) => Number.isInteger(id) && id >= 0))]
+function attachLevelRenderInfo(levels, randLevels) {
+  const randByLevel = new Map(randLevels.map((entry) => [`${entry.levelType}:${entry.levelIndex}`, entry]));
+  for (const level of levels) {
+    const rand = randByLevel.get(level.id);
+    if (level.type === "dungeon") {
+      level.renderKind = "dungeon-topdown";
+      level.renderLandlook = null;
+      level.renderTileset = "top-down dungeon";
+      level.renderPictureId = DUNGEON_TINY_PICT_ID;
+      level.renderTilesetSource = "Data DL bitfield rendered with tiny sprites from Realmz PICT 302";
+    } else if (Number.isInteger(rand?.landlook) && rand.landlook >= 0) {
+      level.renderKind = "landlook";
+      level.renderLandlook = rand.landlook;
+      level.renderTileset = `look ${rand.landlook}`;
+      level.renderTilesetSource = "Data RD landlook";
+    } else {
+      level.renderKind = "decoded";
+      level.renderLandlook = null;
+      level.renderTileset = "decoded colors";
+      level.renderTilesetSource = "no known tile atlas";
+    }
+  }
+}
+
+function buildAssetManifest(scenarioPath, levels, randLevels) {
+  const renderLandlooks = levels.map((level) => level.renderLandlook);
+  const metadataLandlooks = randLevels.map((level) => level.landlook);
+  const landlooks = [...new Set([...renderLandlooks, ...metadataLandlooks].filter((id) => Number.isInteger(id) && id >= 0))]
     .sort((a, b) => a - b);
   return {
     tileAtlases: landlooks.map((landlook) => ({
@@ -1412,6 +1482,7 @@ export async function analyzeScenario(scenarioPath) {
     ...parseRandLevels(dataRD, "Data RD", "land"),
     ...parseRandLevels(dataRDD, "Data RDD", "dungeon"),
   ];
+  attachLevelRenderInfo(levels, randLevels);
   const doors = [
     ...parseDoorFile(dataDD, "Data DD", "land"),
     ...parseDoorFile(dataDDD, "Data DDD", "dungeon"),
@@ -1427,7 +1498,7 @@ export async function analyzeScenario(scenarioPath) {
   const resources = await parseScenarioResources(resolvedPath);
   attachMapNames(records, resources);
   attachLevelNameHints(levels, records);
-  const assets = buildAssetManifest(resolvedPath, randLevels);
+  const assets = buildAssetManifest(resolvedPath, levels, randLevels);
 
   const trackedFiles = [
     "Scenario",
