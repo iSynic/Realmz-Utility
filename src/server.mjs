@@ -178,7 +178,7 @@ async function serveIcon(res, url) {
   if (decoded) {
     res.writeHead(200, {
       "content-type": "image/png",
-      "cache-control": "public, max-age=3600",
+      "cache-control": "no-store",
       "x-realmz-icon-source": decoded.source,
     });
     res.end(decoded.png);
@@ -196,7 +196,7 @@ async function serveIcon(res, url) {
     const data = await fs.readFile(resolved);
     res.writeHead(200, {
       "content-type": "image/png",
-      "cache-control": "public, max-age=3600",
+      "cache-control": "no-store",
     });
     res.end(data);
   } catch (error) {
@@ -211,7 +211,7 @@ async function serveIcon(res, url) {
       if (baseDecoded) {
         res.writeHead(200, {
           "content-type": "image/png",
-          "cache-control": "public, max-age=3600",
+          "cache-control": "no-store",
           "x-realmz-icon-source": "base-runtime",
         });
         res.end(baseDecoded.png);

@@ -49,6 +49,7 @@ const DUNGEON_TINY_SOURCE_X = 576;
 const DUNGEON_TINY_SOURCE_Y = 320;
 const DUNGEON_NATIVE_TILE_PIXELS = 16;
 const DUNGEON_SECRET_DIRECTION_MASK = 0x0f00;
+const ICON_RENDER_VERSION = 2;
 
 const els = {
   status: document.querySelector("#status"),
@@ -435,6 +436,7 @@ function loadIconImage(iconId) {
   if (state.selectedScenarioPath) {
     params.set("scenarioPath", state.selectedScenarioPath);
   }
+  params.set("v", String(ICON_RENDER_VERSION));
   image.src = `/api/asset/icon?${params.toString()}`;
   return entry;
 }

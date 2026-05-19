@@ -104,6 +104,10 @@ function decodeCicn(cicn) {
   const maskTop = i16(cicn, 56);
   const maskBottom = i16(cicn, 60);
   const maskHeight = maskBottom > maskTop ? maskBottom - maskTop : height;
+  const bitmapRowBytes = u16(cicn, 68) & 0x3fff;
+  const bitmapTop = i16(cicn, 70);
+  const bitmapBottom = i16(cicn, 74);
+  const bitmapHeight = bitmapBottom > bitmapTop ? bitmapBottom - bitmapTop : 0;
 
   if (width <= 0 || height <= 0 || width > 512 || height > 512 || rowBytes <= 0 || maskRowBytes <= 0) {
     throw new Error("cicn resource has unsupported dimensions");
@@ -113,7 +117,8 @@ function decodeCicn(cicn) {
   }
 
   const maskOffset = CICN_HEADER_BYTES;
-  const colorTableOffset = maskOffset + maskRowBytes * maskHeight;
+  const bitmapOffset = maskOffset + maskRowBytes * maskHeight;
+  const colorTableOffset = bitmapOffset + bitmapRowBytes * bitmapHeight;
   if (colorTableOffset + 8 > cicn.length) {
     throw new Error("cicn color table is missing");
   }
