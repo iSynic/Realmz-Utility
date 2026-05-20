@@ -124,8 +124,12 @@ function toGraphTarget(link) {
   if (link.type === "battle") return `battle:${link.id}`;
   if (link.type === "text") return `message:${link.id}`;
   if (link.type === "map") return `map-record:${link.id}`;
+  if (link.type === "level") return `map:${link.levelType || "land"}:${link.id}`;
   if (link.type === "shop") return `shop:${link.id}`;
   if (link.type === "quest") return `quest-flag:${link.id}`;
+  if (link.type === "treasure") return `treasure:${link.id}`;
+  if (link.type === "time") return `time:${link.id}`;
+  if (link.type === "resource") return `resource-type:${printableToken(link.resourceType || "unknown")}`;
   return null;
 }
 

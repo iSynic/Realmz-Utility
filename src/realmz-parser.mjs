@@ -85,57 +85,126 @@ const opcodeInfo = new Map([
   [4, ["simple encounter", "encounter"]],
   [5, ["complex encounter", "encounter"]],
   [6, ["load shop", "item_shop"]],
-  [7, ["action data", "branch"]],
+  [7, ["action data / X-AP patch", "branch"]],
   [8, ["same as other door", "branch"]],
+  [9, ["play sound", "ui_text"]],
   [10, ["give treasure", "item_shop"]],
+  [11, ["give experience", "combat"]],
   [12, ["new land icon", "map"]],
   [13, ["enable / disable door", "map"]],
+  [14, ["pick characters", "state"]],
+  [-14, ["pick inverse characters", "state"]],
+  [15, ["damage or heal picked characters", "state"]],
+  [16, ["damage or heal party", "state"]],
+  [17, ["cast spell on picked characters", "state"]],
+  [18, ["cast spell on party", "state"]],
+  [19, ["display random string", "ui_text"]],
   [20, ["teleport", "map"]],
   [21, ["branch on item possession", "branch"]],
+  [22, ["alter item status", "item_shop"]],
   [23, ["alter land random rect", "map"]],
   [-23, ["alter dungeon random rect", "map"]],
   [24, ["keep codes", "branch"]],
   [25, ["remove door x-y", "map"]],
+  [26, ["get click", "ui_text"]],
+  [27, ["show picture", "ui_text"]],
+  [28, ["center screen", "map"]],
   [29, ["give / display map", "ui_text"]],
+  [30, ["pick by ability or attribute check", "branch"]],
+  [31, ["branch on ability check", "branch"]],
+  [32, ["offer temple", "item_shop"]],
+  [33, ["take gold", "item_shop"]],
+  [34, ["break encounter loop", "flow"]],
+  [35, ["eliminate simple encounter option", "encounter"]],
+  [36, ["store / give equipment", "item_shop"]],
   [37, ["dungeon move", "map"]],
+  [38, ["branch on possession II", "branch"]],
   [39, ["extend door codes", "branch"]],
   [40, ["branch on party condition", "branch"]],
   [41, ["eliminate simple encounter option", "encounter"]],
   [42, ["branch on percent chance", "branch"]],
+  [43, ["give condition", "state"]],
+  [44, ["break complex encounter option", "encounter"]],
   [45, ["teleport only", "map"]],
   [46, ["branch on quest flag", "quest_read"]],
   [47, ["set quest flag", "quest_write"]],
   [48, ["selective combat", "combat"]],
+  [49, ["bank", "item_shop"]],
+  [50, ["pick by race / caste / gender", "branch"]],
+  [51, ["alter shop", "item_shop"]],
+  [52, ["pick by position / movement / item / percent", "branch"]],
+  [53, ["pick on caste", "branch"]],
   [54, ["alter time encounter", "time"]],
+  [55, ["branch on picked characters", "branch"]],
   [56, ["branch on battle outcome", "branch"]],
   [57, ["change land look", "map"]],
+  [58, ["branch on difficulty level", "branch"]],
   [59, ["branch on tile id", "branch"]],
+  [60, ["alter party money", "item_shop"]],
   [61, ["shift party level/x/y", "map"]],
+  [62, ["display scrolling text", "ui_text"]],
   [63, ["alter game time", "time"]],
   [64, ["branch on game time", "branch"]],
+  [65, ["award random items", "item_shop"]],
   [66, ["disable / enable camping", "time"]],
+  [67, ["branch on item charges", "branch"]],
+  [68, ["alter party fatigue", "state"]],
+  [69, ["set spell casting / charging flags", "state"]],
   [70, ["save / restore party position", "map"]],
+  [71, ["disable / enable coordinate display", "ui_text"]],
   [72, ["branch on range of quest flags", "quest_read"]],
   [73, ["load shop and restrict items", "item_shop"]],
+  [74, ["take / give spell points", "state"]],
   [75, ["branch on spell points", "branch"]],
   [76, ["increment / decrement quest value", "quest_write"]],
   [77, ["branch on quest value", "quest_read"]],
   [78, ["branch on tile parameters", "branch"]],
   [81, ["branch on PC condition", "branch"]],
+  [82, ["turn priest turning off", "state"]],
+  [83, ["turn priest turning on", "state"]],
+  [84, ["check scenario registration", "registration"]],
   [85, ["branch to random door", "branch"]],
   [86, ["branch on misc", "branch"]],
   [87, ["branch on allies in party", "branch"]],
   [88, ["drop allies from party", "state"]],
   [89, ["add allies to party", "state"]],
+  [90, ["take away victory", "state"]],
+  [91, ["drop all equipment", "item_shop"]],
   [92, ["alter random rect size", "map"]],
+  [93, ["turn compass on", "map"]],
+  [94, ["turn compass off", "map"]],
+  [95, ["change look direction", "map"]],
+  [96, ["require 3D map", "map"]],
   [97, ["allow full map", "map"]],
+  [98, ["require registered game", "registration"]],
+  [99, ["get scenario registration", "registration"]],
+  [100, ["end battle", "combat"]],
+  [101, ["back up party", "map"]],
+  [102, ["level up picked characters", "combat"]],
   [103, ["test/set boat/camp status", "state"]],
+  [104, ["set encounter status", "encounter"]],
+  [105, ["activate / disable allies", "state"]],
   [106, ["set darkland status", "map"]],
   [107, ["improved selective battle", "combat"]],
+  [108, ["alter selected character", "state"]],
   [111, ["return from gosub", "flow"]],
   [112, ["pop stack", "flow"]],
+  [119, ["revive NPC / party after combat", "state"]],
+  [120, ["alter NPC or monster during combat", "combat"]],
+  [121, ["de-animate lower level undead", "combat"]],
+  [122, ["cause fumble", "combat"]],
+  [123, ["cause rout", "combat"]],
   [124, ["spawn", "combat"]],
+  [125, ["destroy related monsters", "combat"]],
   [126, ["battle combat-round macro", "combat"]],
+  [127, ["continue if monster present", "combat"]],
+]);
+
+const opcodesLoadingExtracode = new Set([
+  2, 3, 7, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, -23, 30, 31, 33, 37, 38, 40,
+  41, 42, 43, 45, 46, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64,
+  65, 67, 68, 69, 70, 72, 73, 74, 75, 76, 77, 78, 81, 85, 86, 87, 90, 92, 103,
+  106, 107, 108, 120, 121, 122, 123, 124, 125, 126,
 ]);
 
 let macDecoder = null;
@@ -934,6 +1003,391 @@ function buildRecords(buffers) {
   };
 }
 
+function positiveRef(id) {
+  return Number.isFinite(id) && id > 0;
+}
+
+function linkableRef(link) {
+  if (!Number.isFinite(link?.id)) return false;
+  if (["extracode", "encounter", "battle", "shop", "treasure", "time", "map", "level", "resource", "quest"].includes(link.type)) {
+    return link.id >= 0;
+  }
+  return link.id > 0;
+}
+
+function addLink(output, link) {
+  if (!link) return;
+  if (link.type !== "flow" && !linkableRef(link)) return;
+  output.links.push(link);
+}
+
+function addMessageLink(output, id, role = "shows message") {
+  addLink(output, { type: "text", id, role });
+}
+
+function addBattleLinks(output, low, high = 0, role = "starts battle") {
+  if (positiveRef(Math.abs(low))) addLink(output, { type: "battle", id: Math.abs(low), role });
+  if (high && Math.abs(high) !== Math.abs(low)) {
+    addLink(output, { type: "battle", id: Math.abs(high), role: `${role} range end` });
+  }
+}
+
+function addBranchTarget(output, mode, id, role = "branch target", slot = null) {
+  if (mode === -1) {
+    addLink(output, { type: "flow", role: `${role}: drop out` });
+    return;
+  }
+  if (mode === 3) {
+    addLink(output, { type: "flow", role: `${role}: keep codes` });
+    return;
+  }
+  if (!positiveRef(id)) return;
+  if (mode === 0) addLink(output, { type: "macro", id, role, slot });
+  if (mode === 1) addLink(output, { type: "encounter", kind: "simple", id, role, slot });
+  if (mode === 2) addLink(output, { type: "encounter", kind: "complex", id, role, slot });
+}
+
+function addChoiceBranchTarget(output, mode, id, role = "choice branch") {
+  if (!positiveRef(id)) return;
+  if (mode === 1) addLink(output, { type: "macro", id, role });
+  if (mode === 2) addLink(output, { type: "encounter", kind: "simple", id, role });
+  if (mode === 3) addLink(output, { type: "encounter", kind: "complex", id, role });
+}
+
+function addBranchPair(output, mode, falseId, trueId, rolePrefix = "conditional") {
+  addBranchTarget(output, mode, falseId, `${rolePrefix} false branch`);
+  addBranchTarget(output, mode, trueId, `${rolePrefix} true branch`);
+}
+
+function field(slot, label, value) {
+  return { slot, label, value };
+}
+
+function rangeText(low, high, noun) {
+  if (!high || high === low) return `${noun} ${low}`;
+  return `${noun}s ${low}-${high}`;
+}
+
+function describeExtracodeUsage(action, values, output) {
+  const usage = {
+    source: "newland.c",
+    confidence: "source-backed",
+    summary: "Uses EDCD action parameters.",
+    fields: values.map((value, slot) => field(slot, `extracode[${slot}]`, value)),
+  };
+
+  switch (action.code) {
+    case 2:
+      usage.summary = `Starts ${rangeText(Math.abs(values[0]), Math.abs(values[1]), "battle")}.`;
+      usage.fields = [
+        field(0, "battle id or range start", values[0]),
+        field(1, "battle range end", values[1]),
+        field(2, "sound id / revive branch macro", values[2]),
+        field(3, "pre-battle message id", values[3]),
+        field(4, "booty mode", values[4]),
+      ];
+      addBattleLinks(output, values[0], values[1]);
+      addMessageLink(output, values[3], "pre-battle message");
+      break;
+    case 3:
+      usage.summary = `Asks a two-message choice and may branch to record ${values[2]}.`;
+      usage.fields = [
+        field(0, "reply polarity", values[0]),
+        field(1, "branch mode: 1 macro, 2 simple, 3 complex", values[1]),
+        field(2, "branch target", values[2]),
+        field(3, "choice message A", values[3]),
+        field(4, "choice message B", values[4]),
+      ];
+      addChoiceBranchTarget(output, values[1], values[2], "choice result");
+      addMessageLink(output, values[3], "choice prompt");
+      addMessageLink(output, values[4], "choice prompt");
+      break;
+    case 7:
+      usage.fields = [
+        field(0, "mode / target level", values[0]),
+        field(1, "target door or encounter record", values[1]),
+        field(2, "macro/action source", values[2]),
+        field(3, "level kind override", values[3]),
+        field(4, "encounter result slot", values[4]),
+      ];
+      if (values[0] === -1) {
+        usage.summary = `Replaces simple encounter ${values[1]} result slot ${values[4]} with macro ${values[2]}.`;
+        addLink(output, { type: "encounter", kind: "simple", id: values[1], role: "replace result" });
+        addLink(output, { type: "macro", id: values[2], role: "replacement action source" });
+      } else if (values[0] === -2) {
+        usage.summary = `Replaces complex encounter ${values[1]} result slot ${values[4]} with macro ${values[2]}.`;
+        addLink(output, { type: "encounter", kind: "complex", id: values[1], role: "replace result" });
+        addLink(output, { type: "macro", id: values[2], role: "replacement action source" });
+      } else {
+        usage.summary = `Copies macro ${values[2]} into door ${values[1]} on level ${values[0]}.`;
+        addLink(output, { type: "macro", id: values[2], role: `copy into door ${values[1]}` });
+      }
+      break;
+    case 19:
+      usage.summary = `Shows a random message from ${values[0]}-${values[1]}.`;
+      usage.fields = [field(0, "message range start", values[0]), field(1, "message range end", values[1])];
+      addMessageLink(output, values[0], "random message range start");
+      addMessageLink(output, values[1], "random message range end");
+      break;
+    case 20:
+    case 45:
+      usage.summary = `Moves the party to level ${values[0]}, x ${values[1]}, y ${values[2]}.`;
+      usage.fields = [
+        field(0, "target level", values[0]),
+        field(1, "target x", values[1]),
+        field(2, "target y", values[2]),
+        field(3, "sound id", values[3]),
+        field(4, "arrival message id", values[4]),
+      ];
+      addLink(output, { type: "level", levelType: action.levelType, id: values[0], role: "teleport target level" });
+      addMessageLink(output, values[4], "arrival message");
+      break;
+    case 21:
+      usage.summary = `Branches on possession of item ${values[0]}.`;
+      usage.fields = [
+        field(0, "item id", values[0]),
+        field(1, "branch mode: 0 macro, 1 simple, 2 complex", values[1]),
+        field(2, "missing-item behavior", values[2]),
+        field(3, "has-item target", values[3]),
+        field(4, "missing-item target or message", values[4]),
+      ];
+      addBranchPair(output, values[1], values[4], values[3], "item possession");
+      if (values[2] === 2) addMessageLink(output, values[4], "missing-item message");
+      break;
+    case 38:
+    case 46:
+    case 58:
+    case 59:
+      usage.summary = `${action.label} using force-branch mode ${values[2]}.`;
+      usage.fields = [
+        field(0, "test value", values[0]),
+        field(1, "test mode", values[1]),
+        field(2, "branch mode: -1 drop, 0 macro, 1 simple, 2 complex, 3 keep", values[2]),
+        field(3, "branch target", values[3]),
+        field(4, "result slot / extra target", values[4]),
+      ];
+      addBranchTarget(output, values[2], values[3], action.label, values[4]);
+      break;
+    case 40:
+      usage.summary = `Branches on party condition ${values[3]} to target ${values[2]}.`;
+      usage.fields = [
+        field(0, "condition threshold", values[0]),
+        field(1, "branch mode: 1 macro, 2 simple, 3 complex", values[1]),
+        field(2, "branch target", values[2]),
+        field(3, "party condition index", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      addChoiceBranchTarget(output, values[1], values[2], "party condition branch");
+      break;
+    case 42:
+      usage.summary = `Branches on ${values[0]}% chance.`;
+      usage.fields = [
+        field(0, "percent chance", values[0]),
+        field(1, "on-success behavior", values[1]),
+        field(2, "branch mode", values[2]),
+        field(3, "branch target", values[3]),
+        field(4, "result slot", values[4]),
+      ];
+      addBranchTarget(output, values[2], values[3], "percent chance branch", values[4]);
+      break;
+    case 48:
+    case 56:
+    case 107:
+      usage.summary = `Starts ${rangeText(values[0], values[1], "battle")} and may branch to macro ${values[2] || values[4]}.`;
+      usage.fields = [
+        field(0, "battle id or range start", values[0]),
+        field(1, "battle range end", values[1]),
+        field(2, action.code === 56 ? "coward branch macro" : "sound id", values[2]),
+        field(3, "message id", values[3]),
+        field(4, action.code === 107 ? "battle outcome branch macro" : "treasure / message / branch value", values[4]),
+      ];
+      addBattleLinks(output, values[0], values[1], action.code === 56 ? "battle outcome check" : "selective battle");
+      addMessageLink(output, values[3], "battle message");
+      if (action.code === 56) addLink(output, { type: "macro", id: values[2], role: "coward branch" });
+      if (action.code === 107) addLink(output, { type: "macro", id: values[4], role: "battle outcome branch" });
+      if (action.code === 48 && positiveRef(values[4])) addLink(output, { type: "treasure", id: values[4], role: "selective battle treasure" });
+      break;
+    case 51:
+      usage.summary = `Changes shop ${values[0]}.`;
+      usage.fields = [
+        field(0, "shop id", values[0]),
+        field(1, "inflation delta", values[1]),
+        field(2, "item id", values[2]),
+        field(3, "quantity delta", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      addLink(output, { type: "shop", id: values[0], role: "mutates shop" });
+      break;
+    case 54:
+      usage.summary = `Changes timed encounter ${values[0]}.`;
+      usage.fields = [
+        field(0, "timed encounter id", values[0]),
+        field(1, "percent", values[1]),
+        field(2, "increment", values[2]),
+        field(3, "sound id", values[3]),
+        field(4, "day offset", values[4]),
+      ];
+      addLink(output, { type: "time", id: values[0], role: "mutates timed encounter" });
+      break;
+    case 55:
+      usage.summary = `Branches based on picked-character state.`;
+      usage.fields = [
+        field(0, "picked-count / picked selector", values[0]),
+        field(1, "false behavior", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "true macro target", values[3]),
+        field(4, "false macro or message", values[4]),
+      ];
+      addLink(output, { type: "macro", id: values[3], role: "picked true branch" });
+      if (values[1] === 1) addLink(output, { type: "macro", id: values[4], role: "picked false branch" });
+      if (values[1] === 2) addMessageLink(output, values[4], "picked false message");
+      break;
+    case 64:
+      usage.summary = `Branches on game time.`;
+      usage.fields = [
+        field(0, "latest day / -1 any", values[0]),
+        field(1, "latest hour / -1 any", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "in-range macro", values[3]),
+        field(4, "out-of-range macro", values[4]),
+      ];
+      addLink(output, { type: "macro", id: values[3], role: "time in range branch" });
+      addLink(output, { type: "macro", id: values[4], role: "time out of range branch" });
+      break;
+    case 72:
+    case 75:
+      usage.summary = `Branches to ${values[4]} using mode ${values[3]}.`;
+      usage.fields = [
+        field(0, action.code === 72 ? "quest range start" : "spell point test scope", values[0]),
+        field(1, action.code === 72 ? "quest range end" : "spell point threshold", values[1]),
+        field(2, "keep-codes false behavior", values[2]),
+        field(3, "branch mode: 0 macro, 1 simple, 2 complex", values[3]),
+        field(4, "branch target", values[4]),
+      ];
+      addBranchTarget(output, values[3], values[4], action.label);
+      break;
+    case 73:
+      usage.summary = `Opens shop ${Math.abs(values[0])} with item restrictions.`;
+      usage.fields = [
+        field(0, "shop id", values[0]),
+        field(1, "accepted item range 1 low", values[1]),
+        field(2, "accepted item range 1 high", values[2]),
+        field(3, "accepted item range 2 low", values[3]),
+        field(4, "accepted item range 2 high", values[4]),
+      ];
+      addLink(output, { type: "shop", id: Math.abs(values[0]), role: "opens restricted shop" });
+      break;
+    case 76:
+      usage.summary = `Changes quest value ${values[0]} by ${values[1]}.`;
+      usage.fields = [
+        field(0, "quest index", values[0]),
+        field(1, "quest value delta", values[1]),
+        field(2, "branch mode: 1 macro, 2 simple, 3 complex", values[2]),
+        field(3, "branch threshold", values[3]),
+        field(4, "branch target", values[4]),
+      ];
+      addChoiceBranchTarget(output, values[2], values[4], "quest value threshold branch");
+      break;
+    case 77:
+    case 78:
+      usage.summary = `${action.label}; false target ${values[3]}, true target ${values[4]}.`;
+      usage.fields = [
+        field(0, action.code === 77 ? "quest index" : "tile parameter", values[0]),
+        field(1, action.code === 77 ? "quest threshold" : "tile comparison value", values[1]),
+        field(2, "branch mode: 0 macro, 1 simple, 2 complex", values[2]),
+        field(3, "false/low target", values[3]),
+        field(4, "true/high target", values[4]),
+      ];
+      addBranchPair(output, values[2], values[3], values[4], action.label);
+      break;
+    case 81:
+      usage.summary = `Branches on condition ${values[0]}.`;
+      usage.fields = [
+        field(0, "condition id", values[0]),
+        field(1, "character selector", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "has-condition macro", values[3]),
+        field(4, "missing-condition macro", values[4]),
+      ];
+      addLink(output, { type: "macro", id: values[3], role: "has condition branch" });
+      addLink(output, { type: "macro", id: values[4], role: "missing condition branch" });
+      break;
+    case 85:
+      usage.summary = `Branches to a random ${values[0] === 1 ? "simple encounter" : values[0] === 2 ? "complex encounter" : "macro"} from ${values[1]}-${values[2]}.`;
+      usage.fields = [
+        field(0, "branch mode: 0 macro, 1 simple, 2 complex", values[0]),
+        field(1, "range start", values[1]),
+        field(2, "range end", values[2]),
+        field(3, "sound id", values[3]),
+        field(4, "message id", values[4]),
+      ];
+      addBranchTarget(output, values[0], values[1], "random branch range start");
+      addBranchTarget(output, values[0], values[2], "random branch range end");
+      addMessageLink(output, values[4], "random branch message");
+      break;
+    case 86:
+    case 87:
+      usage.summary = `${action.label}; true target ${values[3]}, false target ${values[4]}.`;
+      usage.fields = [
+        field(0, "test selector", values[0]),
+        field(1, "branch mode / test value", values[1]),
+        field(2, "false behavior", values[2]),
+        field(3, "true target", values[3]),
+        field(4, "false target or message", values[4]),
+      ];
+      addBranchPair(output, values[1], values[4], values[3], action.label);
+      if (action.code === 87 && values[2] === 2) addMessageLink(output, values[4], "allies missing message");
+      break;
+    case 92:
+      usage.summary = `Changes random rectangle ${values[1]} on level ${values[0]}.`;
+      usage.fields = [
+        field(0, "target level", values[0]),
+        field(1, "random rectangle index", values[1]),
+        field(2, "dungeon flag", values[2]),
+        field(3, "percent delta", values[3]),
+        field(4, "shape update mode using next EDCD row", values[4]),
+      ];
+      break;
+    case 106:
+      usage.summary = `Sets level darkness to ${values[0] - 1}.`;
+      usage.fields = [
+        field(0, "darkland status + 1", values[0]),
+        field(1, "only if current status + 1 matches", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 122:
+      usage.summary = `Causes a fumble and can show message ${values[0]}.`;
+      usage.fields = [
+        field(0, "message id", values[0]),
+        field(1, "sound id", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      addMessageLink(output, values[0], "fumble message");
+      break;
+    case 126:
+      usage.summary = `Runs a battle macro branch.`;
+      usage.fields = [
+        field(0, "mode", values[0]),
+        field(1, "round / percent", values[1]),
+        field(2, "repeat mode", values[2]),
+        field(3, "macro or random range start", values[3]),
+        field(4, "random range end", values[4]),
+      ];
+      addLink(output, { type: "macro", id: values[3], role: "battle macro branch" });
+      if (values[2] === 2) addLink(output, { type: "macro", id: values[4], role: "battle macro random range end" });
+      break;
+    default:
+      usage.summary = `${action.label} uses EDCD row ${action.id}.`;
+      break;
+  }
+  return usage;
+}
+
 function classifyAction(door, action, extracodeById) {
   const output = {
     ...action,
@@ -953,30 +1407,30 @@ function classifyAction(door, action, extracodeById) {
     output.links.push({ type: "encounter", kind: "simple", id: action.id });
   } else if (action.code === 5) {
     output.links.push({ type: "encounter", kind: "complex", id: action.id });
-  } else if (action.code === 7) {
+  } else if (action.code === 1 || action.code === 62) {
+    addMessageLink(output, action.id, "shows message");
+  } else if (action.code === 6) {
+    addLink(output, { type: "shop", id: action.id, role: "opens shop" });
+  } else if (action.code === 10) {
+    addLink(output, { type: "treasure", id: action.id, role: "gives treasure" });
+  } else if (action.code === 27) {
+    addLink(output, { type: "resource", resourceType: "PICT", id: action.id, role: "shows picture" });
+  } else if (action.code === 29) {
+    addLink(output, { type: "map", id: action.id, role: "gives or displays map" });
+  } else if (action.code === 39) {
+    addLink(output, { type: "macro", id: action.id, role: "extend door codes" });
+  } else if (action.code === 47) {
+    addLink(output, { type: "quest", id: Math.abs(action.id), role: action.id > 0 ? "sets flag true" : "sets flag false" });
+  }
+
+  if (opcodesLoadingExtracode.has(action.code)) {
     const extra = extracodeById.get(action.id);
     if (extra) {
       output.extracode = extra.values;
-      output.links.push({ type: "extracode", id: action.id });
-      if (extra.values[0] === -1) {
-        output.links.push({ type: "encounter", kind: "simple", id: extra.values[1], role: "replace result" });
-      } else if (extra.values[0] === -2) {
-        output.links.push({ type: "encounter", kind: "complex", id: extra.values[1], role: "replace result" });
-      } else {
-        output.links.push({ type: "macro", id: extra.values[2], role: `action mode ${extra.values[0]}` });
-      }
+      output.extracodeUsage = describeExtracodeUsage(action, extra.values, output);
+      addLink(output, { type: "extracode", id: action.id, role: "uses action-data row" });
     } else {
       output.missingExtracode = true;
-    }
-  } else if ([46, 76, 77].includes(action.code)) {
-    const extra = extracodeById.get(action.id);
-    if (extra) {
-      output.extracode = extra.values;
-    }
-  } else if (action.code === 72) {
-    const extra = extracodeById.get(action.id);
-    if (extra) {
-      output.extracode = extra.values;
     }
   }
 
@@ -1012,41 +1466,6 @@ function classifyOverlayCategory(actions, door = null) {
   if (actions.some((action) => [12, 13, 20, 23, -23, 25, 37, 45, 57, 61, 70, 78, 92, 97, 106].includes(action.code))) return "map mutation";
   if (actions.some((action) => [1, 19, 27, 29, 62].includes(action.code) || action.category === "ui_text")) return "text";
   return "unknown";
-}
-
-function addBranchTargets(action, output, extra) {
-  if (action.code === 39) {
-    if (Number.isFinite(action.id) && action.id > 0) {
-      output.links.push({ type: "macro", id: action.id, role: "extend door codes" });
-    }
-    return;
-  }
-  if (!extra) return;
-  const targets = [];
-  if ([42, 46, 77, 78].includes(action.code)) {
-    targets.push({ type: "macro", id: extra.values[3], role: "false/low branch" });
-    targets.push({ type: "macro", id: extra.values[4], role: "true/high branch" });
-  } else if ([72, 75].includes(action.code)) {
-    const mode = extra.values[3];
-    const id = extra.values[4];
-    if (mode === 0) targets.push({ type: "macro", id, role: "branch macro" });
-    if (mode === 1) targets.push({ type: "encounter", kind: "simple", id, role: "branch encounter" });
-    if (mode === 2) targets.push({ type: "encounter", kind: "complex", id, role: "branch encounter" });
-  } else if (action.code === 76) {
-    const mode = extra.values[2];
-    const id = extra.values[4];
-    if (mode === 1) targets.push({ type: "macro", id, role: "quest value branch" });
-    if (mode === 2) targets.push({ type: "encounter", kind: "simple", id, role: "quest value branch" });
-    if (mode === 3) targets.push({ type: "encounter", kind: "complex", id, role: "quest value branch" });
-  } else if ([21, 40, 59, 64, 81, 85, 86, 87].includes(action.code)) {
-    targets.push({ type: "macro", id: extra.values[3], role: "conditional branch" });
-    targets.push({ type: "macro", id: extra.values[4], role: "conditional branch" });
-  }
-  for (const target of targets) {
-    if (Number.isFinite(target.id) && target.id > 0) {
-      output.links.push(target);
-    }
-  }
 }
 
 function buildGraph(activeDoors, extracodes, simpleEncounters = [], complexEncounters = []) {
@@ -1164,10 +1583,6 @@ function buildGraph(activeDoors, extracodes, simpleEncounters = [], complexEncou
       }
       if ([42, 46, 56, 59, 72, 75, 76, 77, 78, 85].includes(item.code)) {
         addEdge(sourceNode, sourceNode, "forcebranch", { slot: item.slot, code: item.rawCode, actionId: item.id });
-      }
-      if ([21, 40, 42, 46, 59, 64, 72, 75, 76, 77, 78, 81, 85, 86, 87].includes(item.code)) {
-        const extra = extracodeById.get(item.id);
-        addBranchTargets(item, item, extra);
       }
       actions.push(item);
 

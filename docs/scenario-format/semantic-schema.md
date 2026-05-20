@@ -88,7 +88,7 @@ The first version normalizes the surfaces already parsed by the utility:
 - map field records and map entities
 - random metadata and random encounter regions
 - all door/action records, with active doors as trigger/macro entities
-- EDCD rows
+- EDCD rows plus `extracodeUsage` summaries on actions that consume them
 - simple and complex encounter entities
 - quest flag read/write entities
 - fixed record collections for battles, monsters, shops, strings, maps,

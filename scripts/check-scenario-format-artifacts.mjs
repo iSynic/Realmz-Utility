@@ -6,6 +6,7 @@ const REQUIRED_DOCS = [
   "docs/scenario-format/README.md",
   "docs/scenario-format/format-index.md",
   "docs/scenario-format/semantic-schema.md",
+  "docs/scenario-format/opcodes-edcd.md",
   "docs/scenario-format/evidence-map.md",
   "docs/scenario-format/fixtures.md",
 ];

@@ -18,6 +18,8 @@ live in this repository.
   owners, and confidence.
 - [Semantic Schema](semantic-schema.md): utility-ready normalized object model
   emitted by `analyzeScenario().semanticSchema`.
+- [Opcode And EDCD Semantics](opcodes-edcd.md): source-backed action opcode and
+  five-short parameter shapes.
 - [Evidence Map](evidence-map.md): source anchors, generated reference reports,
   and confidence vocabulary.
 - [Fixtures](fixtures.md): regression scenarios and assertions to keep parser

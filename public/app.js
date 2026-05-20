@@ -1406,6 +1406,7 @@ function recordGroupName(groupKey, kind = null) {
   if (groupKey === "battles") return "Battle";
   if (groupKey === "shops") return "Shop";
   if (groupKey === "treasure") return "Treasure";
+  if (groupKey === "time") return "Timed encounter";
   if (groupKey === "maps") return "Map";
   if (groupKey === "encounter") return `${kind === "complex" ? "Complex" : "Simple"} encounter`;
   if (groupKey === "extracode") return "Action data";
@@ -1469,6 +1470,13 @@ function linkSummary(link) {
   if (link.type === "macro") return `${link.role || "branches"} to macro ${link.id}`;
   if (link.type === "extracode") return `uses action-data row ${link.id}`;
   if (link.type === "encounter") return `${link.role || "opens"} ${link.kind} encounter ${link.id}${encounterPreview(link.kind, link.id)}`;
+  if (link.type === "text") return `${link.role || "shows message"} ${link.id}${textPreview(link.id)}`;
+  if (link.type === "battle") return `${link.role || "starts battle"} ${link.id}${battlePreview(link.id)}`;
+  if (link.type === "shop") return `${link.role || "opens shop"} ${link.id}${shopPreview(link.id)}`;
+  if (link.type === "treasure") return `${link.role || "uses treasure"} ${link.id}${treasurePreview(link.id)}`;
+  if (link.type === "time") return `${link.role || "uses timed encounter"} ${link.id}`;
+  if (link.type === "map") return `${link.role || "uses map"} ${link.id}${mapPreview(link.id)}`;
+  if (link.type === "level") return `${link.role || "uses level"} ${link.levelType || "level"} ${link.id}`;
   if (link.type === "flow") return link.role || "changes script flow";
   return `${link.kind || link.type || "link"} ${link.id ?? ""}`.trim();
 }
@@ -1483,10 +1491,10 @@ function linkedRecordsForAction(action) {
   };
 
   if (action.code === 1) add("strings", action.id);
-  if ([2, 48, 107].includes(action.code)) add("battles", action.id);
+  if ([2, 48, 56, 107].includes(action.code) && !action.extracode) add("battles", action.id);
   if (action.code === 4) add("encounter", action.id, { kind: "simple" });
   if (action.code === 5) add("encounter", action.id, { kind: "complex" });
-  if ([6, 73].includes(action.code)) add("shops", action.id);
+  if (action.code === 6) add("shops", action.id);
   if (action.code === 10) add("treasure", action.id);
   if (action.code === 29) add("maps", action.id);
   if (action.code === 7 || action.extracode) add("extracode", action.id);
@@ -1494,6 +1502,12 @@ function linkedRecordsForAction(action) {
   for (const link of action.links || []) {
     if (link.type === "encounter") add("encounter", link.id, { kind: link.kind });
     if (link.type === "extracode") add("extracode", link.id);
+    if (link.type === "text") add("strings", link.id);
+    if (link.type === "battle") add("battles", link.id);
+    if (link.type === "shop") add("shops", link.id);
+    if (link.type === "treasure") add("treasure", link.id);
+    if (link.type === "time") add("time", link.id);
+    if (link.type === "map") add("maps", link.id);
   }
 
   return links;
@@ -1511,6 +1525,10 @@ function linkedRecordSummary(link) {
   if (link.groupKey === "battles") return battlePreview(link.id).replace(/^\s*[()]/, "").replace(/[)]$/, "") || "Battle record.";
   if (link.groupKey === "shops") return shopPreview(link.id).replace(/^\s*[()]/, "").replace(/[)]$/, "") || "Shop inventory record.";
   if (link.groupKey === "treasure") return treasurePreview(link.id).replace(/^\s*[()]/, "").replace(/[)]$/, "") || "Treasure record.";
+  if (link.groupKey === "time") {
+    const record = recordById("time", link.id);
+    return record ? `day ${record.day}, percent ${record.percent}, door ${record.door}` : "Timed encounter record.";
+  }
   if (link.groupKey === "maps") {
     const map = recordById("maps", link.id);
     if (!map) return "Map record.";
@@ -1560,6 +1578,7 @@ function wireRecordLinkButtons(root, context = {}) {
 
 function actionSummary(action) {
   const code = action.code;
+  if (action.extracodeUsage?.summary) return action.extracodeUsage.summary;
   if (code === 1) return `Shows message ${action.id}${textPreview(action.id)}`;
   if (code === 2) return `Starts battle ${action.id}${battlePreview(action.id)}`;
   if (code === 3) return `Presents a player choice and follows the matching branch.`;
@@ -1621,7 +1640,9 @@ function renderSemanticActions(actions) {
   if (!actions?.length) return `<div class="empty">This trigger has no populated action slots.</div>`;
   return `<div class="semantic-list">${actions.map((action) => {
     const links = (action.links || []).map(linkSummary).filter(Boolean);
-    const extra = action.extracode ? `Action data: ${action.extracode.join(", ")}` : "";
+    const extra = action.extracodeUsage?.fields?.length
+      ? `Action data: ${action.extracodeUsage.fields.map((entry) => `${entry.label} ${entry.value}`).join("; ")}`
+      : action.extracode ? `Action data: ${action.extracode.join(", ")}` : "";
     const meta = [extra, ...links].filter(Boolean).join(" | ");
     const questClass = action.category?.startsWith("quest") ? "quest" : action.category;
     return `
@@ -1726,6 +1747,20 @@ function renderRecordDetail(selected) {
       ${kv("gems", record.gems)}
       ${kv("jewelry", record.jewelry)}
     ` : `<div class="empty">Treasure ${escapeHtml(id)} was not decoded.</div>`;
+  } else if (groupKey === "time") {
+    const record = recordById("time", id);
+    body = record ? `
+      ${kv("source", "Data TD3")}
+      ${kv("day", record.day)}
+      ${kv("increment", record.increment)}
+      ${kv("percent", record.percent)}
+      ${kv("door", record.door)}
+      ${kv("level", record.level)}
+      ${kv("rect", record.rect)}
+      ${kv("position", `${record.x}, ${record.y}`)}
+      ${kv("item", record.item)}
+      ${kv("quest", record.quest)}
+    ` : `<div class="empty">Timed encounter ${escapeHtml(id)} was not decoded.</div>`;
   } else if (groupKey === "maps") {
     const record = recordById("maps", id);
     body = record ? `
