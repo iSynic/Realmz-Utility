@@ -43,6 +43,24 @@ edges used by the browser:
 4. `Data BD`, `Data MD`, `Data SD2`, and `Data MD2` references.
 5. Scenario resource fork names and art resources.
 
+## Deep Container Specs
+
+These pages expand the table above into source-backed field notes:
+
+- [Action Records](containers/action-records.md): `Data DD`, `Data DDD`,
+  `Data ED3`, `Data EDCD`, dispatch, macro loading, and mutation behavior.
+- [Maps, Random Metadata, And Fields](containers/maps-random-and-fields.md):
+  `Data LD`, `Data DL`, `Data RD`, `Data RDD`, landlook, dungeon bitfields,
+  LOS, darkness, random regions, and secret/pass-through modeling.
+- [Encounters](containers/encounters.md): `Data ED`, `Data ED2`, embedded action
+  slots, generated caches, and partial-record compatibility.
+- [Supporting Records](containers/supporting-records.md): battles, monsters,
+  shops, strings, treasure, thief, timed encounters, map notes, contact info,
+  menu caches, solids, and save-linked state.
+- [Assets And Runtime Caches](containers/assets-and-runtime-caches.md):
+  scenario resources, shared Realmz art, custom icons/tiles, and generated cache
+  provenance.
+
 ## Open Format Gaps
 
 - Full field semantics for every `struct door` opcode and `extracode` shape.

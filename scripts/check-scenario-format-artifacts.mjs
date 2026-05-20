@@ -7,6 +7,13 @@ const REQUIRED_DOCS = [
   "docs/scenario-format/format-index.md",
   "docs/scenario-format/semantic-schema.md",
   "docs/scenario-format/opcodes-edcd.md",
+  "docs/scenario-format/source-anchors.md",
+  "docs/scenario-format/containers/README.md",
+  "docs/scenario-format/containers/action-records.md",
+  "docs/scenario-format/containers/maps-random-and-fields.md",
+  "docs/scenario-format/containers/encounters.md",
+  "docs/scenario-format/containers/supporting-records.md",
+  "docs/scenario-format/containers/assets-and-runtime-caches.md",
   "docs/scenario-format/evidence-map.md",
   "docs/scenario-format/fixtures.md",
 ];

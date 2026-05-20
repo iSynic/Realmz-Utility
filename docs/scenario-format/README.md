@@ -20,6 +20,11 @@ live in this repository.
   emitted by `analyzeScenario().semanticSchema`.
 - [Opcode And EDCD Semantics](opcodes-edcd.md): source-backed action opcode and
   five-short parameter shapes.
+- [Source Anchor Index](source-anchors.md): durable trail from scenario bytes to
+  original Realmz source callsites.
+- [Container Specs](containers/README.md): deeper source-backed notes for action
+  records, maps/random metadata, encounters, support records, assets, and
+  runtime caches.
 - [Evidence Map](evidence-map.md): source anchors, generated reference reports,
   and confidence vocabulary.
 - [Fixtures](fixtures.md): regression scenarios and assertions to keep parser
