@@ -1009,7 +1009,7 @@ function positiveRef(id) {
 
 function linkableRef(link) {
   if (!Number.isFinite(link?.id)) return false;
-  if (["extracode", "encounter", "battle", "shop", "treasure", "time", "map", "level", "resource", "quest"].includes(link.type)) {
+  if (["extracode", "encounter", "battle", "monster", "shop", "treasure", "time", "map", "level", "resource", "quest"].includes(link.type)) {
     return link.id >= 0;
   }
   return link.id > 0;
@@ -1123,6 +1123,51 @@ function describeExtracodeUsage(action, values, output) {
         addLink(output, { type: "macro", id: values[2], role: `copy into door ${values[1]}` });
       }
       break;
+    case 12:
+      usage.summary = `Writes tile ${values[3]} on ${values[4] ? "dungeon" : "land"} level ${values[0]} at x ${values[1]}, y ${values[2]}.`;
+      usage.fields = [
+        field(0, "target level", values[0]),
+        field(1, "target land x / dungeon y", values[1]),
+        field(2, "target land y / dungeon x", values[2]),
+        field(3, "new field tile value", values[3]),
+        field(4, "dungeon flag", values[4]),
+      ];
+      addLink(output, { type: "level", levelType: values[4] ? "dungeon" : "land", id: values[0], role: "mutates tile on level" });
+      break;
+    case 13:
+      usage.summary = `Sets trigger percent ${values[2]} on level ${values[0]}.`;
+      usage.fields = [
+        field(0, "target level", values[0]),
+        field(1, "single trigger index", values[1]),
+        field(2, "new trigger percent", values[2]),
+        field(3, "range start; negative dungeon, positive land", values[3]),
+        field(4, "range end", values[4]),
+      ];
+      addLink(output, { type: "level", levelType: values[3] < 0 ? "dungeon" : "land", id: values[0], role: "mutates trigger percent on level" });
+      break;
+    case 15:
+    case 16:
+      usage.summary = `${action.code === 15 ? "Damages or heals picked characters" : "Damages or heals the party"} by multiplier ${values[0]} times ${values[1]}-${values[2]}.`;
+      usage.fields = [
+        field(0, "heal/damage multiplier", values[0]),
+        field(1, "random amount low", values[1]),
+        field(2, "random amount high", values[2]),
+        field(3, "sound id", values[3]),
+        field(4, "message id", values[4]),
+      ];
+      addMessageLink(output, values[4], "damage/heal message");
+      break;
+    case 17:
+    case 18:
+      usage.summary = `${action.code === 17 ? "Casts a spell on picked characters" : "Casts a spell on the party"} using spell ${values[0]}.`;
+      usage.fields = [
+        field(0, "spell id", values[0]),
+        field(1, "power level", values[1]),
+        field(2, "save adjustment", values[2]),
+        field(3, "force affect flag", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
     case 19:
       usage.summary = `Shows a random message from ${values[0]}-${values[1]}.`;
       usage.fields = [field(0, "message range start", values[0]), field(1, "message range end", values[1])];
@@ -1153,6 +1198,50 @@ function describeExtracodeUsage(action, values, output) {
       ];
       addBranchPair(output, values[1], values[4], values[3], "item possession");
       if (values[2] === 2) addMessageLink(output, values[4], "missing-item message");
+      break;
+    case 22:
+      usage.summary = `Alters up to ${values[1]} copies of item ${values[0]}.`;
+      usage.fields = [
+        field(0, "item id to find", values[0]),
+        field(1, "maximum matching items", values[1]),
+        field(2, "mode: 1 drop, 2 alter charges, 3 replace item", values[2]),
+        field(3, "charge delta", values[3]),
+        field(4, "replacement item id", values[4]),
+      ];
+      break;
+    case 23:
+    case -23:
+      usage.summary = `Sets random region ${values[1]} percent and battle range on ${action.code < 0 ? "dungeon" : "land"} level ${values[0]}.`;
+      usage.fields = [
+        field(0, "target level", values[0]),
+        field(1, "random region index", values[1]),
+        field(2, "new percent", values[2]),
+        field(3, "battle range low; -1 keeps existing", values[3]),
+        field(4, "battle range high; -1 keeps existing", values[4]),
+      ];
+      addLink(output, { type: "level", levelType: action.code < 0 ? "dungeon" : "land", id: values[0], role: "mutates random region" });
+      addBattleLinks(output, values[3], values[4], "random region battle range");
+      break;
+    case 33:
+      usage.summary = `${values[0] > 0 ? "Takes" : "Checks"} ${Math.abs(values[0])} gold, then branches through the shared branch path.`;
+      usage.fields = [
+        field(0, "gold amount; negative means check-only", values[0]),
+        field(1, "failure branch mode marker", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 37:
+      usage.summary = `Moves inside a dungeon by mode ${values[0]}.`;
+      usage.fields = [
+        field(0, "dungeon movement mode", values[0]),
+        field(1, "x / direction parameter", values[1]),
+        field(2, "y / direction parameter", values[2]),
+        field(3, "sound id", values[3]),
+        field(4, "message id", values[4]),
+      ];
+      addMessageLink(output, values[4], "dungeon move message");
       break;
     case 38:
     case 46:
@@ -1207,6 +1296,16 @@ function describeExtracodeUsage(action, values, output) {
       if (action.code === 107) addLink(output, { type: "macro", id: values[4], role: "battle outcome branch" });
       if (action.code === 48 && positiveRef(values[4])) addLink(output, { type: "treasure", id: values[4], role: "selective battle treasure" });
       break;
+    case 52:
+      usage.summary = `Selects characters by ${values[0]} using comparison value ${values[1]}.`;
+      usage.fields = [
+        field(0, "selector: 0 move, 1 position, 2 item, 3 percent, 4 attribute save, 5 spell save, 6 selected PC, 7 worn item, 8 exact position", values[0]),
+        field(1, "selector value", values[1]),
+        field(2, "source set: 0 all, 1 living, 2 current picked", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
     case 51:
       usage.summary = `Changes shop ${values[0]}.`;
       usage.fields = [
@@ -1242,6 +1341,36 @@ function describeExtracodeUsage(action, values, output) {
       if (values[1] === 1) addLink(output, { type: "macro", id: values[4], role: "picked false branch" });
       if (values[1] === 2) addMessageLink(output, values[4], "picked false message");
       break;
+    case 60:
+      usage.summary = `Clears party money type ${values[0]} for ${values[1] ? "picked characters" : "all characters"}.`;
+      usage.fields = [
+        field(0, "money type: 1 gold, 2 gems, 3 jewelry", values[0]),
+        field(1, "picked-only flag", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 61:
+      usage.summary = `Shifts party position by x ${values[1]}, y ${values[2]}${values[3] ? " using random +/- offsets" : ""}.`;
+      usage.fields = [
+        field(0, "legacy target level / unused in source path", values[0]),
+        field(1, "x shift or max random x shift", values[1]),
+        field(2, "y shift or max random y shift", values[2]),
+        field(3, "randomize sign and amount flag", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 63:
+      usage.summary = `${values[0] === 1 ? "Sets" : values[0] === 2 ? "Offsets" : "Alters"} game time.`;
+      usage.fields = [
+        field(0, "mode: 1 set clock, 2 offset clock", values[0]),
+        field(1, "day value or day delta", values[1]),
+        field(2, "hour value or hour delta", values[2]),
+        field(3, "minute value or minute delta", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
     case 64:
       usage.summary = `Branches on game time.`;
       usage.fields = [
@@ -1253,6 +1382,16 @@ function describeExtracodeUsage(action, values, output) {
       ];
       addLink(output, { type: "macro", id: values[3], role: "time in range branch" });
       addLink(output, { type: "macro", id: values[4], role: "time out of range branch" });
+      break;
+    case 65:
+      usage.summary = `Awards ${values[0] < 0 ? "a random count of" : values[0]} random items from ${values[1]}-${values[2]}.`;
+      usage.fields = [
+        field(0, "item count; negative means random 0..abs(count)", values[0]),
+        field(1, "random item range low", values[1]),
+        field(2, "random item range high", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
       break;
     case 72:
     case 75:
@@ -1348,6 +1487,16 @@ function describeExtracodeUsage(action, values, output) {
         field(4, "shape update mode using next EDCD row", values[4]),
       ];
       break;
+    case 103:
+      usage.summary = `Tests or sets boat/camp status with mode ${values[0]}.`;
+      usage.fields = [
+        field(0, "boat/camp mode", values[0]),
+        field(1, "status value", values[1]),
+        field(2, "branch mode / behavior", values[2]),
+        field(3, "branch target or extra value", values[3]),
+        field(4, "branch target or extra value", values[4]),
+      ];
+      break;
     case 106:
       usage.summary = `Sets level darkness to ${values[0] - 1}.`;
       usage.fields = [
@@ -1368,6 +1517,17 @@ function describeExtracodeUsage(action, values, output) {
         field(4, "unused / legacy", values[4]),
       ];
       addMessageLink(output, values[0], "fumble message");
+      break;
+    case 124:
+      usage.summary = `Spawns ${values[2] < 0 ? "a random count of" : values[2]} monster ${values[1]}.`;
+      usage.fields = [
+        field(0, "unused / legacy in source path", values[0]),
+        field(1, "monster id", values[1]),
+        field(2, "monster count; negative means random", values[2]),
+        field(3, "sound id", values[3]),
+        field(4, "traiter override", values[4]),
+      ];
+      addLink(output, { type: "monster", id: values[1], role: "spawns monster" });
       break;
     case 126:
       usage.summary = `Runs a battle macro branch.`;
@@ -1450,6 +1610,7 @@ function targetNodeId(link) {
   if (link.type === "macro") return `macro:${link.id}`;
   if (link.type === "extracode") return `extracode:${link.id}`;
   if (link.type === "encounter") return encounterNodeId(link.kind, link.id);
+  if (link.type === "monster") return `monster:${link.id}`;
   return null;
 }
 

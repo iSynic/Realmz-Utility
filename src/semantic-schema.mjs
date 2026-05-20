@@ -122,6 +122,7 @@ function toGraphTarget(link) {
   if (link.type === "extracode") return `record:Data EDCD:${link.id}`;
   if (link.type === "encounter") return encounterEntityId(link.kind || "simple", link.id);
   if (link.type === "battle") return `battle:${link.id}`;
+  if (link.type === "monster") return `monster:${link.id}`;
   if (link.type === "text") return `message:${link.id}`;
   if (link.type === "map") return `map-record:${link.id}`;
   if (link.type === "level") return `map:${link.levelType || "land"}:${link.id}`;
@@ -221,6 +222,33 @@ function addBattleLinks(output, records) {
         kind: "calls_battle_macro",
         confidence: "source-backed",
         evidence: [`record:Data BD:${battle.id}`],
+      });
+    }
+  }
+}
+
+function addMonsterLinks(output, records) {
+  for (const monster of records?.monsters?.records || []) {
+    const monsterId = `monster:${monster.id}`;
+    if (monster.iconId) {
+      output.links.push({
+        id: `link:${output.links.length}`,
+        from: monsterId,
+        to: "resource-type:cicn",
+        kind: "uses_icon_resource",
+        confidence: "source-backed",
+        evidence: [`record:Data MD:${monster.id}`],
+        metadata: { iconId: monster.iconId },
+      });
+    }
+    if (monster.todoOnDeath) {
+      output.links.push({
+        id: `link:${output.links.length}`,
+        from: monsterId,
+        to: `macro:${monster.todoOnDeath}`,
+        kind: "calls_death_macro",
+        confidence: "source-backed",
+        evidence: [`record:Data MD:${monster.id}`],
       });
     }
   }
@@ -658,6 +686,7 @@ export function buildSemanticSchema({
   addGraphEdges(output, graph);
   addActionLinks(output, graph?.actions);
   addBattleLinks(output, records);
+  addMonsterLinks(output, records);
   addMapRecordLinks(output, records, levels);
 
   if (assets?.tileAtlases?.length) {

@@ -92,6 +92,14 @@ function assertFixtureSemantics(analysis) {
   if ((analysis.records?.battles?.records || []).length && !hasLink(analysis, (link) => link.kind === "uses_monster")) {
     throw new Error(`${name}: expected battle to monster semantic links`);
   }
+  if ((analysis.records?.monsters?.records || []).some((monster) => monster.iconId) &&
+      !hasLink(analysis, (link) => link.kind === "uses_icon_resource")) {
+    throw new Error(`${name}: expected monster icon resource links`);
+  }
+  if ((analysis.records?.monsters?.records || []).some((monster) => monster.todoOnDeath) &&
+      !hasLink(analysis, (link) => link.kind === "calls_death_macro")) {
+    throw new Error(`${name}: expected monster death macro links`);
+  }
   if (name === "City of Bywater") {
     if (!hasLink(analysis, (link) => String(link.kind).includes("battle"))) {
       throw new Error(`${name}: expected trigger/battle semantic links`);

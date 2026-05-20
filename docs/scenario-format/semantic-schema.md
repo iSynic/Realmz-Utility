@@ -97,6 +97,7 @@ The first version normalizes the surfaces already parsed by the utility:
 - scenario resource type inventory
 - graph/action links, unresolved-reference diagnostics, unknown-opcode
   diagnostics, and missing-EDCD diagnostics
+- monster links to icon resource type evidence and death macros
 
 ## Planned Expansion
 
