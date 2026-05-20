@@ -2,6 +2,8 @@ const state = {
   config: null,
   scenarios: [],
   data: null,
+  schemaIndex: null,
+  scenarioFolderInitialPath: "",
   selectedScenarioPath: null,
   selectedLevelId: null,
   selectedItem: null,
@@ -18,6 +20,13 @@ const state = {
   pictureCache: new Map(),
   secretWalkableCache: new Map(),
   zoom: 8,
+  projectSearch: {
+    open: false,
+    query: "",
+    activeIndex: 0,
+    results: [],
+    pageQuery: "",
+  },
   pan: {
     active: false,
     moved: false,
@@ -73,6 +82,7 @@ const els = {
   scriptPanel: document.querySelector("#scriptPanel"),
   flagsPanel: document.querySelector("#flagsPanel"),
   dataPanel: document.querySelector("#dataPanel"),
+  searchPanel: document.querySelector("#searchPanel"),
   filesPanel: document.querySelector("#filesPanel"),
   inspectorBack: document.querySelector("#inspectorBack"),
   inspectorForward: document.querySelector("#inspectorForward"),
@@ -88,10 +98,31 @@ const els = {
   toggleText: document.querySelector("#toggleText"),
   toggleUnknown: document.querySelector("#toggleUnknown"),
   toggleSecrets: document.querySelector("#toggleSecrets"),
+  overlayFilterButton: document.querySelector("#overlayFilterButton"),
+  overlayFilterCount: document.querySelector("#overlayFilterCount"),
+  overlayFilterMenu: document.querySelector("#overlayFilterMenu"),
+  overlayFilterClose: document.querySelector("#overlayFilterClose"),
+  overlayShowAll: document.querySelector("#overlayShowAll"),
+  overlayHideAll: document.querySelector("#overlayHideAll"),
+  overlayOnlySecrets: document.querySelector("#overlayOnlySecrets"),
   importTiles: document.querySelector("#importTiles"),
   exportMap: document.querySelector("#exportMap"),
   zoom: document.querySelector("#zoom"),
   zoomValue: document.querySelector("#zoomValue"),
+  projectSearchLauncher: document.querySelector("#projectSearchLauncher"),
+  projectSearchOverlay: document.querySelector("#projectSearchOverlay"),
+  projectSearchInput: document.querySelector("#projectSearchInput"),
+  projectSearchResults: document.querySelector("#projectSearchResults"),
+  projectSearchSubtitle: document.querySelector("#projectSearchSubtitle"),
+  projectSearchFooter: document.querySelector("#projectSearchFooter"),
+  folderPickerOverlay: document.querySelector("#folderPickerOverlay"),
+  folderPickerClose: document.querySelector("#folderPickerClose"),
+  folderPickerCancel: document.querySelector("#folderPickerCancel"),
+  folderPickerPath: document.querySelector("#folderPickerPath"),
+  folderPickerGo: document.querySelector("#folderPickerGo"),
+  folderPickerStatus: document.querySelector("#folderPickerStatus"),
+  folderPickerList: document.querySelector("#folderPickerList"),
+  folderPickerOpen: document.querySelector("#folderPickerOpen"),
 };
 
 function setStatus(text) {
@@ -106,11 +137,44 @@ function updateLauncherControls() {
   const hasDesktopBridge = Boolean(getTauriInvoke());
   els.rootForm.classList.toggle("has-folder-picker", hasDesktopBridge);
   if (els.locateScenarios) {
-    els.locateScenarios.hidden = !hasDesktopBridge;
+    els.locateScenarios.hidden = false;
+    els.locateScenarios.title = hasDesktopBridge ? "Choose scenario folder" : "Browse local folders";
   }
   if (els.exportMap) {
     els.exportMap.hidden = !hasDesktopBridge;
   }
+}
+
+function overlayToggleInputs() {
+  return [
+    els.toggleDoors,
+    els.toggleRandom,
+    els.toggleEncounters,
+    els.toggleQuest,
+    els.toggleMapMutation,
+    els.toggleBattle,
+    els.toggleText,
+    els.toggleUnknown,
+    els.toggleSecrets,
+  ].filter(Boolean);
+}
+
+function updateOverlayFilterSummary() {
+  const inputs = overlayToggleInputs();
+  const active = inputs.filter((input) => input.checked).length;
+  if (els.overlayFilterCount) {
+    els.overlayFilterCount.textContent = `${active}/${inputs.length}`;
+  }
+  if (els.overlayFilterButton) {
+    els.overlayFilterButton.classList.toggle("has-hidden", active < inputs.length);
+    els.overlayFilterButton.title = `${active} of ${inputs.length} overlay filters visible`;
+  }
+}
+
+function setOverlayFilterMenu(open) {
+  if (!els.overlayFilterMenu || !els.overlayFilterButton) return;
+  els.overlayFilterMenu.hidden = !open;
+  els.overlayFilterButton.setAttribute("aria-expanded", String(open));
 }
 
 async function api(path) {
@@ -131,12 +195,12 @@ async function apiPost(path) {
   return response.json();
 }
 
-async function rememberScenarioRoot(root) {
+async function rememberScenarioFolder(folderPath) {
   const invoke = getTauriInvoke();
-  if (!invoke || !root) return;
+  if (!invoke || !folderPath) return;
 
   try {
-    await invoke("remember_scenarios_folder", { path: root });
+    await invoke("remember_scenarios_folder", { path: folderPath });
   } catch (error) {
     console.warn("Unable to remember scenario folder", error);
   }
@@ -163,6 +227,644 @@ function sourceLabel(item) {
 function currentLevel() {
   if (!state.data || !state.selectedLevelId) return null;
   return state.data.levels.find((level) => level.id === state.selectedLevelId) || null;
+}
+
+function pushIndexList(map, key, value) {
+  if (!key) return;
+  if (!map.has(key)) map.set(key, []);
+  map.get(key).push(value);
+}
+
+function buildSchemaIndex(schema) {
+  const index = {
+    entitiesById: new Map(),
+    recordsById: new Map(),
+    linksFrom: new Map(),
+    linksTo: new Map(),
+    diagnosticsBySource: new Map(),
+    entitiesByRecordRef: new Map(),
+    entitiesByType: new Map(),
+    recordsBySource: new Map(),
+  };
+  if (!schema) return index;
+  for (const entity of schema.entities || []) {
+    index.entitiesById.set(entity.id, entity);
+    pushIndexList(index.entitiesByType, entity.type || "unknown", entity);
+    pushIndexList(index.entitiesByRecordRef, entity.recordRef, entity);
+  }
+  for (const record of schema.records || []) {
+    index.recordsById.set(record.id, record);
+    pushIndexList(index.recordsBySource, record.source || record.type || "unknown", record);
+  }
+  for (const link of schema.links || []) {
+    pushIndexList(index.linksFrom, link.from, link);
+    pushIndexList(index.linksTo, link.to, link);
+  }
+  for (const diagnostic of schema.diagnostics || []) {
+    pushIndexList(index.diagnosticsBySource, diagnostic.source, diagnostic);
+    if (diagnostic.data?.source) pushIndexList(index.diagnosticsBySource, diagnostic.data.source, diagnostic);
+    if (diagnostic.data?.recordIndex != null && diagnostic.data?.source) {
+      const key = `record:${diagnostic.data.source}:${diagnostic.data.levelIndex ?? "macro"}:${diagnostic.data.recordIndex}`;
+      pushIndexList(index.diagnosticsBySource, key, diagnostic);
+    }
+  }
+  return index;
+}
+
+function schema() {
+  return state.data?.semanticSchema || null;
+}
+
+function schemaIndex() {
+  if (!state.schemaIndex) state.schemaIndex = buildSchemaIndex(schema());
+  return state.schemaIndex;
+}
+
+function entityById(id) {
+  return id ? schemaIndex().entitiesById.get(id) || null : null;
+}
+
+function schemaRecordById(id) {
+  return id ? schemaIndex().recordsById.get(id) || null : null;
+}
+
+function linksFrom(id) {
+  return id ? schemaIndex().linksFrom.get(id) || [] : [];
+}
+
+function linksTo(id) {
+  return id ? schemaIndex().linksTo.get(id) || [] : [];
+}
+
+function currentMapEntityId() {
+  const level = currentLevel();
+  return level ? `map:${level.type}:${level.index}` : null;
+}
+
+function labelize(value) {
+  return String(value ?? "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateText(value, length = 180) {
+  const text = String(value ?? "");
+  return text.length > length ? `${text.slice(0, length - 3)}...` : text;
+}
+
+function formatSummaryValue(value) {
+  if (value == null || value === "") return "-";
+  if (Array.isArray(value)) {
+    if (!value.length) return "-";
+    if (value.every((entry) => entry == null || ["string", "number", "boolean"].includes(typeof entry))) {
+      return truncateText(value.join(" / "), 260);
+    }
+    return truncateText(value.map((entry) => {
+      if (entry?.name) return entry.name;
+      if (entry?.id != null) return `${entry.id}`;
+      return JSON.stringify(entry);
+    }).join(" / "), 260);
+  }
+  if (typeof value === "object") {
+    if (Number.isFinite(value.left) && Number.isFinite(value.top) && Number.isFinite(value.right) && Number.isFinite(value.bottom)) {
+      return `${value.left},${value.top} - ${value.right},${value.bottom}`;
+    }
+    return truncateText(JSON.stringify(value), 260);
+  }
+  return truncateText(value, 260);
+}
+
+function renderSummaryKv(summary, options = {}) {
+  const skip = new Set(options.skip || []);
+  const entries = Object.entries(summary || {}).filter(([key, value]) => !skip.has(key) && value != null && value !== "");
+  if (!entries.length) return `<div class="empty">No decoded summary fields.</div>`;
+  return entries.map(([key, value]) => kv(labelize(key), formatSummaryValue(value))).join("");
+}
+
+function renderReaderSummary(entity) {
+  const skip = new Set([
+    "actions",
+    "actionCount",
+    "nameHints",
+    "render",
+    "levelType",
+    "levelIndex",
+    "x",
+    "y",
+    "percent",
+    "source",
+    "record",
+    "recordIndex",
+    "scriptShape",
+    "selection",
+    "trigger",
+  ]);
+  const entries = Object.entries(entity?.summary || {}).filter(([key, value]) =>
+    !skip.has(key) &&
+    value != null &&
+    value !== "" &&
+    !(Array.isArray(value) && !value.length)
+  );
+  if (!entries.length) return "";
+  return `
+    <div class="section">
+      <h3>Details</h3>
+      ${entries.map(([key, value]) => kv(labelize(key), formatSummaryValue(value))).join("")}
+    </div>
+  `;
+}
+
+function entityTitle(entity) {
+  if (!entity) return "Unknown Entity";
+  return entity.label || entity.id;
+}
+
+function entityReadableType(entity) {
+  return labelize(entity?.type || "entity");
+}
+
+function entityLocationSummary(entity) {
+  const summary = entity?.summary || {};
+  const type = entity?.type || "";
+  if (Number.isFinite(summary.x) && Number.isFinite(summary.y) && summary.levelType != null && Number.isFinite(summary.levelIndex)) {
+    return `${labelize(summary.levelType)} ${summary.levelIndex}, tile ${summary.x}, ${summary.y}`;
+  }
+  if (summary.bounds) {
+    return formatSummaryValue(summary.bounds);
+  }
+  if (type === "map") {
+    const levelType = summary.levelType ?? entity.id?.split(":")[1];
+    const levelIndex = Number.isFinite(summary.levelIndex) ? summary.levelIndex : entity.id?.split(":")[2];
+    const size = Number.isFinite(summary.width) && Number.isFinite(summary.height) ? `, ${summary.width} x ${summary.height}` : "";
+    return `${labelize(levelType || "map")} ${levelIndex ?? ""}${size}`.trim();
+  }
+  if (entity?.id?.startsWith("message:")) return `message ${entity.id.slice("message:".length)}`;
+  if (entity?.id?.startsWith("battle:")) return `battle ${entity.id.slice("battle:".length)}`;
+  if (entity?.id?.startsWith("monster:")) return `monster ${entity.id.slice("monster:".length)}`;
+  if (entity?.id?.startsWith("shop:")) return `shop ${entity.id.slice("shop:".length)}`;
+  if (entity?.id?.startsWith("resource:")) {
+    const [, resourceType, resourceId] = entity.id.split(":");
+    return `${resourceType} ${resourceId}`;
+  }
+  return "";
+}
+
+function entityReaderMeta(entity) {
+  if (!entity) return "";
+  const location = entityLocationSummary(entity);
+  return location ? `${entityReadableType(entity)} at ${location}` : entityReadableType(entity);
+}
+
+function entityButtonMeta(entity) {
+  if (!entity) return "";
+  const summary = entity?.summary || {};
+  if (entity.type === "message" && summary.preview) return truncateText(summary.preview, 140);
+  if (entity.type === "battle" && summary.monsters) return `Monsters: ${formatSummaryValue(summary.monsters)}`;
+  if (entity.type === "map" && summary.nameHints?.length) return formatSummaryValue(summary.nameHints);
+  return entityLocationSummary(entity) || entityReadableType(entity);
+}
+
+function entityRecord(entity) {
+  return schemaRecordById(entity?.recordRef);
+}
+
+function entityIdForRecordSelection(item) {
+  if (!item) return null;
+  const id = Number(item.id);
+  if (!Number.isFinite(id)) return null;
+  if (item.groupKey === "strings") return `message:${id}`;
+  if (item.groupKey === "battles") return `battle:${id}`;
+  if (item.groupKey === "monsters") return `monster:${id}`;
+  if (item.groupKey === "shops") return `shop:${id}`;
+  if (item.groupKey === "treasure") return `treasure:${id}`;
+  if (item.groupKey === "time") return `time:${id}`;
+  if (item.groupKey === "maps") return `map-record:${id}`;
+  if (item.groupKey === "extracode") return `record:Data EDCD:${id}`;
+  if (item.groupKey === "encounter" || item.groupKey === "encounters") return `encounter:${item.kind || "simple"}:${id}`;
+  return null;
+}
+
+function entityIdForOverlayBox(box) {
+  if (!box) return null;
+  if (box.category === "random") {
+    return `random:${box.levelType}:${box.levelIndex}:${box.recordRef}`;
+  }
+  if (box.nodeId && entityById(box.nodeId)) return box.nodeId;
+  const door = doorByRecordRef(box.recordRef);
+  if (!door) return null;
+  if (door.source === "Data ED3") return `macro:${door.recordIndex}`;
+  return `trigger:${door.levelType}:${door.levelIndex}:${door.recordIndex}`;
+}
+
+function targetExists(id) {
+  return Boolean(entityById(id) || schemaRecordById(id));
+}
+
+function recordSourceLabel(record) {
+  if (!record) return "";
+  const range = record.byteRange ? `bytes ${record.byteRange.start}-${record.byteRange.endExclusive}` : "";
+  return [record.type, record.source, range].filter(Boolean).join(" | ");
+}
+
+function renderSchemaTargetButton(targetId, options = {}) {
+  const entity = entityById(targetId);
+  const record = entity ? null : schemaRecordById(targetId);
+  const title = entity ? entityTitle(entity) : record ? record.id : targetId;
+  const meta = entity ? entityButtonMeta(entity) : record ? recordSourceLabel(record) : "unresolved";
+  const attr = entity ? `data-entity-id="${escapeHtml(targetId)}"` : record ? `data-schema-record-id="${escapeHtml(targetId)}"` : "";
+  const disabled = attr ? "" : " disabled";
+  const role = options.role ? `<span>${escapeHtml(options.role)}</span>` : "";
+  const renderedMeta = options.hideMeta ? "" : options.meta != null ? options.meta : meta;
+  return `
+    <button class="row-button" ${attr}${disabled}>
+      <span class="row-title"><strong>${escapeHtml(title)}</strong>${role}</span>
+      ${renderedMeta ? `<span class="row-meta">${escapeHtml(renderedMeta)}</span>` : ""}
+    </button>
+  `;
+}
+
+function wireSchemaNavigation(root) {
+  for (const button of root.querySelectorAll("[data-entity-id]")) {
+    button.addEventListener("click", () => selectEntity(button.dataset.entityId));
+  }
+  for (const button of root.querySelectorAll("[data-schema-record-id]")) {
+    button.addEventListener("click", () => selectSchemaRecord(button.dataset.schemaRecordId));
+  }
+}
+
+function selectSchemaTarget(targetId) {
+  if (entityById(targetId)) {
+    selectEntity(targetId);
+    return true;
+  }
+  if (schemaRecordById(targetId)) {
+    selectSchemaRecord(targetId);
+    return true;
+  }
+  return false;
+}
+
+function diagnosticsForEntity(entity) {
+  if (!entity) return [];
+  const index = schemaIndex();
+  const keys = new Set([entity.id, entity.recordRef, entity.source].filter(Boolean));
+  const record = entityRecord(entity);
+  if (record?.id) keys.add(record.id);
+  const diagnostics = new Map();
+  for (const key of keys) {
+    for (const diagnostic of index.diagnosticsBySource.get(key) || []) {
+      diagnostics.set(diagnostic.id || `${diagnostic.type}:${diagnostic.message}`, diagnostic);
+    }
+  }
+  for (const diagnostic of schema()?.diagnostics || []) {
+    const haystack = JSON.stringify(diagnostic.data || {});
+    if ([entity.id, entity.recordRef].some((key) => key && haystack.includes(key))) {
+      diagnostics.set(diagnostic.id || `${diagnostic.type}:${diagnostic.message}`, diagnostic);
+    }
+  }
+  return [...diagnostics.values()];
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9#:_./\\' -]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function searchEntryText(entry) {
+  return normalizeSearchText([
+    entry.title,
+    entry.subtitle,
+    entry.meta,
+    entry.keywords,
+    entry.kind,
+  ].filter(Boolean).join(" "));
+}
+
+function scoreSearchEntry(entry, query) {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return entry.defaultScore || 0;
+  const text = searchEntryText(entry);
+  const tokens = normalizedQuery.split(" ").filter(Boolean);
+  let score = entry.baseScore || 1;
+  for (const token of tokens) {
+    if (!text.includes(token)) return 0;
+    if (normalizeSearchText(entry.title).startsWith(token)) score += 24;
+    else if (normalizeSearchText(entry.title).includes(token)) score += 14;
+    else if (normalizeSearchText(entry.subtitle).includes(token)) score += 8;
+    else score += 3;
+  }
+  if (text.includes(normalizedQuery)) score += 12;
+  return score;
+}
+
+function entryKindLabel(kind) {
+  if (!kind) return "ITEM";
+  if (kind.length <= 10) return kind.toUpperCase();
+  return kind.split(/\s+/).map((part) => part[0]).join("").slice(0, 10).toUpperCase();
+}
+
+function schemaEntitySearchKeywords(entity) {
+  const parts = [
+    entity.id,
+    entity.recordRef,
+    entity.source,
+    entity.confidence,
+    formatSummaryValue(entity.summary),
+  ];
+  if (entity.type === "message") {
+    const id = parseEntityNumber(entity, "message:");
+    const record = Number.isFinite(id) ? recordById("strings", id) : null;
+    parts.push(record?.text);
+  }
+  return parts.filter(Boolean).join(" ");
+}
+
+function levelIdForEntity(entity) {
+  const levelType = entity?.summary?.levelType;
+  const levelIndex = entity?.summary?.levelIndex;
+  if (levelType && Number.isInteger(levelIndex)) return `${levelType}:${levelIndex}`;
+  const match = entity?.id?.match(/^(?:map|trigger|random):([^:]+):(\d+)/);
+  if (match) return `${match[1]}:${match[2]}`;
+  return null;
+}
+
+function buildWorkspaceSearchEntries() {
+  const loaded = Boolean(state.data);
+  const workspaceEntries = [
+    {
+      kind: "tab",
+      title: "Selection",
+      subtitle: "Inspect the current map or selected scenario entity",
+      keywords: "current selected inspector entity",
+      defaultScore: 100,
+      action: { type: "panel", panel: "selection" },
+    },
+    {
+      kind: "tab",
+      title: "Script",
+      subtitle: "Browse incoming and outgoing schema links for scripts and actions",
+      keywords: "actions triggers macros links graph",
+      defaultScore: 96,
+      action: { type: "panel", panel: "script" },
+    },
+    {
+      kind: "tab",
+      title: "Flags",
+      subtitle: "Open quest flag read/write links",
+      keywords: "quest flags state reads writes",
+      defaultScore: 92,
+      action: { type: "panel", panel: "flags" },
+    },
+    {
+      kind: "tab",
+      title: "Data",
+      subtitle: "Browse schema entity and raw record catalogues",
+      keywords: "records entities catalogue schema raw",
+      defaultScore: 88,
+      action: { type: "panel", panel: "data" },
+    },
+    {
+      kind: "tab",
+      title: "Files",
+      subtitle: "View sources, resource types, alignment, and diagnostics",
+      keywords: "files resources diagnostics source hashes alignment",
+      defaultScore: 84,
+      action: { type: "panel", panel: "files" },
+    },
+  ];
+  if (loaded && currentMapEntityId()) {
+    workspaceEntries.unshift({
+      kind: "map",
+      title: "Current Map",
+      subtitle: levelTitle(currentLevel(), { long: true }),
+      keywords: currentMapEntityId(),
+      defaultScore: 110,
+      action: { type: "entity", entityId: currentMapEntityId() },
+    });
+  }
+  return workspaceEntries;
+}
+
+function buildProjectSearchEntries() {
+  const entries = [...buildWorkspaceSearchEntries()];
+  if (!state.data) return entries;
+
+  for (const level of state.data.levels || []) {
+    const entityId = `map:${level.type}:${level.index}`;
+    entries.push({
+      kind: "map",
+      title: levelTitle(level),
+      subtitle: `Open ${level.type} level ${level.index}`,
+      meta: [
+        level.nameSource,
+        (level.nameHints || []).map((hint) => hint.name).slice(0, 4).join(" / "),
+      ].filter(Boolean).join(" | "),
+      keywords: [entityId, levelTitle(level, { long: true }), level.name, JSON.stringify(level.nameHints || [])].join(" "),
+      baseScore: 12,
+      action: entityById(entityId) ? { type: "entity", entityId } : { type: "level", levelId: level.id },
+    });
+  }
+
+  const index = schemaIndex();
+  for (const entity of schema()?.entities || []) {
+    entries.push({
+      kind: entity.type || "entity",
+      title: entityTitle(entity),
+      subtitle: labelize(entity.type || "entity"),
+      meta: [entity.source, entity.confidence, entity.recordRef].filter(Boolean).join(" | "),
+      keywords: schemaEntitySearchKeywords(entity),
+      baseScore: entity.type === "map" ? 16 : entity.type === "trigger" ? 14 : entity.type === "message" ? 12 : 8,
+      action: { type: "entity", entityId: entity.id },
+    });
+  }
+
+  for (const record of schema()?.records || []) {
+    if (index.entitiesByRecordRef.has(record.id)) continue;
+    entries.push({
+      kind: record.type || "record",
+      title: record.id,
+      subtitle: labelize(record.type || "raw record"),
+      meta: recordSourceLabel(record),
+      keywords: [record.source, record.confidence, formatSummaryValue(record.summary)].filter(Boolean).join(" "),
+      baseScore: 3,
+      action: { type: "schema-record", recordId: record.id },
+    });
+  }
+
+  for (const diagnostic of schema()?.diagnostics || []) {
+    entries.push({
+      kind: "diagnostic",
+      title: diagnostic.message || diagnostic.id || diagnostic.type,
+      subtitle: labelize(diagnostic.type || "diagnostic"),
+      meta: [diagnostic.source, diagnostic.confidence].filter(Boolean).join(" | "),
+      keywords: [diagnostic.id, JSON.stringify(diagnostic.data || {})].join(" "),
+      baseScore: 5,
+      action: { type: "panel", panel: "data" },
+    });
+  }
+
+  return entries;
+}
+
+function projectSearchResults(query) {
+  const scored = buildProjectSearchEntries()
+    .map((entry, originalIndex) => ({ ...entry, originalIndex, score: scoreSearchEntry(entry, query) }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
+  return scored.slice(0, 80);
+}
+
+function renderProjectSearchResults() {
+  const query = state.projectSearch.query;
+  const results = projectSearchResults(query);
+  state.projectSearch.results = results;
+  if (state.projectSearch.activeIndex >= results.length) {
+    state.projectSearch.activeIndex = query ? -1 : Math.max(0, results.length - 1);
+  }
+  if (!results.length) {
+    els.projectSearchResults.innerHTML = `<div class="project-search-empty">No matching project entries.</div>`;
+    els.projectSearchFooter.textContent = "Try a map name, trigger number, message text, resource id, or file name.";
+    return;
+  }
+  els.projectSearchSubtitle.textContent = query
+    ? `Found ${results.length}${results.length === 80 ? "+" : ""} matching indexed entries.`
+    : "Jump to workspaces and entities, or search inside the open scenario.";
+  els.projectSearchFooter.textContent = query && state.projectSearch.activeIndex < 0
+    ? "Press Enter for full search results, or use arrow keys/mouse to choose a direct jump."
+    : "Use arrow keys to move, and Enter to jump.";
+  els.projectSearchResults.innerHTML = results.map((entry, index) => `
+    <button class="project-search-result ${index === state.projectSearch.activeIndex ? "active" : ""}" type="button" role="option" aria-selected="${index === state.projectSearch.activeIndex}" data-search-index="${index}">
+      <span class="project-search-badge">${escapeHtml(entryKindLabel(entry.kind))}</span>
+      <span class="project-search-copy">
+        <strong>${escapeHtml(entry.title)}</strong>
+        <span>${escapeHtml(entry.subtitle || entry.meta || "")}</span>
+        ${entry.meta && entry.subtitle !== entry.meta ? `<small>${escapeHtml(entry.meta)}</small>` : ""}
+      </span>
+    </button>
+  `).join("");
+  for (const button of els.projectSearchResults.querySelectorAll("[data-search-index]")) {
+    button.addEventListener("mouseenter", () => {
+      setProjectSearchActive(Number(button.dataset.searchIndex));
+    });
+    button.addEventListener("click", () => {
+      performProjectSearchResult(Number(button.dataset.searchIndex));
+    });
+  }
+}
+
+function openProjectSearch(initialQuery = "") {
+  state.projectSearch.open = true;
+  state.projectSearch.query = initialQuery;
+  state.projectSearch.activeIndex = initialQuery ? -1 : 0;
+  els.projectSearchOverlay.hidden = false;
+  els.projectSearchInput.value = initialQuery;
+  renderProjectSearchResults();
+  window.requestAnimationFrame(() => {
+    els.projectSearchInput.focus();
+    els.projectSearchInput.select();
+  });
+}
+
+function closeProjectSearch() {
+  state.projectSearch.open = false;
+  els.projectSearchOverlay.hidden = true;
+}
+
+function setProjectSearchActive(index) {
+  const count = state.projectSearch.results.length;
+  if (!count) return;
+  state.projectSearch.activeIndex = Math.max(0, Math.min(index, count - 1));
+  for (const button of els.projectSearchResults.querySelectorAll("[data-search-index]")) {
+    const active = Number(button.dataset.searchIndex) === state.projectSearch.activeIndex;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  }
+  els.projectSearchFooter.textContent = "Use arrow keys to move, and Enter to jump.";
+}
+
+function moveProjectSearchActive(delta) {
+  const count = state.projectSearch.results.length;
+  if (!count) return;
+  if (state.projectSearch.activeIndex < 0) {
+    state.projectSearch.activeIndex = delta < 0 ? count - 1 : 0;
+  } else {
+    state.projectSearch.activeIndex = (state.projectSearch.activeIndex + delta + count) % count;
+  }
+  setProjectSearchActive(state.projectSearch.activeIndex);
+  els.projectSearchResults.querySelector(".project-search-result.active")?.scrollIntoView({ block: "nearest" });
+}
+
+async function performProjectSearchResult(index = state.projectSearch.activeIndex) {
+  if (index == null || index < 0) {
+    openSearchResultsPanel(state.projectSearch.query);
+    return;
+  }
+  const entry = state.projectSearch.results[index];
+  if (!entry) return;
+  closeProjectSearch();
+  await performProjectSearchAction(entry.action);
+}
+
+async function performProjectSearchAction(action) {
+  if (action.type === "scenario") {
+    await loadScenario(action.path);
+    return;
+  }
+  if (action.type === "panel") {
+    activateInspectorPanel(action.panel);
+    return;
+  }
+  if (action.type === "level") {
+    state.selectedLevelId = action.levelId;
+    state.selectedItem = null;
+    state.selectedScriptNode = null;
+    renderAll();
+    return;
+  }
+  if (action.type === "schema-record") {
+    selectSchemaRecord(action.recordId);
+    return;
+  }
+  if (action.type === "entity") {
+    const entity = entityById(action.entityId);
+    const levelId = levelIdForEntity(entity);
+    if (levelId && state.selectedLevelId !== levelId) {
+      state.selectedLevelId = levelId;
+      renderLevelTabs();
+      drawMap();
+    }
+    selectEntity(action.entityId);
+  }
+}
+
+function openSearchResultsPanel(query) {
+  state.projectSearch.pageQuery = query || state.projectSearch.query || "";
+  closeProjectSearch();
+  renderSearchPanel();
+  activateInspectorPanel("search");
+}
+
+function handleProjectSearchKeydown(event) {
+  if (!state.projectSearch.open) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeProjectSearch();
+  } else if (event.key === "ArrowDown") {
+    event.preventDefault();
+    moveProjectSearchActive(1);
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    moveProjectSearchActive(-1);
+  } else if (event.key === "Enter") {
+    event.preventDefault();
+    performProjectSearchResult();
+  }
 }
 
 function randLevelFor(level) {
@@ -1042,8 +1744,7 @@ function renderOverlay() {
     const bounds = box.bounds;
     const width = Math.max(0.8, bounds.width);
     const height = Math.max(0.8, bounds.height);
-    const selected = (state.selectedItem?.type === "overlay" && state.selectedItem.item?.box?.id === box.id)
-      || (state.selectedItem?.type === "record" && state.selectedItem.item?.sourceOverlay?.box?.id === box.id);
+    const selected = isBoxSelected(box);
     const color = colorForCategory(box.category, highlighted || selected);
     const isZone = width > 1.2 || height > 1.2;
     const rect = svgEl("rect", {
@@ -1091,8 +1792,15 @@ function resolveCanvasColor(value, fallback = "#ffffff") {
 }
 
 function isBoxSelected(box) {
-  return (state.selectedItem?.type === "overlay" && state.selectedItem.item?.box?.id === box.id)
-    || (state.selectedItem?.type === "record" && state.selectedItem.item?.sourceOverlay?.box?.id === box.id);
+  const selected = state.selectedItem;
+  if (selected?.type === "entity") {
+    const entityId = entityIdForOverlayBox(box);
+    if (entityId && entityId === selected.entityId) return true;
+    const entity = entityById(selected.entityId);
+    if (entity?.recordRef && entity.recordRef === box.recordRef) return true;
+  }
+  return (selected?.type === "overlay" && selected.item?.box?.id === box.id)
+    || (selected?.type === "record" && selected.item?.sourceOverlay?.box?.id === box.id);
 }
 
 function isBoxHighlighted(box) {
@@ -1329,17 +2037,22 @@ async function exportCurrentMap() {
 }
 
 function renderScenarioList() {
-  els.scenarioList.innerHTML = state.scenarios
-    .map((scenario) => `
-      <button class="scenario-item ${scenario.path === state.selectedScenarioPath ? "active" : ""}" data-path="${escapeHtml(scenario.path)}">
-        ${escapeHtml(scenario.name)}
-        <span>${escapeHtml(scenario.path)}</span>
-      </button>
-    `)
-    .join("");
-  for (const button of els.scenarioList.querySelectorAll(".scenario-item")) {
-    button.addEventListener("click", () => loadScenario(button.dataset.path));
+  if (state.data?.scenario) {
+    els.scenarioList.innerHTML = `
+      <div class="scenario-item active scenario-current">
+        <strong>Open Scenario</strong>
+        ${escapeHtml(state.data.scenario.name)}
+        <span>${escapeHtml(state.data.scenario.path)}</span>
+      </div>
+    `;
+    return;
   }
+  els.scenarioList.innerHTML = `
+    <div class="scenario-item scenario-current scenario-empty">
+      <strong>No Scenario Open</strong>
+      Choose a single scenario folder to inspect its maps, triggers, records, and resources.
+    </div>
+  `;
 }
 
 function renderHeader() {
@@ -1566,12 +2279,15 @@ function renderLinkedRecordButtons(actions) {
 function wireRecordLinkButtons(root, context = {}) {
   for (const button of root.querySelectorAll("[data-record-group][data-record-id]")) {
     button.addEventListener("click", () => {
-      selectItem("record", {
+      const item = {
         groupKey: button.dataset.recordGroup,
         kind: button.dataset.recordKind || null,
         id: Number(button.dataset.recordId),
         ...context,
-      });
+      };
+      const targetId = entityIdForRecordSelection(item);
+      if (targetId && selectSchemaTarget(targetId)) return;
+      selectItem("record", item, { normalize: false });
     });
   }
 }
@@ -1639,19 +2355,53 @@ function actionSummary(action) {
 function renderSemanticActions(actions) {
   if (!actions?.length) return `<div class="empty">This trigger has no populated action slots.</div>`;
   return `<div class="semantic-list">${actions.map((action) => {
-    const links = (action.links || []).map(linkSummary).filter(Boolean);
-    const extra = action.extracodeUsage?.fields?.length
-      ? `Action data: ${action.extracodeUsage.fields.map((entry) => `${entry.label} ${entry.value}`).join("; ")}`
-      : action.extracode ? `Action data: ${action.extracode.join(", ")}` : "";
-    const meta = [extra, ...links].filter(Boolean).join(" | ");
     const questClass = action.category?.startsWith("quest") ? "quest" : action.category;
     return `
       <div class="semantic-line ${escapeHtml(questClass || "")}">
-        <div class="semantic-title">${escapeHtml(actionSummary(action))}</div>
-        <div class="semantic-meta">slot ${escapeHtml(action.slot)} | opcode ${escapeHtml(action.rawCode)} | id ${escapeHtml(action.id)}${meta ? ` | ${escapeHtml(meta)}` : ""}</div>
+        <div class="semantic-title">${escapeHtml(actionReaderSummary(action))}</div>
+        ${action.category ? `<div class="semantic-meta">${escapeHtml(actionCategoryName(action.category))}</div>` : ""}
       </div>
     `;
   }).join("")}</div>`;
+}
+
+function actionReaderSummary(action) {
+  const code = action.code;
+  if (code === 1) return "Shows a message.";
+  if ([2, 48, 107].includes(code)) return "Starts a battle.";
+  if (code === 3) return "Offers a choice to the player.";
+  if (code === 4 || code === 5) return "Starts an encounter.";
+  if (code === 6 || code === 73) return "Opens a shop.";
+  if (code === 7) return "Uses extra action data to branch or replace an encounter result.";
+  if (code === 8) return "Reuses another trigger's actions.";
+  if (code === 10) return "Gives treasure.";
+  if (code === 12) return "Changes a tile or map icon.";
+  if (code === 13) return "Enables or disables another trigger.";
+  if ([20, 37, 45, 61].includes(code)) return "Moves the party to another place.";
+  if ([21, 40, 42, 46, 56, 59, 64, 72, 75, 77, 78, 81, 86, 87].includes(code)) return "Checks a condition and branches.";
+  if (code === 23 || code === -23 || code === 92) return "Changes a random encounter area.";
+  if (code === 24) return "Leaves this trigger active after it runs.";
+  if (code === 25) return "Removes a trigger or door from the map.";
+  if (code === 29) return "Shows or gives a map.";
+  if (code === 39) return "Runs additional actions from a macro.";
+  if (code === 41) return "Disables an encounter option.";
+  if (code === 47) return "Sets a quest flag.";
+  if (code === 54) return "Changes a timed encounter.";
+  if (code === 57) return "Changes the level's look.";
+  if (code === 63) return "Changes the in-game clock.";
+  if (code === 66) return "Changes whether camping is allowed.";
+  if (code === 70) return "Saves or restores the party position.";
+  if (code === 76) return "Changes a quest value.";
+  if (code === 85) return "Branches to a random trigger.";
+  if (code === 88) return "Removes allies from the party.";
+  if (code === 89) return "Adds allies to the party.";
+  if (code === 97) return "Allows the full map to be viewed.";
+  if (code === 103) return "Checks or changes travel state.";
+  if (code === 106) return "Changes darkness or line-of-sight behavior.";
+  if (code === 111 || code === 112) return "Controls script flow.";
+  if (code === 124) return "Spawns a combatant or combat event.";
+  if (code === 126) return "Runs a battle macro.";
+  return action.label ? `${labelize(action.label)}.` : "Runs an unclassified action.";
 }
 
 function actionCategoryName(category) {
@@ -1802,6 +2552,399 @@ function renderRecordDetail(selected) {
   }
 }
 
+function renderSchemaRecordDetail(recordId) {
+  const record = schemaRecordById(recordId);
+  if (!record) {
+    els.selectionPanel.innerHTML = `<div class="empty">Schema record ${escapeHtml(recordId)} was not found.</div>`;
+    return;
+  }
+  const linkedEntities = schemaIndex().entitiesByRecordRef.get(record.id) || [];
+  els.selectionPanel.innerHTML = `
+    <div class="section">
+      <h3>${escapeHtml(record.id)}</h3>
+      ${kv("type", record.type || "-")}
+      ${kv("source", record.source || "-")}
+      ${record.confidence ? kv("confidence", record.confidence) : ""}
+      ${record.byteRange ? kv("byte range", `${record.byteRange.start}-${record.byteRange.endExclusive} (${record.byteRange.length} bytes)`) : ""}
+    </div>
+    ${linkedEntities.length ? `
+      <div class="section">
+        <h3>Semantic Entities</h3>
+        <div class="list">${linkedEntities.map((entity) => renderSchemaTargetButton(entity.id)).join("")}</div>
+      </div>
+    ` : ""}
+    <div class="section">
+      <h3>Raw Evidence</h3>
+      ${renderSummaryKv(record.summary)}
+      <pre class="raw-json">${escapeHtml(JSON.stringify(record.summary || {}, null, 2))}</pre>
+    </div>
+  `;
+  wireSchemaNavigation(els.selectionPanel);
+}
+
+function linkLabel(link) {
+  return labelize(link.kind || "link");
+}
+
+const TECHNICAL_LINK_KINDS = new Set([
+  "located_on",
+  "has_record",
+  "uses_source",
+  "member_of_resource_type",
+  "configures_map",
+  "occupies_region",
+  "uses action-data row",
+]);
+
+function isTechnicalLink(link) {
+  return TECHNICAL_LINK_KINDS.has(link?.kind) || link?.from === link?.to;
+}
+
+function dedupeLinks(links, direction) {
+  const seen = new Set();
+  const output = [];
+  for (const link of links || []) {
+    const targetId = direction === "incoming" ? link.from : link.to;
+    const key = `${link.kind}:${targetId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    output.push(link);
+  }
+  return output;
+}
+
+function renderSchemaLinks(entityId, direction, options = {}) {
+  const allLinks = direction === "incoming" ? linksTo(entityId) : linksFrom(entityId);
+  const baseLinks = options.filter ? allLinks.filter(options.filter) : allLinks;
+  const links = dedupeLinks(baseLinks, direction);
+  if (!links.length) return `<div class="empty">${escapeHtml(options.empty || `No ${direction} links decoded.`)}</div>`;
+  const limit = options.limit || 80;
+  return `
+    <div class="list">
+      ${links.slice(0, limit).map((link) => {
+        const targetId = direction === "incoming" ? link.from : link.to;
+        const meta = options.showEvidence
+          ? [
+              link.confidence,
+              (link.evidence || []).slice(0, 2).join(", "),
+              link.metadata ? formatSummaryValue(link.metadata) : "",
+            ].filter(Boolean).join(" | ")
+          : options.showMetadata === false ? "" : formatSummaryValue(link.metadata || "");
+        return renderSchemaTargetButton(targetId, { role: linkLabel(link), meta });
+      }).join("")}
+      ${links.length > limit ? `<div class="row-meta">Showing ${limit} of ${links.length} links.</div>` : ""}
+    </div>
+  `;
+}
+
+function renderRelatedLinks(entityId) {
+  const entity = entityById(entityId);
+  const outgoing = linksFrom(entityId).filter((link) => !isTechnicalLink(link));
+  const incoming = entity?.type === "map" ? [] : linksTo(entityId).filter((link) => !isTechnicalLink(link));
+  const sections = [];
+  if (outgoing.length) {
+    sections.push(`
+      <div class="section">
+        <h3>Leads To</h3>
+        ${renderSchemaLinks(entityId, "outgoing", {
+          filter: (link) => !isTechnicalLink(link),
+          limit: 40,
+          showMetadata: false,
+          empty: "No outward relationships.",
+        })}
+      </div>
+    `);
+  }
+  if (incoming.length) {
+    sections.push(`
+      <div class="section">
+        <h3>Referenced By</h3>
+        ${renderSchemaLinks(entityId, "incoming", {
+          filter: (link) => !isTechnicalLink(link),
+          limit: 40,
+          showMetadata: false,
+          empty: "No incoming relationships.",
+        })}
+      </div>
+    `);
+  }
+  return sections.join("");
+}
+
+function renderDiagnosticsList(diagnostics) {
+  if (!diagnostics?.length) return `<div class="empty">No schema diagnostics are attached to this item.</div>`;
+  return `<div class="semantic-list">${diagnostics.slice(0, 80).map((diagnostic) => `
+    <div class="semantic-line diagnostic-line">
+      <div class="semantic-title">${escapeHtml(labelize(diagnostic.type || "diagnostic"))}</div>
+      <div class="semantic-meta">${escapeHtml(diagnostic.message || "")}</div>
+      ${diagnostic.confidence ? `<div class="semantic-meta">${escapeHtml(diagnostic.confidence)}${diagnostic.source ? ` | ${escapeHtml(diagnostic.source)}` : ""}</div>` : ""}
+    </div>
+  `).join("")}${diagnostics.length > 80 ? `<div class="row-meta">Showing 80 of ${diagnostics.length} diagnostics.</div>` : ""}</div>`;
+}
+
+function renderTechnicalEvidence(entity, record, diagnostics) {
+  const door = entity?.type === "trigger" || entity?.type === "macro" ? legacyDoorForEntity(entity) : null;
+  const actions = door ? actionsForDoor(door) : [];
+  const hasOutgoing = linksFrom(entity.id).length > 0;
+  const hasIncoming = linksTo(entity.id).length > 0;
+  return `
+    <details class="evidence-details">
+      <summary>Technical Evidence</summary>
+      <div class="evidence-content">
+        <div class="evidence-block">
+          ${kv("entity id", entity.id)}
+          ${kv("type", entity.type || "-")}
+          ${entity.confidence ? kv("confidence", entity.confidence) : ""}
+          ${kv("source", entity.source || "-")}
+          ${entity.recordRef ? kv("record", entity.recordRef) : ""}
+          ${record?.byteRange ? kv("byte range", `${record.byteRange.start}-${record.byteRange.endExclusive} (${record.byteRange.length} bytes)`) : ""}
+        </div>
+        ${actions.length ? `
+          <div class="evidence-block">
+            <h4>Raw Action Slots</h4>
+            ${renderActionLines(actions)}
+          </div>
+        ` : ""}
+        ${record ? `
+          <div class="evidence-block">
+            <h4>Raw Record Summary</h4>
+            <pre class="raw-json">${escapeHtml(JSON.stringify(record.summary || {}, null, 2))}</pre>
+          </div>
+        ` : `
+          <div class="evidence-block">
+            <div class="empty">No raw record is attached to this semantic entity yet.</div>
+          </div>
+        `}
+        ${diagnostics?.length ? `
+          <div class="evidence-block">
+            <h4>Diagnostics</h4>
+            ${renderDiagnosticsList(diagnostics)}
+          </div>
+        ` : ""}
+        ${hasOutgoing ? `
+          <div class="evidence-block">
+            <h4>All Outgoing Links</h4>
+            ${renderSchemaLinks(entity.id, "outgoing", { showEvidence: true, limit: 80 })}
+          </div>
+        ` : ""}
+        ${hasIncoming ? `
+          <div class="evidence-block">
+            <h4>All Incoming Links</h4>
+            ${renderSchemaLinks(entity.id, "incoming", { showEvidence: true, limit: 80 })}
+          </div>
+        ` : ""}
+      </div>
+    </details>
+  `;
+}
+
+function parseEntityNumber(entity, prefix) {
+  if (!entity?.id?.startsWith(prefix)) return null;
+  const value = Number(entity.id.slice(prefix.length));
+  return Number.isFinite(value) ? value : null;
+}
+
+function legacyDoorForEntity(entity) {
+  if (!entity?.recordRef) return null;
+  const parts = entity.recordRef.split(":");
+  if (parts[0] !== "record" || parts.length < 4) return null;
+  const source = parts[1];
+  const levelIndex = parts[2] === "macro" ? null : Number(parts[2]);
+  const recordIndex = Number(parts[3]);
+  if (!Number.isFinite(recordIndex)) return null;
+  return state.data?.doors?.find((door) =>
+    door.source === source &&
+    door.recordIndex === recordIndex &&
+    (parts[2] === "macro" || door.levelIndex === levelIndex)
+  ) || null;
+}
+
+function renderResourcePreview(entity) {
+  if (!entity?.id?.startsWith("resource:")) return "";
+  const [, type, idText] = entity.id.split(":");
+  const id = Number(idText);
+  if (!Number.isFinite(id)) return "";
+  if (type === "cicn") {
+    const params = new URLSearchParams({ id: String(id), v: String(ICON_RENDER_VERSION) });
+    if (state.selectedScenarioPath) params.set("scenarioPath", state.selectedScenarioPath);
+    return `
+      <div class="resource-preview-wrap">
+        <img class="resource-preview icon-preview" alt="cicn ${escapeHtml(id)}" src="/api/asset/icon?${params.toString()}">
+      </div>
+    `;
+  }
+  if (type === "PICT") {
+    return `
+      <div class="resource-preview-wrap">
+        <img class="resource-preview picture-preview" alt="PICT ${escapeHtml(id)}" src="/api/asset/picture?id=${encodeURIComponent(id)}">
+        <div class="row-meta">Preview is available when this PICT is in the shared decoded picture cache.</div>
+      </div>
+    `;
+  }
+  return `<div class="empty">No decoded preview endpoint exists for ${escapeHtml(type)} resources yet.</div>`;
+}
+
+function renderMessageEntity(entity) {
+  const id = parseEntityNumber(entity, "message:");
+  const record = Number.isFinite(id) ? recordById("strings", id) : null;
+  if (!record?.text) return "";
+  return `
+    <div class="section">
+      <h3>Message Text</h3>
+      <div class="record-text">${escapeHtml(record.text)}</div>
+    </div>
+  `;
+}
+
+function renderBattleEntity(entity) {
+  const id = parseEntityNumber(entity, "battle:");
+  const record = Number.isFinite(id) ? recordById("battles", id) : null;
+  if (!record) return "";
+  return `
+    <div class="section">
+      <h3>Battle Setup</h3>
+      ${kv("monster slots", record.monsterSlots)}
+      ${kv("monsters", record.monsters?.join(", ") || "-")}
+      ${kv("message before", record.messageBefore)}
+      ${kv("message after", record.messageAfter)}
+      ${kv("battle macro", record.battleMacro)}
+    </div>
+  `;
+}
+
+function renderMonsterEntity(entity) {
+  const id = parseEntityNumber(entity, "monster:");
+  const record = Number.isFinite(id) ? recordById("monsters", id) : null;
+  if (!record) return "";
+  return `
+    <div class="section">
+      <h3>Monster Details</h3>
+      ${renderSummaryKv(record, { skip: ["raw"] })}
+    </div>
+  `;
+}
+
+function renderShopEntity(entity) {
+  const id = parseEntityNumber(entity, "shop:");
+  const record = Number.isFinite(id) ? recordById("shops", id) : null;
+  if (!record) return "";
+  return `
+    <div class="section">
+      <h3>Shop Inventory</h3>
+      ${kv("items", record.itemCount)}
+      ${kv("quantity slots", record.quantitySlots)}
+      ${kv("inflation", record.inflation)}
+      ${kv("sample items", record.sampleItems?.join(", ") || "-")}
+    </div>
+  `;
+}
+
+function renderEntitySpecialSections(entity, context = null) {
+  if (!entity) return "";
+  if (entity.type === "map") {
+    const level = currentLevel();
+    const isCurrent = entity.id === currentMapEntityId();
+    const rand = isCurrent ? randLevelFor(level) : null;
+    return `
+      <div class="section">
+        <h3>Map Rendering</h3>
+        ${isCurrent ? kv("render tileset", renderTilesetLabel(level)) : kv("selected level", "Open this map to inspect live render state.")}
+        ${isCurrent ? kv(isDungeonTopdownLevel(level) ? "render art" : "tile atlas", atlasStatusForLevel(level)) : ""}
+        ${isCurrent && rand ? kv("dark/LOS", `${rand.isdark ? "dark" : "lit"} / ${rand.uselos ? "LOS" : "no LOS"}`) : ""}
+      </div>
+      ${isCurrent ? `<div class="section"><h3>Dominant Tiles</h3><div class="list">${(level?.topTiles || []).map((tile) => `<div class="row-meta">tile ${tile.tile}: ${tile.count}</div>`).join("")}</div></div>` : ""}
+    `;
+  }
+  if (entity.type === "trigger" || entity.type === "macro") {
+    const door = legacyDoorForEntity(entity);
+    const actions = door ? actionsForDoor(door) : [];
+    return `
+      ${door ? `
+        <div class="section">
+          <h3>What It Does</h3>
+          ${kv("activation", door.percent ? `${door.percent}% chance` : "always or scenario-defined")}
+          ${renderSemanticActions(actions)}
+        </div>
+      ` : ""}
+      ${context?.alternateBoxes?.length ? `
+        <div class="section">
+          <h3>Other Boxes Here</h3>
+          <div class="semantic-summary">The click selected the smallest matching box. These larger boxes also cover the same tile.</div>
+          <div class="list">
+            ${context.alternateBoxes.map((otherBox) => `
+              <button class="row-button" data-overlay-id="${escapeHtml(otherBox.id)}">
+                <span class="row-title"><strong>${escapeHtml(boxTitle(otherBox))}</strong><span>${escapeHtml(categoryDefinition(otherBox.category).shortName)}</span></span>
+                <span class="row-meta">${escapeHtml(formatBounds(otherBox.bounds))}</span>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      ` : ""}
+    `;
+  }
+  if (entity.type === "random encounter area") {
+    return `
+      <div class="section">
+        <h3>Random Area</h3>
+        ${renderSummaryKv(entity.summary)}
+      </div>
+    `;
+  }
+  if (entity.type === "resource" || entity.type === "resource reference" || entity.id?.startsWith("resource:")) {
+    return `
+      <div class="section">
+        <h3>Resource Preview</h3>
+        ${renderResourcePreview(entity)}
+      </div>
+    `;
+  }
+  if (entity.type === "message") return renderMessageEntity(entity);
+  if (entity.type === "battle") return renderBattleEntity(entity);
+  if (entity.type === "monster") return renderMonsterEntity(entity);
+  if (entity.type === "shop") return renderShopEntity(entity);
+  return "";
+}
+
+function renderEntityDetail(entityId, context = null) {
+  const entity = entityById(entityId);
+  if (!entity) {
+    els.selectionPanel.innerHTML = `<div class="empty">Entity ${escapeHtml(entityId)} was not found in the semantic schema.</div>`;
+    return;
+  }
+  const record = entityRecord(entity);
+  const diagnostics = diagnosticsForEntity(entity);
+  els.selectionPanel.innerHTML = `
+    <div class="section entity-header">
+      <h3>${escapeHtml(entityTitle(entity))}</h3>
+      <div class="semantic-summary">${escapeHtml(entityReaderMeta(entity) || entity.id)}</div>
+    </div>
+    ${renderReaderSummary(entity)}
+    ${renderEntitySpecialSections(entity, context)}
+    ${renderRelatedLinks(entity.id)}
+    ${diagnostics.length ? `
+      <div class="section">
+        <h3>Needs Attention</h3>
+        ${renderDiagnosticsList(diagnostics)}
+      </div>
+    ` : ""}
+    ${renderTechnicalEvidence(entity, record, diagnostics)}
+  `;
+  wireSchemaNavigation(els.selectionPanel);
+  for (const button of els.selectionPanel.querySelectorAll("[data-overlay-id]")) {
+    button.addEventListener("click", () => {
+      const allBoxes = context?.allBoxesAtPoint || context?.alternateBoxes || [];
+      const boxAtPoint = allBoxes.find((entry) => entry.id === button.dataset.overlayId);
+      if (boxAtPoint) {
+        selectOverlayBox(boxAtPoint, {
+          point: context?.point,
+          alternateBoxes: allBoxes.filter((entry) => entry.id !== boxAtPoint.id),
+          allBoxesAtPoint: allBoxes,
+        });
+      }
+    });
+  }
+}
+
 function renderSelectionPanel() {
   const selected = state.selectedItem;
   const level = currentLevel();
@@ -1809,7 +2952,20 @@ function renderSelectionPanel() {
     els.selectionPanel.innerHTML = `<div class="empty">Load a scenario folder to inspect maps, actions, encounters, and quest flag links.</div>`;
     return;
   }
+  if (selected?.type === "entity") {
+    renderEntityDetail(selected.entityId, selected.context);
+    return;
+  }
+  if (selected?.type === "schema-record") {
+    renderSchemaRecordDetail(selected.recordId);
+    return;
+  }
   if (!selected) {
+    const mapEntityId = currentMapEntityId();
+    if (mapEntityId && entityById(mapEntityId)) {
+      renderEntityDetail(mapEntityId);
+      return;
+    }
     const rand = randLevelFor(level);
     const doors = doorsFor(level);
     const questDoors = doors.filter(isQuestDoor).length;
@@ -1860,9 +3016,6 @@ function renderSelectionPanel() {
         <div class="semantic-summary">${escapeHtml(definition.summary)}</div>
         ${kv("location", `${box.levelType} ${box.levelIndex}, ${formatBounds(box.bounds)}`)}
         ${destination ? kv("destination", destination) : ""}
-        ${kv("source", box.source || "-")}
-        ${kv("record", recordShortId(box.recordRef))}
-        ${kv("selection", box.bounds.width > 1.2 || box.bounds.height > 1.2 ? "area" : "single tile")}
       </div>
       ${random ? `
         <div class="section">
@@ -1882,17 +3035,11 @@ function renderSelectionPanel() {
         <div class="section">
           <h3>What It Does</h3>
           ${kv("activation", door.percent ? `${door.percent}% chance` : "always or scenario-defined")}
-          ${kv("script shape", actionCategories.length ? actionCategories.join(", ") : "no decoded action category")}
-          ${kv("trigger", sourceLabel(door))}
           ${renderSemanticActions(actions)}
         </div>
         <div class="section">
-          <h3>Linked Records</h3>
+          <h3>Leads To</h3>
           ${renderLinkedRecordButtons(actions)}
-        </div>
-        <div class="section">
-          <h3>Raw Action Slots</h3>
-          ${renderActionLines(actions)}
         </div>
       ` : ""}
       ${!door && !random ? `
@@ -1918,6 +3065,24 @@ function renderSelectionPanel() {
           </div>
         </div>
       ` : ""}
+      <details class="evidence-details">
+        <summary>Technical Evidence</summary>
+        <div class="evidence-content">
+          <div class="evidence-block">
+            ${kv("source", box.source || "-")}
+            ${kv("record", recordShortId(box.recordRef))}
+            ${kv("selection", box.bounds.width > 1.2 || box.bounds.height > 1.2 ? "area" : "single tile")}
+            ${door ? kv("trigger", sourceLabel(door)) : ""}
+            ${door ? kv("script shape", actionCategories.length ? actionCategories.join(", ") : "no decoded action category") : ""}
+          </div>
+          ${actions.length ? `
+            <div class="evidence-block">
+              <h4>Raw Action Slots</h4>
+              ${renderActionLines(actions)}
+            </div>
+          ` : ""}
+        </div>
+      </details>
     `;
     wireRecordLinkButtons(els.selectionPanel, { sourceOverlay: selected.item });
     for (const button of els.selectionPanel.querySelectorAll("[data-overlay-id]")) {
@@ -1976,73 +3141,56 @@ function renderScriptPanel() {
     return;
   }
   const graph = state.data.scriptGraph || state.data.graph;
-  const node = scriptNodeById(state.selectedScriptNode) || scriptNodeById(state.selectedItem?.item?.nodeId);
-  if (!node) {
+  const selectedEntityId = state.selectedItem?.type === "entity" ? state.selectedItem.entityId : state.selectedScriptNode;
+  const selectedEntity = entityById(selectedEntityId);
+  if (!selectedEntity) {
     const currentBoxes = overlayForLevel(currentLevel()).filter((box) => box.nodeId);
+    const schemaData = schema();
     els.scriptPanel.innerHTML = `
       <div class="section">
         <h3>Script Graph</h3>
-        ${kv("nodes", graph.nodes?.length ?? 0)}
-        ${kv("edges", graph.edges?.length ?? 0)}
-        ${kv("unresolved refs", graph.unresolvedRefs?.length ?? 0)}
+        ${kv("schema entities", schemaData?.entities?.length ?? 0)}
+        ${kv("schema links", schemaData?.links?.length ?? 0)}
+        ${kv("diagnostics", schemaData?.diagnostics?.length ?? 0)}
+        ${kv("legacy nodes", graph.nodes?.length ?? 0)}
+        ${kv("legacy edges", graph.edges?.length ?? 0)}
       </div>
       <div class="section">
         <h3>Visible Triggers</h3>
         <div class="list">
-          ${currentBoxes.slice(0, 80).map((box) => `
-            <button class="row-button" data-node="${escapeHtml(box.nodeId)}">
-              <span class="row-title"><strong>${escapeHtml(box.label || box.category)}</strong><span>${escapeHtml(box.category)}</span></span>
-              <span class="row-meta">${escapeHtml(box.recordRef)} at ${box.bounds.left + 0.5},${box.bounds.top + 0.5}</span>
-            </button>
-          `).join("") || `<div class="empty">No script-backed boxes on this level.</div>`}
+          ${currentBoxes.slice(0, 80).map((box) => {
+            const entityId = entityIdForOverlayBox(box) || box.nodeId;
+            return renderSchemaTargetButton(entityId, {
+              role: box.category,
+              meta: `${box.recordRef} at ${box.bounds.left + 0.5},${box.bounds.top + 0.5}`,
+            });
+          }).join("") || `<div class="empty">No script-backed boxes on this level.</div>`}
         </div>
       </div>
     `;
   } else {
-    const outgoing = (graph.edges || []).filter((edge) => edge.from === node.id);
-    const incoming = (graph.edges || []).filter((edge) => edge.to === node.id).slice(0, 24);
-    const door = doorByRecordRef(node.recordRef);
+    const door = legacyDoorForEntity(selectedEntity);
     const actions = door ? actionsForDoor(door) : [];
     els.scriptPanel.innerHTML = `
       <div class="section">
-        <h3>${escapeHtml(node.label || node.id)}</h3>
-        ${kv("type", node.type)}
-        ${kv("source", node.source || "-")}
-        ${node.levelType ? kv("map", `${node.levelType} ${node.levelIndex} (${node.x}, ${node.y})`) : ""}
-        ${node.values ? kv("values", `[${node.values.join(", ")}]`) : ""}
+        <h3>${escapeHtml(entityTitle(selectedEntity))}</h3>
+        ${kv("type", selectedEntity.type)}
+        ${kv("source", selectedEntity.source || "-")}
+        ${kv("confidence", selectedEntity.confidence || "-")}
+        ${selectedEntity.recordRef ? kv("record", selectedEntity.recordRef) : ""}
       </div>
       ${actions.length ? `<div class="section"><h3>Action List</h3>${renderActionLines(actions)}</div>` : ""}
       <div class="section">
         <h3>Outgoing Links</h3>
-        <div class="list">
-          ${outgoing.map((edge) => {
-            const target = scriptNodeById(edge.to);
-            return `
-              <button class="row-button" data-node="${escapeHtml(edge.to)}">
-                <span class="row-title"><strong>${escapeHtml(edge.kind)}</strong><span>${escapeHtml(edge.code ?? "")}/${escapeHtml(edge.actionId ?? "")}</span></span>
-                <span class="row-meta">${escapeHtml(target?.label || edge.to)}</span>
-              </button>
-            `;
-          }).join("") || `<div class="empty">No decoded downstream links.</div>`}
-        </div>
+        ${renderSchemaLinks(selectedEntity.id, "outgoing")}
       </div>
       <div class="section">
         <h3>Incoming Links</h3>
-        <div class="list">
-          ${incoming.map((edge) => `
-            <button class="row-button" data-node="${escapeHtml(edge.from)}">
-              <span class="row-title"><strong>${escapeHtml(edge.kind)}</strong><span>${escapeHtml(edge.code ?? "")}/${escapeHtml(edge.actionId ?? "")}</span></span>
-              <span class="row-meta">${escapeHtml(scriptNodeById(edge.from)?.label || edge.from)}</span>
-            </button>
-          `).join("") || `<div class="empty">No decoded incoming links.</div>`}
-        </div>
+        ${renderSchemaLinks(selectedEntity.id, "incoming")}
       </div>
     `;
   }
-
-  for (const button of els.scriptPanel.querySelectorAll("[data-node]")) {
-    button.addEventListener("click", () => selectScriptNode(button.dataset.node));
-  }
+  wireSchemaNavigation(els.scriptPanel);
 }
 
 function renderDataPanel() {
@@ -2050,24 +3198,41 @@ function renderDataPanel() {
     els.dataPanel.innerHTML = `<div class="empty">No scenario loaded.</div>`;
     return;
   }
-  const groups = Object.entries(state.data.records || {});
+  const index = schemaIndex();
+  const entityGroups = [...index.entitiesByType.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const recordGroups = [...index.recordsBySource.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   els.dataPanel.innerHTML = `
     <div class="section">
-      <h3>Discrete Records</h3>
+      <h3>Semantic Entities</h3>
       <div class="list">
-        ${groups.map(([key, group]) => {
-          const sample = (group.records || []).slice(0, 3).map((record) => {
-            const label = record.name || record.preview || record.note || record.text || record.sampleItems?.join(", ") || "";
-            return `#${record.id}${label ? `: ${String(label).slice(0, 80)}` : ""}`;
-          }).join(" | ");
-          return `
-            <button class="row-button" data-record-group="${escapeHtml(key)}">
-              <span class="row-title"><strong>${escapeHtml(group.kind || key)}</strong><span>${escapeHtml(group.status)} / ${group.count}</span></span>
-              <span class="row-meta">${escapeHtml(sample || `${group.recordBytes || "-"} bytes each`)}</span>
-            </button>
-          `;
-        }).join("")}
+        ${entityGroups.map(([type, entities]) => `
+          <div class="semantic-line">
+            <div class="semantic-title">${escapeHtml(labelize(type))} <span class="schema-count">${entities.length}</span></div>
+            <div class="list compact-list">
+              ${entities.slice(0, 12).map((entity) => renderSchemaTargetButton(entity.id)).join("")}
+              ${entities.length > 12 ? `<div class="row-meta">Showing 12 of ${entities.length} ${escapeHtml(labelize(type))} entities.</div>` : ""}
+            </div>
+          </div>
+        `).join("")}
       </div>
+    </div>
+    <div class="section">
+      <h3>Raw Records</h3>
+      <div class="list">
+        ${recordGroups.map(([source, records]) => `
+          <div class="semantic-line">
+            <div class="semantic-title">${escapeHtml(source)} <span class="schema-count">${records.length}</span></div>
+            <div class="list compact-list">
+              ${records.slice(0, 8).map((record) => renderSchemaTargetButton(record.id)).join("")}
+              ${records.length > 8 ? `<div class="row-meta">Showing 8 of ${records.length} records.</div>` : ""}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Diagnostics</h3>
+      ${renderDiagnosticsList(schema()?.diagnostics || [])}
     </div>
     <div class="section">
       <h3>Script Risk</h3>
@@ -2078,6 +3243,46 @@ function renderDataPanel() {
       </div>
     </div>
   `;
+  wireSchemaNavigation(els.dataPanel);
+}
+
+function renderSearchPanel() {
+  if (!state.data) {
+    els.searchPanel.innerHTML = `<div class="empty">No scenario loaded.</div>`;
+    return;
+  }
+  const query = state.projectSearch.pageQuery || "";
+  const results = projectSearchResults(query);
+  els.searchPanel.innerHTML = `
+    <div class="section">
+      <h3>Search Results</h3>
+      ${kv("query", query || "recent/indexed project entries")}
+      ${kv("matches", results.length)}
+      <button class="row-button" data-open-project-search="1">
+        <span class="row-title"><strong>Open search palette</strong><span>Ctrl+Space</span></span>
+        <span class="row-meta">Search maps, entities, records, resources, messages, and diagnostics in the open scenario.</span>
+      </button>
+    </div>
+    <div class="section">
+      <h3>Results</h3>
+      <div class="list">
+        ${results.map((entry, index) => `
+          <button class="row-button" data-search-page-index="${index}">
+            <span class="row-title"><strong>${escapeHtml(entry.title)}</strong><span>${escapeHtml(labelize(entry.kind))}</span></span>
+            <span class="row-meta">${escapeHtml([entry.subtitle, entry.meta].filter(Boolean).join(" | "))}</span>
+          </button>
+        `).join("") || `<div class="empty">No matching entries. Try a map name, trigger number, message text, resource id, or file name.</div>`}
+      </div>
+    </div>
+  `;
+  const openButton = els.searchPanel.querySelector("[data-open-project-search]");
+  openButton?.addEventListener("click", () => openProjectSearch(query));
+  for (const button of els.searchPanel.querySelectorAll("[data-search-page-index]")) {
+    button.addEventListener("click", () => {
+      const entry = results[Number(button.dataset.searchPageIndex)];
+      if (entry) performProjectSearchAction(entry.action);
+    });
+  }
 }
 
 function renderFlagsPanel() {
@@ -2085,7 +3290,7 @@ function renderFlagsPanel() {
     els.flagsPanel.innerHTML = `<div class="empty">No scenario loaded.</div>`;
     return;
   }
-  const flags = state.data.graph.questFlags;
+  const flags = schemaIndex().entitiesByType.get("quest flag") || [];
   if (!flags.length) {
     els.flagsPanel.innerHTML = `<div class="empty">No quest flag references were decoded from door or macro actions.</div>`;
     return;
@@ -2095,28 +3300,35 @@ function renderFlagsPanel() {
       <h3>Quest Flags</h3>
       <div class="list">
         ${flags
-          .map((flag) => `
-            <button class="row-button ${state.highlightedQuest === flag.id ? "active" : ""}" data-flag="${flag.id}">
-              <span class="row-title"><strong>Quest ${flag.id}</strong><span>${flag.writeCount} set / ${flag.readCount} read</span></span>
-              <span class="row-meta">${escapeHtml(flag.locations.slice(0, 4).map((loc) => `${loc.source} ${loc.levelIndex ?? "macro"} (${loc.x},${loc.y}) ${loc.label}`).join(" | "))}</span>
+          .map((flag) => {
+            const numericId = Number(flag.id.replace(/^quest-flag:/, ""));
+            const incoming = linksTo(flag.id).length;
+            const outgoing = linksFrom(flag.id).length;
+            return `
+            <button class="row-button ${state.highlightedQuest === numericId ? "active" : ""}" data-entity-id="${escapeHtml(flag.id)}" data-flag="${escapeHtml(numericId)}">
+              <span class="row-title"><strong>${escapeHtml(entityTitle(flag))}</strong><span>${escapeHtml(flag.summary?.writeCount ?? 0)} set / ${escapeHtml(flag.summary?.readCount ?? 0)} read</span></span>
+              <span class="row-meta">${escapeHtml(`${incoming} incoming links, ${outgoing} outgoing links | ${flag.confidence}`)}</span>
             </button>
-          `)
+          `;
+          })
           .join("")}
       </div>
     </div>
   `;
+  wireSchemaNavigation(els.flagsPanel);
   for (const button of els.flagsPanel.querySelectorAll("[data-flag]")) {
     button.addEventListener("click", () => {
       const id = Number(button.dataset.flag);
       state.highlightedQuest = state.highlightedQuest === id ? null : id;
-      const flag = flags.find((entry) => entry.id === id);
-      const first = flag?.locations.find((loc) => loc.levelType === currentLevel()?.type && loc.levelIndex === currentLevel()?.index) || flag?.locations[0];
+      const legacyFlag = state.data.graph.questFlags.find((entry) => entry.id === id);
+      const first = legacyFlag?.locations.find((loc) => loc.levelType === currentLevel()?.type && loc.levelIndex === currentLevel()?.index) || legacyFlag?.locations[0];
       if (first?.levelType && Number.isInteger(first.levelIndex)) {
         state.selectedLevelId = `${first.levelType}:${first.levelIndex}`;
       }
-      state.selectedItem = null;
-      state.selectedScriptNode = null;
-      clearSelectionHistory();
+      if (button.dataset.entityId) {
+        state.selectedItem = { type: "entity", entityId: button.dataset.entityId };
+        state.selectedScriptNode = null;
+      }
       renderAll();
     });
   }
@@ -2127,6 +3339,11 @@ function renderFilesPanel() {
     els.filesPanel.innerHTML = `<div class="empty">No scenario loaded.</div>`;
     return;
   }
+  const schemaData = schema();
+  const sources = schemaData?.sources || [];
+  const resourceTypes = (schemaIndex().entitiesByType.get("resource type") || [])
+    .sort((a, b) => entityTitle(a).localeCompare(entityTitle(b)));
+  const diagnostics = schemaData?.diagnostics || [];
   const rows = state.data.files
     .map((file) => `
       <tr>
@@ -2144,6 +3361,30 @@ function renderFilesPanel() {
     .join("");
   els.filesPanel.innerHTML = `
     <div class="section">
+      <h3>Schema Sources</h3>
+      <div class="list">
+        ${sources.slice(0, 80).map((source) => `
+          <div class="semantic-line">
+            <div class="semantic-title">${escapeHtml(source.id || source.path || source.name || "source")}</div>
+            <div class="semantic-meta">${escapeHtml([source.type, source.path, source.sha256 ? `sha256 ${source.sha256}` : ""].filter(Boolean).join(" | "))}</div>
+          </div>
+        `).join("") || `<div class="empty">No schema source records emitted.</div>`}
+        ${sources.length > 80 ? `<div class="row-meta">Showing 80 of ${sources.length} sources.</div>` : ""}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Resource Fork</h3>
+      <div class="list">
+        ${resourceTypes.map((entity) => renderSchemaTargetButton(entity.id, {
+          meta: `${formatSummaryValue(entity.summary)} | ${linksTo(entity.id).length} members`,
+        })).join("") || `<div class="empty">No resource type entities decoded.</div>`}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Diagnostics</h3>
+      ${renderDiagnosticsList(diagnostics)}
+    </div>
+    <div class="section">
       <h3>Alignment</h3>
       ${alignment}
     </div>
@@ -2155,6 +3396,7 @@ function renderFilesPanel() {
       </table>
     </div>
   `;
+  wireSchemaNavigation(els.filesPanel);
 }
 
 function activeInspectorPanelName() {
@@ -2172,6 +3414,8 @@ function activateInspectorPanel(name) {
 function selectionHistoryItemKey(selectedItem) {
   if (!selectedItem) return "empty";
   const { type, item } = selectedItem;
+  if (type === "entity") return `entity:${selectedItem.entityId || item?.entityId || ""}`;
+  if (type === "schema-record") return `schema-record:${selectedItem.recordId || item?.recordId || ""}`;
   if (type === "overlay") return `overlay:${item.box?.id || item.id || ""}`;
   if (type === "record") return `record:${item.groupKey || ""}:${item.kind || ""}:${item.id ?? ""}:${item.sourceOverlay?.box?.id || ""}`;
   if (type === "door") return `door:${item.recordRef || item.nodeId || sourceLabel(item)}`;
@@ -2244,7 +3488,66 @@ function restoreSelectionHistory(offset) {
   updateInspectorNav();
 }
 
+function selectEntity(entityId, options = {}) {
+  const entity = entityById(entityId);
+  if (!entity) return;
+  state.selectedItem = { type: "entity", entityId, context: options.context || null };
+  state.selectedScriptNode = scriptNodeById(entityId) ? entityId : null;
+  if (entity.type === "quest flag") {
+    const id = Number(entity.id.replace(/^quest-flag:/, ""));
+    state.highlightedQuest = Number.isFinite(id) ? id : state.highlightedQuest;
+  }
+  activateInspectorPanel(options.panel || "selection");
+  renderSelectionPanel();
+  renderScriptPanel();
+  renderFlagsPanel();
+  renderOverlay();
+  if (options.history !== false) {
+    rememberSelection(options.panel || "selection");
+  }
+}
+
+function selectSchemaRecord(recordId, options = {}) {
+  if (!schemaRecordById(recordId)) return;
+  state.selectedItem = { type: "schema-record", recordId, context: options.context || null };
+  state.selectedScriptNode = null;
+  activateInspectorPanel(options.panel || "selection");
+  renderSelectionPanel();
+  renderScriptPanel();
+  renderOverlay();
+  if (options.history !== false) {
+    rememberSelection(options.panel || "selection");
+  }
+}
+
 function selectItem(type, item, options = {}) {
+  if (options.normalize !== false) {
+    if (type === "overlay") {
+      const entityId = entityIdForOverlayBox(item?.box || item);
+      if (entityId && targetExists(entityId)) {
+        selectEntity(entityId, { ...options, context: item });
+        return;
+      }
+    }
+    if (type === "record") {
+      const targetId = entityIdForRecordSelection(item);
+      if (targetId && selectSchemaTarget(targetId)) return;
+    }
+    if (type === "door") {
+      const entityId = item?.nodeId || entityIdForOverlayBox({ recordRef: item?.recordRef, category: "trigger" });
+      if (entityId && entityById(entityId)) {
+        selectEntity(entityId, { ...options, context: item });
+        return;
+      }
+    }
+    if (type === "random") {
+      const entityId = `random:${item?.levelType}:${item?.levelIndex}:${item?.id ?? item?.rectIndex ?? item?.recordRef}`;
+      if (entityById(entityId)) {
+        selectEntity(entityId, { ...options, context: item });
+        return;
+      }
+    }
+  }
   state.selectedItem = { type, item };
   if (type === "door" && item.nodeId) {
     state.selectedScriptNode = item.nodeId;
@@ -2270,6 +3573,17 @@ function handleMapClick(event) {
 }
 
 function selectScriptNode(nodeId) {
+  if (entityById(nodeId)) {
+    const node = scriptNodeById(nodeId);
+    const door = node ? doorByRecordRef(node.recordRef) : null;
+    if (door && Number.isInteger(door.levelIndex)) {
+      state.selectedLevelId = `${door.levelType}:${door.levelIndex}`;
+      renderLevelTabs();
+      drawMap();
+    }
+    selectEntity(nodeId, { panel: "script" });
+    return;
+  }
   state.selectedScriptNode = nodeId;
   const node = scriptNodeById(nodeId);
   const door = node ? doorByRecordRef(node.recordRef) : null;
@@ -2288,52 +3602,159 @@ function renderAll() {
   renderScenarioList();
   renderHeader();
   renderLevelTabs();
+  updateOverlayFilterSummary();
   drawMap();
   renderSelectionPanel();
   renderScriptPanel();
   renderFlagsPanel();
   renderDataPanel();
+  renderSearchPanel();
   renderFilesPanel();
   updateInspectorNav();
 }
 
-async function loadScenarios() {
-  const root = els.rootPath.value.trim();
-  setStatus("Reading scenario folders...");
-  const result = await api(`/api/scenarios?root=${encodeURIComponent(root)}`);
-  state.scenarios = result.scenarios;
-  if (state.scenarios.length) {
-    await rememberScenarioRoot(result.root || root);
-  }
-  if (!state.scenarios.some((scenario) => scenario.path === state.selectedScenarioPath)) {
-    state.selectedScenarioPath = null;
-    state.data = null;
-    state.selectedLevelId = null;
-    state.selectedItem = null;
-    state.selectedScriptNode = null;
-    clearSelectionHistory();
-  }
-  setStatus(`${state.scenarios.length} scenario folders found`);
-  renderScenarioList();
-  if (!state.selectedScenarioPath && state.scenarios.length) {
-    await loadScenario(state.scenarios[0].path);
-  } else {
-    renderAll();
-  }
-}
-
-async function loadScenario(scenarioPath) {
-  state.selectedScenarioPath = scenarioPath;
+function clearScenarioState() {
+  state.scenarios = [];
+  state.selectedScenarioPath = null;
+  state.data = null;
+  state.schemaIndex = null;
+  state.selectedLevelId = null;
   state.selectedItem = null;
   state.selectedScriptNode = null;
   state.highlightedQuest = null;
   state.hoverTile = null;
   clearSelectionHistory();
   state.tileAtlasCache.clear();
+  state.iconCache.clear();
+  state.pictureCache.clear();
+  state.secretWalkableCache.clear();
+}
+
+async function scenarioPathInfo(folderPath) {
+  return api(`/api/path-info?path=${encodeURIComponent(folderPath || "")}`);
+}
+
+async function folderList(folderPath) {
+  return api(`/api/folders?path=${encodeURIComponent(folderPath || "")}`);
+}
+
+function setFolderPickerOpen(open) {
+  if (!els.folderPickerOverlay) return;
+  els.folderPickerOverlay.hidden = !open;
+}
+
+function closeFolderPicker() {
+  setFolderPickerOpen(false);
+}
+
+function folderPickerInitialPath() {
+  return els.rootPath.value.trim() || state.scenarioFolderInitialPath || state.config?.defaultScenarioRoot || "";
+}
+
+async function openFolderPicker(initialPath = folderPickerInitialPath()) {
+  setFolderPickerOpen(true);
+  await browseFolder(initialPath);
+}
+
+async function browseFolder(folderPath) {
+  if (!els.folderPickerOverlay) return;
+  els.folderPickerStatus.textContent = "Reading folders...";
+  els.folderPickerOpen.disabled = true;
+  els.folderPickerList.innerHTML = "";
+  try {
+    const info = await folderList(folderPath || state.config?.defaultScenarioRoot || "");
+    els.folderPickerPath.value = info.path || folderPath || "";
+    els.folderPickerOpen.disabled = !info.isScenarioFolder;
+    const summary = info.isScenarioFolder
+      ? "This folder looks like a Realmz scenario and can be opened."
+      : info.scenarioCount
+        ? `This is a container with ${info.scenarioCount} scenario folder${info.scenarioCount === 1 ? "" : "s"}. Choose one below.`
+        : "Choose a folder that contains Realmz scenario data.";
+    els.folderPickerStatus.textContent = summary;
+    const parentButton = info.parent && info.parent !== info.path ? `
+      <button class="folder-picker-row parent" type="button" data-folder-path="${escapeHtml(info.parent)}">
+        <strong>..</strong>
+        <span>${escapeHtml(info.parent)}</span>
+      </button>
+    ` : "";
+    const entries = (info.entries || []).map((entry) => `
+      <button class="folder-picker-row ${entry.isScenarioFolder ? "scenario" : ""}" type="button" data-folder-path="${escapeHtml(entry.path)}">
+        <strong>${escapeHtml(entry.name)}</strong>
+        <span>${escapeHtml(entry.isScenarioFolder ? "Scenario folder" : entry.scenarioCount ? `${entry.scenarioCount} scenarios inside` : entry.path)}</span>
+      </button>
+    `).join("");
+    els.folderPickerList.innerHTML = parentButton + entries || `<div class="empty">No folders were found here.</div>`;
+    for (const button of els.folderPickerList.querySelectorAll("[data-folder-path]")) {
+      button.addEventListener("click", () => browseFolder(button.dataset.folderPath));
+    }
+  } catch (error) {
+    els.folderPickerStatus.textContent = `Unable to read folder: ${error.message || error}`;
+    els.folderPickerList.innerHTML = "";
+  }
+}
+
+async function openFolderPickerSelection() {
+  const folderPath = els.folderPickerPath.value.trim();
+  if (!folderPath) return;
+  els.rootPath.value = folderPath;
+  closeFolderPicker();
+  await openScenarioFromInput();
+}
+
+async function openScenarioFromInput() {
+  const scenarioPath = els.rootPath.value.trim();
+  if (!scenarioPath) {
+    clearScenarioState();
+    setStatus("Choose a scenario folder to begin.");
+    renderAll();
+    return;
+  }
+
+  setStatus("Checking scenario folder...");
+  const info = await scenarioPathInfo(scenarioPath);
+  state.scenarioFolderInitialPath = info.path || scenarioPath;
+  if (!info.exists) {
+    setStatus(`Folder not found: ${scenarioPath}`);
+    return;
+  }
+  if (!info.isDirectory) {
+    setStatus("Choose a folder, not a file.");
+    return;
+  }
+  if (!info.isScenarioFolder) {
+    const hint = info.scenarioCount
+      ? `That folder contains ${info.scenarioCount} scenario folders. Open one of those scenario folders directly.`
+      : "That folder does not look like a Realmz scenario folder.";
+    clearScenarioState();
+    setStatus(hint);
+    renderAll();
+    return;
+  }
+
+  await loadScenario(info.path || scenarioPath);
+}
+
+async function loadScenario(scenarioPath) {
+  state.selectedScenarioPath = scenarioPath;
+  state.scenarios = [];
+  state.selectedItem = null;
+  state.selectedScriptNode = null;
+  state.highlightedQuest = null;
+  state.hoverTile = null;
+  clearSelectionHistory();
+  state.tileAtlasCache.clear();
+  state.iconCache.clear();
+  state.pictureCache.clear();
   state.secretWalkableCache.clear();
   setStatus("Analyzing scenario...");
   renderScenarioList();
   state.data = await api(`/api/analyze?path=${encodeURIComponent(scenarioPath)}`);
+  state.selectedScenarioPath = state.data.scenario.path;
+  state.scenarioFolderInitialPath = state.data.scenario.path;
+  els.rootPath.value = state.data.scenario.path;
+  state.scenarios = [{ name: state.data.scenario.name, path: state.data.scenario.path }];
+  await rememberScenarioFolder(state.data.scenario.path);
+  state.schemaIndex = buildSchemaIndex(state.data.semanticSchema);
   state.selectedLevelId = state.data.levels[0]?.id || null;
   setStatus(`Loaded ${state.data.scenario.name}`);
   renderAll();
@@ -2362,22 +3783,21 @@ async function importTilemaps() {
   }
 }
 
-async function locateScenariosFolder() {
+async function locateScenarioFolder() {
   const invoke = getTauriInvoke();
   if (!invoke) {
-    setStatus("Folder picker is available in the desktop launcher.");
-    updateLauncherControls();
+    await openFolderPicker();
     return;
   }
 
   els.locateScenarios.disabled = true;
-  setStatus("Locating scenarios folder...");
+  setStatus("Choosing scenario folder...");
   try {
-    const initialPath = els.rootPath.value.trim() || state.config?.defaultScenarioRoot || null;
+    const initialPath = els.rootPath.value.trim() || state.scenarioFolderInitialPath || state.config?.defaultScenarioRoot || null;
     const selectedPath = await invoke("pick_scenarios_folder", { initialPath });
     if (selectedPath) {
       els.rootPath.value = selectedPath;
-      await loadScenarios();
+      await openScenarioFromInput();
     } else {
       setStatus("Folder selection canceled");
     }
@@ -2434,19 +3854,110 @@ function endMapPan(event) {
 }
 
 function wireEvents() {
+  els.overlayFilterButton?.addEventListener("click", () => {
+    setOverlayFilterMenu(els.overlayFilterMenu.hidden);
+  });
+  els.overlayFilterClose?.addEventListener("click", () => setOverlayFilterMenu(false));
+  els.overlayShowAll?.addEventListener("click", () => {
+    for (const input of overlayToggleInputs()) input.checked = true;
+    state.toggles.doors = true;
+    state.toggles.random = true;
+    state.toggles.encounters = true;
+    state.toggles.quest = true;
+    state.toggles["map mutation"] = true;
+    state.toggles.battle = true;
+    state.toggles.text = true;
+    state.toggles.unknown = true;
+    state.toggles.secrets = true;
+    updateOverlayFilterSummary();
+    renderOverlay();
+  });
+  els.overlayHideAll?.addEventListener("click", () => {
+    for (const input of overlayToggleInputs()) input.checked = false;
+    state.toggles.doors = false;
+    state.toggles.random = false;
+    state.toggles.encounters = false;
+    state.toggles.quest = false;
+    state.toggles["map mutation"] = false;
+    state.toggles.battle = false;
+    state.toggles.text = false;
+    state.toggles.unknown = false;
+    state.toggles.secrets = false;
+    updateOverlayFilterSummary();
+    renderOverlay();
+  });
+  els.overlayOnlySecrets?.addEventListener("click", () => {
+    for (const input of overlayToggleInputs()) input.checked = false;
+    els.toggleSecrets.checked = true;
+    state.toggles.doors = false;
+    state.toggles.random = false;
+    state.toggles.encounters = false;
+    state.toggles.quest = false;
+    state.toggles["map mutation"] = false;
+    state.toggles.battle = false;
+    state.toggles.text = false;
+    state.toggles.unknown = false;
+    state.toggles.secrets = true;
+    updateOverlayFilterSummary();
+    renderOverlay();
+  });
+
+  els.projectSearchLauncher?.addEventListener("click", () => openProjectSearch());
+  els.projectSearchInput?.addEventListener("input", () => {
+    state.projectSearch.query = els.projectSearchInput.value;
+    state.projectSearch.activeIndex = -1;
+    renderProjectSearchResults();
+  });
+  els.projectSearchInput?.addEventListener("keydown", handleProjectSearchKeydown);
+  els.projectSearchOverlay?.addEventListener("click", (event) => {
+    if (event.target === els.projectSearchOverlay) closeProjectSearch();
+  });
+  window.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.code === "Space") {
+      event.preventDefault();
+      openProjectSearch();
+    } else if (event.key === "Escape" && !els.folderPickerOverlay?.hidden) {
+      closeFolderPicker();
+    } else if (event.key === "Escape" && !els.overlayFilterMenu?.hidden) {
+      setOverlayFilterMenu(false);
+    } else {
+      handleProjectSearchKeydown(event);
+    }
+  });
+  window.addEventListener("pointerdown", (event) => {
+    if (els.overlayFilterMenu?.hidden) return;
+    if (event.target.closest(".overlay-menu-wrap")) return;
+    setOverlayFilterMenu(false);
+  });
+
   els.rootForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    loadScenarios().catch((error) => setStatus(error.message));
+    openScenarioFromInput().catch((error) => setStatus(error.message));
   });
   els.locateScenarios?.addEventListener("click", () => {
-    locateScenariosFolder();
+    locateScenarioFolder();
+  });
+  els.folderPickerClose?.addEventListener("click", closeFolderPicker);
+  els.folderPickerCancel?.addEventListener("click", closeFolderPicker);
+  els.folderPickerGo?.addEventListener("click", () => browseFolder(els.folderPickerPath.value.trim()));
+  els.folderPickerPath?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      browseFolder(els.folderPickerPath.value.trim());
+    }
+  });
+  els.folderPickerOpen?.addEventListener("click", () => {
+    openFolderPickerSelection().catch((error) => setStatus(error.message));
+  });
+  els.folderPickerOverlay?.addEventListener("click", (event) => {
+    if (event.target === els.folderPickerOverlay) closeFolderPicker();
   });
 
   els.sidebarToggle.addEventListener("click", () => {
     state.sidebarCollapsed = !state.sidebarCollapsed;
     els.app.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
     els.sidebarToggle.textContent = state.sidebarCollapsed ? ">" : "<";
-    els.sidebarToggle.title = state.sidebarCollapsed ? "Expand scenarios" : "Collapse scenarios";
+    els.sidebarToggle.title = state.sidebarCollapsed ? "Expand scenario panel" : "Collapse scenario panel";
     els.sidebarToggle.setAttribute("aria-label", els.sidebarToggle.title);
     els.sidebarToggle.setAttribute("aria-expanded", String(!state.sidebarCollapsed));
   });
@@ -2471,6 +3982,7 @@ function wireEvents() {
 
   els.toggleDoors.addEventListener("change", () => {
     state.toggles.doors = els.toggleDoors.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleRealTiles.addEventListener("change", () => {
@@ -2490,34 +4002,42 @@ function wireEvents() {
   });
   els.toggleRandom.addEventListener("change", () => {
     state.toggles.random = els.toggleRandom.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleEncounters.addEventListener("change", () => {
     state.toggles.encounters = els.toggleEncounters.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleQuest.addEventListener("change", () => {
     state.toggles.quest = els.toggleQuest.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleMapMutation.addEventListener("change", () => {
     state.toggles["map mutation"] = els.toggleMapMutation.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleBattle.addEventListener("change", () => {
     state.toggles.battle = els.toggleBattle.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleText.addEventListener("change", () => {
     state.toggles.text = els.toggleText.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleUnknown.addEventListener("change", () => {
     state.toggles.unknown = els.toggleUnknown.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.toggleSecrets.addEventListener("change", () => {
     state.toggles.secrets = els.toggleSecrets.checked;
+    updateOverlayFilterSummary();
     renderOverlay();
   });
   els.importTiles.addEventListener("click", () => {
@@ -2554,8 +4074,20 @@ async function init() {
   updateLauncherControls();
   window.setTimeout(updateLauncherControls, 250);
   state.config = await api("/api/config");
-  els.rootPath.value = state.config.defaultScenarioRoot;
-  await loadScenarios();
+  state.scenarioFolderInitialPath = state.config.defaultScenarioRoot || "";
+  if (state.config.defaultScenarioRoot) {
+    const info = await scenarioPathInfo(state.config.defaultScenarioRoot).catch(() => null);
+    state.scenarioFolderInitialPath = info?.path || state.config.defaultScenarioRoot;
+    if (info?.isScenarioFolder) {
+      els.rootPath.value = info.path;
+      await loadScenario(info.path);
+      return;
+    }
+  }
+  els.rootPath.value = "";
+  clearScenarioState();
+  setStatus("Choose a scenario folder to begin.");
+  renderAll();
 }
 
 init().catch((error) => {

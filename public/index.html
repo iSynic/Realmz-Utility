@@ -12,17 +12,17 @@
         <div class="brand">
           <div class="brand-title">
             <h1>Realmz Scenario Utility</h1>
-            <button id="sidebarToggle" class="icon-button" type="button" title="Collapse scenarios" aria-label="Collapse scenarios" aria-expanded="true">&lt;</button>
+            <button id="sidebarToggle" class="icon-button" type="button" title="Collapse scenario panel" aria-label="Collapse scenario panel" aria-expanded="true">&lt;</button>
           </div>
           <div id="status" class="status">Starting...</div>
         </div>
 
         <form id="rootForm" class="path-form">
-          <label for="rootPath">Scenario root</label>
+          <label for="rootPath">Scenario folder</label>
           <div class="inline-row">
-            <input id="rootPath" type="text" autocomplete="off" spellcheck="false" />
-            <button id="locateScenarios" class="tool-button path-browse" type="button" title="Locate scenarios folder" hidden>Browse</button>
-            <button class="icon-button" title="Load scenario folders" aria-label="Load scenario folders">↻</button>
+            <input id="rootPath" type="text" autocomplete="off" spellcheck="false" placeholder="Choose one scenario folder..." />
+            <button id="locateScenarios" class="tool-button path-browse" type="button" title="Choose scenario folder">Browse</button>
+            <button class="icon-button" title="Open scenario folder" aria-label="Open scenario folder">↻</button>
           </div>
         </form>
 
@@ -36,6 +36,10 @@
             <h2 id="scenarioTitle">No scenario loaded</h2>
             <div id="scenarioPath" class="subtle"></div>
           </div>
+          <button id="projectSearchLauncher" class="project-search-launcher" type="button">
+            <span>Search scenario, maps, records...</span>
+            <kbd>Ctrl+Space</kbd>
+          </button>
           <div id="summary" class="summary"></div>
         </section>
 
@@ -54,16 +58,64 @@
                   <label class="toggle"><input type="checkbox" id="toggleDecodedColors" /> Decoded colors</label>
                   <label class="toggle" title="Use the original Realmz field[x][y] map cell order"><input type="checkbox" id="toggleRealmzOrder" checked /> Realmz XY</label>
                 </div>
-                <div class="control-group overlay-filters" aria-label="Overlay filters">
-                  <label class="toggle"><input type="checkbox" id="toggleDoors" checked /> Triggers</label>
-                  <label class="toggle"><input type="checkbox" id="toggleRandom" checked /> Random</label>
-                  <label class="toggle"><input type="checkbox" id="toggleEncounters" checked /> Encounters</label>
-                  <label class="toggle"><input type="checkbox" id="toggleQuest" checked /> Quest</label>
-                  <label class="toggle"><input type="checkbox" id="toggleMapMutation" checked /> Map</label>
-                  <label class="toggle"><input type="checkbox" id="toggleBattle" checked /> Battle</label>
-                  <label class="toggle"><input type="checkbox" id="toggleText" checked /> Text</label>
-                  <label class="toggle"><input type="checkbox" id="toggleUnknown" checked /> Unknown</label>
-                  <label class="toggle" title="Show decoded secret markers and passable secret-path tiles"><input type="checkbox" id="toggleSecrets" /> Secrets</label>
+                <div class="overlay-menu-wrap" aria-label="Overlay filters">
+                  <button id="overlayFilterButton" class="tool-button overlay-filter-button" type="button" aria-expanded="false" aria-controls="overlayFilterMenu">
+                    Overlays <strong id="overlayFilterCount">8/9</strong>
+                  </button>
+                  <div id="overlayFilterMenu" class="overlay-filter-menu" hidden>
+                    <div class="overlay-filter-header">
+                      <div>
+                        <strong>Overlay Filters</strong>
+                        <span>Choose which map annotations are drawn.</span>
+                      </div>
+                      <button id="overlayFilterClose" class="icon-button" type="button" aria-label="Close overlay filters">×</button>
+                    </div>
+                    <div class="overlay-filter-grid" role="group" aria-label="Overlay filter visibility">
+                      <div class="overlay-filter-grid-head">Category</div>
+                      <div class="overlay-filter-grid-head">Show</div>
+                      <label class="overlay-filter-row">
+                        <span><strong>Triggers</strong><small>All trigger-backed boxes and action points.</small></span>
+                        <input type="checkbox" id="toggleDoors" checked />
+                      </label>
+                      <label class="overlay-filter-row">
+                        <span><strong>Random</strong><small>Wandering encounter rectangles.</small></span>
+                        <input type="checkbox" id="toggleRandom" checked />
+                      </label>
+                      <label class="overlay-filter-row">
+                        <span><strong>Encounters</strong><small>Encounter and conversation triggers.</small></span>
+                        <input type="checkbox" id="toggleEncounters" checked />
+                      </label>
+                      <label class="overlay-filter-row">
+                        <span><strong>Quest</strong><small>Quest flag reads, writes, and checks.</small></span>
+                        <input type="checkbox" id="toggleQuest" checked />
+                      </label>
+                      <label class="overlay-filter-row">
+                        <span><strong>Map</strong><small>Entrances, exits, teleports, and map changes.</small></span>
+                        <input type="checkbox" id="toggleMapMutation" checked />
+                      </label>
+                      <label class="overlay-filter-row">
+                        <span><strong>Battle</strong><small>Combat starts and battle-related triggers.</small></span>
+                        <input type="checkbox" id="toggleBattle" checked />
+                      </label>
+                      <label class="overlay-filter-row">
+                        <span><strong>Text</strong><small>Message-only and text presentation triggers.</small></span>
+                        <input type="checkbox" id="toggleText" checked />
+                      </label>
+                      <label class="overlay-filter-row">
+                        <span><strong>Unknown</strong><small>Partially decoded or unclassified actions.</small></span>
+                        <input type="checkbox" id="toggleUnknown" checked />
+                      </label>
+                      <label class="overlay-filter-row" title="Show decoded secret markers and passable secret-path tiles">
+                        <span><strong>Secrets</strong><small>Secret markers and passable secret-path tiles.</small></span>
+                        <input type="checkbox" id="toggleSecrets" />
+                      </label>
+                    </div>
+                    <div class="overlay-filter-actions">
+                      <button id="overlayShowAll" class="tool-button" type="button">Show All</button>
+                      <button id="overlayHideAll" class="tool-button" type="button">Hide All</button>
+                      <button id="overlayOnlySecrets" class="tool-button" type="button">Secrets Only</button>
+                    </div>
+                  </div>
                 </div>
                 <div class="control-group tool-cluster" aria-label="Map tools">
                   <button class="tool-button" id="importTiles" type="button">Import tilemaps</button>
@@ -93,16 +145,53 @@
               <button class="tab" data-panel="script">Script</button>
               <button class="tab" data-panel="flags">Flags</button>
               <button class="tab" data-panel="data">Data</button>
+              <button class="tab" data-panel="search">Search</button>
               <button class="tab" data-panel="files">Files</button>
             </div>
             <div id="selectionPanel" class="panel active"></div>
             <div id="scriptPanel" class="panel"></div>
             <div id="flagsPanel" class="panel"></div>
             <div id="dataPanel" class="panel"></div>
+            <div id="searchPanel" class="panel"></div>
             <div id="filesPanel" class="panel"></div>
           </aside>
         </section>
       </main>
+    </div>
+    <div id="projectSearchOverlay" class="project-search-overlay" hidden>
+      <div class="project-search-dialog" role="dialog" aria-modal="true" aria-labelledby="projectSearchTitle">
+        <div class="project-search-input-row">
+          <input id="projectSearchInput" type="text" autocomplete="off" spellcheck="false" placeholder="Search scenario, maps, scripts, resources..." />
+          <kbd>Esc</kbd>
+        </div>
+        <div class="project-search-body">
+          <h2 id="projectSearchTitle">Search Project</h2>
+          <p id="projectSearchSubtitle">Jump to maps, schema entities, source records, resources, and diagnostics.</p>
+          <div id="projectSearchResults" class="project-search-results" role="listbox"></div>
+        </div>
+        <div id="projectSearchFooter" class="project-search-footer">Use arrow keys to move, and Enter to jump.</div>
+      </div>
+    </div>
+    <div id="folderPickerOverlay" class="folder-picker-overlay" hidden>
+      <div class="folder-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="folderPickerTitle">
+        <div class="folder-picker-header">
+          <div>
+            <h2 id="folderPickerTitle">Open Scenario Folder</h2>
+            <p>Choose one Realmz scenario folder. Broad Scenarios folders are browsable, but not opened directly.</p>
+          </div>
+          <button id="folderPickerClose" class="icon-button" type="button" aria-label="Close folder picker">×</button>
+        </div>
+        <div class="folder-picker-path-row">
+          <input id="folderPickerPath" type="text" autocomplete="off" spellcheck="false" />
+          <button id="folderPickerGo" class="tool-button" type="button">Go</button>
+        </div>
+        <div id="folderPickerStatus" class="folder-picker-status"></div>
+        <div id="folderPickerList" class="folder-picker-list"></div>
+        <div class="folder-picker-footer">
+          <button id="folderPickerOpen" class="tool-button primary-action" type="button">Open This Scenario</button>
+          <button id="folderPickerCancel" class="tool-button" type="button">Cancel</button>
+        </div>
+      </div>
     </div>
     <script type="module" src="/app.js"></script>
   </body>

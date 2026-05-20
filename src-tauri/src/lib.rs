@@ -109,7 +109,7 @@ fn remember_scenarios_folder(app: tauri::AppHandle, path: String) -> Result<(), 
 
 #[tauri::command]
 fn pick_scenarios_folder(initial_path: Option<String>) -> Result<Option<String>, String> {
-    let mut dialog = rfd::FileDialog::new().set_title("Locate Scenarios folder");
+    let mut dialog = rfd::FileDialog::new().set_title("Open Realmz scenario folder");
 
     if let Some(initial_dir) = initial_path
         .as_deref()

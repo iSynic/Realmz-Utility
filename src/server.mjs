@@ -280,9 +280,75 @@ async function importTileAtlases(res, url) {
   sendJson(res, 200, { scenarioPath: path.resolve(scenarioPath), results });
 }
 
+async function pathInfo(targetPath) {
+  const resolvedPath = path.resolve(targetPath || defaultScenarioRoot);
+  const info = {
+    path: resolvedPath,
+    exists: false,
+    isDirectory: false,
+    isScenarioFolder: false,
+    scenarioCount: 0,
+  };
+
+  const stat = await fs.stat(resolvedPath).catch(() => null);
+  if (!stat) return info;
+  info.exists = true;
+  info.isDirectory = stat.isDirectory();
+  if (!stat.isDirectory()) return info;
+
+  const [scenario, land, dungeon] = await Promise.all([
+    fs.stat(path.join(resolvedPath, "Scenario")).catch(() => null),
+    fs.stat(path.join(resolvedPath, "Data LD")).catch(() => null),
+    fs.stat(path.join(resolvedPath, "Data DL")).catch(() => null),
+  ]);
+  info.isScenarioFolder = Boolean(scenario || land || dungeon);
+
+  if (!info.isScenarioFolder) {
+    info.scenarioCount = (await discoverScenarios(resolvedPath).catch(() => [])).length;
+  }
+
+  return info;
+}
+
+async function folderList(targetPath) {
+  const info = await pathInfo(targetPath);
+  const result = {
+    ...info,
+    parent: info.isDirectory ? path.dirname(info.path) : null,
+    entries: [],
+  };
+  if (!info.isDirectory) return result;
+
+  const entries = await fs.readdir(info.path, { withFileTypes: true }).catch(() => []);
+  const directories = entries
+    .filter((entry) => entry.isDirectory())
+    .sort((a, b) => a.name.localeCompare(b.name));
+  result.entries = await Promise.all(directories.map(async (entry) => {
+    const entryPath = path.join(info.path, entry.name);
+    const entryInfo = await pathInfo(entryPath);
+    return {
+      name: entry.name,
+      path: entryInfo.path,
+      isScenarioFolder: entryInfo.isScenarioFolder,
+      scenarioCount: entryInfo.scenarioCount,
+    };
+  }));
+  return result;
+}
+
 async function handleApi(req, res, url) {
   if (url.pathname === "/api/config") {
     sendJson(res, 200, { defaultScenarioRoot, defaultScenarioRootCandidates, defaultReferenceRoot, dataDir: dataDir(), assetRoot: rootDir });
+    return;
+  }
+
+  if (url.pathname === "/api/path-info") {
+    sendJson(res, 200, await pathInfo(url.searchParams.get("path")));
+    return;
+  }
+
+  if (url.pathname === "/api/folders") {
+    sendJson(res, 200, await folderList(url.searchParams.get("path")));
     return;
   }
 
