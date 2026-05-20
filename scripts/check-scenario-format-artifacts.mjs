@@ -11,6 +11,7 @@ const REQUIRED_DOCS = [
   "docs/scenario-format/runtime-consumer-matrix.md",
   "docs/scenario-format/byte-layout-reference.md",
   "docs/scenario-format/opcode-runtime-reference.md",
+  "docs/scenario-format/resource-fork-taxonomy.md",
   "docs/scenario-format/containers/README.md",
   "docs/scenario-format/containers/action-records.md",
   "docs/scenario-format/containers/maps-random-and-fields.md",
@@ -96,6 +97,14 @@ function assertFixtureSemantics(analysis) {
       !hasLink(analysis, (link) => link.kind === "uses_icon_resource")) {
     throw new Error(`${name}: expected monster icon resource links`);
   }
+  if ((analysis.records?.monsters?.records || []).some((monster) => monster.iconId) &&
+      !hasLink(analysis, (link) => link.kind === "uses_icon_resource" && link.to?.startsWith("resource:cicn:"))) {
+    throw new Error(`${name}: expected monster icon links to target individual cicn resource references`);
+  }
+  if ((analysis.graph?.actions || []).some((action) => action.code === 27) &&
+      !hasLink(analysis, (link) => link.kind === "shows picture" && link.to?.startsWith("resource:PICT:"))) {
+    throw new Error(`${name}: expected show-picture actions to target individual PICT resource references`);
+  }
   if ((analysis.records?.monsters?.records || []).some((monster) => monster.todoOnDeath) &&
       !hasLink(analysis, (link) => link.kind === "calls_death_macro")) {
     throw new Error(`${name}: expected monster death macro links`);
@@ -117,6 +126,9 @@ function assertFixtureSemantics(analysis) {
     const cicn = analysis.resources?.catalog?.types?.find((entry) => entry.type === "cicn");
     if (!cicn || cicn.count < 1) {
       throw new Error(`${name}: expected custom cicn resource coverage`);
+    }
+    if (!analysis.semanticSchema?.entities?.some((entity) => entity.id.startsWith("resource:cicn:") && entity.type === "resource")) {
+      throw new Error(`${name}: expected individual cicn resource entities`);
     }
   }
   const menuFile = analysis.files.find((file) => file.name === "Data MENU");

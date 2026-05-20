@@ -34,7 +34,8 @@ money/items/spells, `iconid`, experience, current stamina, state bytes,
 
 Important semantic links:
 
-- `uses_resource` from `iconid` to `cicn`/icon art;
+- `uses_icon_resource` from `iconid` to `resource:cicn:<id>`; the actual bytes
+  may live in the scenario fork or shared Realmz resources;
 - `drops_item` or `carries_item` from item slots;
 - `casts_spell` from spell slots;
 - `calls_macro` from `todoondeath`;

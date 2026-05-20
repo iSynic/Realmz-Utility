@@ -27,7 +27,7 @@ Source paths under `F:\Realmz` are read-only evidence.
 | `Data CI` | `contactinfo.c:loadcontact` | Source metadata | scenario contact/info entity | label verification for every string slot |
 | `Data MENU` | `menuinit.c` | Generated/effective monster menu cache | menu-cache diagnostics and monster-menu evidence | rebuild precedence and malformed-cache behavior |
 | `Data Solids` | contact/solidity paths | Source lookup table | solidity/contact lookup entity | all byte meanings and tile-index mapping |
-| Scenario resource fork | Resource Manager, `GetPicture`, `GetIndString`, map names, icon loaders | Read-only scenario assets | resource entities, map-name evidence, render/resource links | full resource type taxonomy |
+| Scenario resource fork | Resource Manager, `GetPicture`, `GetIndString`, map names, icon loaders | Read-only scenario assets | individual resource records/entities, resource-type rollups, map-name evidence, render/resource links | full resource type taxonomy |
 | Family Jewels / shared resources | `GWorldInit.c`, `loadpixmap`, icon/tile drawing paths | Shared base art fallback | shared asset provenance and fallback diagnostics | explicit packaged fallback manifest |
 
 ## Mutation Model

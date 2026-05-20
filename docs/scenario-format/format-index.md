@@ -26,7 +26,7 @@ are defined in [Evidence Map](evidence-map.md).
 | `Data CI` | `4608` bytes | Scenario contact/info strings | `contactinfo.c:loadcontact` | confirmed | Parsed into scenario metadata strings. |
 | `Data MENU` | `502` bytes | Generated monster menu cache | `menuinit.c` | confirmed | Indexed as generated cache metadata. |
 | `Data Solids` | `1024` bytes | Tile solidity/contact table | contact/menu/solids paths need deeper anchoring | source-backed partial | Indexed as a fixed table, semantics pending. |
-| `Scenario` / `Scenario.rsrc` | resource fork | Scenario resource fork: `PICT`, `cicn`, `STR#`, metadata, names | `ResourceManager.cpp`, classic resource chain | fixture-backed | Inventoried by type/id/name; map names from `STR# -102/-101`. |
+| `Scenario` / `Scenario.rsrc` | resource fork | Scenario resource fork: `PICT`, `cicn`, `STR#`, metadata, names | `ResourceManager.cpp`, classic resource chain | fixture-backed | Inventoried by type/id/name/hash; individual resource records/entities emitted; map names from `STR# -102/-101`. |
 | Family Jewels resource fork | resource fork | Shared base tile/icon/picture art | Realmz resource chain | fixture-backed | Used for real tile atlas and dungeon top-down `PICT 302` fallback. |
 | `:Data Files:CL` / `CD` | generated cache | Runtime land/dungeon caches | `setupnewgame.c`, save/load paths | confirmed | Not edited by utility; documented as runtime relationship. |
 | `:Data Files:CE` / `CE2` | generated cache | Runtime encounter/shop state | `setupnewgame.c`, `saveshop.c` | confirmed | Not edited by utility; source files parsed for browsing. |
@@ -56,6 +56,9 @@ These pages expand the table above into source-backed field notes:
   confirmed offsets, endian behavior, and compatibility rules.
 - [Opcode Runtime Reference](opcode-runtime-reference.md): normalized opcode
   behavior, EDCD coverage policy, and high-linkage action shapes.
+- [Resource Fork Taxonomy](resource-fork-taxonomy.md): classic resource fork
+  parsing, observed resource types, individual resource entities, and open
+  taxonomy questions.
 - [Maps, Random Metadata, And Fields](containers/maps-random-and-fields.md):
   `Data LD`, `Data DL`, `Data RD`, `Data RDD`, landlook, dungeon bitfields,
   LOS, darkness, random regions, and secret/pass-through modeling.

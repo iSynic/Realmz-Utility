@@ -23,6 +23,7 @@ fixture work. It complements the narrative container specs.
 | `Data CI` | `4608` | fixed contact/info text block | `contactinfo.c:loadcontact` |
 | `Data MENU` | `502` | generated menu cache, indexed as fixed bytes | `menuinit.c` |
 | `Data Solids` | `1024` | fixed lookup table | contact/solidity paths |
+| Scenario resource fork | variable | classic Mac resource map: type list, reference list, data offsets, Pascal names | Resource Manager/resource fork parser |
 
 ## Confirmed Record Offset Highlights
 
@@ -36,6 +37,10 @@ fixture work. It complements the narrative container specs.
   `gems` at `44`, `jewelry` at `46`.
 - `struct timeencounter`: `day`, `increment`, `percent`, and `door` occupy
   offsets `0..7`; location/item/quest gates occupy `8..19`.
+- Resource fork entries: the utility records type, id, attributes, data length,
+  data byte range, reference-list offset, optional name-list offset, cleaned
+  Pascal name, and content hash. Byte ranges are relative to the normalized
+  resource fork after AppleSingle/AppleDouble extraction.
 
 ## Compatibility Rules
 

@@ -91,6 +91,10 @@ function encounterEntityId(kind, id) {
   return `encounter:${kind}:${id}`;
 }
 
+function resourceEntityId(type, id) {
+  return `resource:${printableToken(type || "unknown")}:${id}`;
+}
+
 function compactAction(action) {
   return {
     slot: action.slot,
@@ -130,6 +134,7 @@ function toGraphTarget(link) {
   if (link.type === "quest") return `quest-flag:${link.id}`;
   if (link.type === "treasure") return `treasure:${link.id}`;
   if (link.type === "time") return `time:${link.id}`;
+  if (link.type === "resource" && Number.isFinite(link.id)) return resourceEntityId(link.resourceType || "unknown", link.id);
   if (link.type === "resource") return `resource-type:${printableToken(link.resourceType || "unknown")}`;
   return null;
 }
@@ -150,6 +155,9 @@ function addActionLinks(output, actions) {
     for (const link of action.links || []) {
       const to = toGraphTarget(link);
       if (!to) continue;
+      if (link.type === "resource" && Number.isFinite(link.id)) {
+        addResourceReferenceEntity(output, link.resourceType || "unknown", link.id, `action:${action.source}:${action.recordIndex}:${action.slot}`);
+      }
       output.links.push({
         id: `link:${output.links.length}`,
         from,
@@ -231,10 +239,11 @@ function addMonsterLinks(output, records) {
   for (const monster of records?.monsters?.records || []) {
     const monsterId = `monster:${monster.id}`;
     if (monster.iconId) {
+      addResourceReferenceEntity(output, "cicn", monster.iconId, `record:Data MD:${monster.id}`);
       output.links.push({
         id: `link:${output.links.length}`,
         from: monsterId,
-        to: "resource-type:cicn",
+        to: resourceEntityId("cicn", monster.iconId),
         kind: "uses_icon_resource",
         confidence: "source-backed",
         evidence: [`record:Data MD:${monster.id}`],
@@ -296,6 +305,72 @@ function addResourceEntities(output, resources) {
     };
     addUnique(output.entities, typeEntity);
   }
+  for (const resource of resources?.resources || []) {
+    const printableType = printableToken(resource.type);
+    const recordRef = `record:resource:${printableType}:${resource.id}`;
+    const entityId = resourceEntityId(resource.type, resource.id);
+    const dataByteRange = Number.isFinite(resource.offset) && Number.isFinite(resource.bytes)
+      ? byteRange(resource.offset, resource.bytes)
+      : null;
+    output.records.push({
+      id: recordRef,
+      source: "source:resource-fork:Scenario",
+      type: "resource fork entry",
+      byteRange: dataByteRange,
+      confidence: "fixture-backed",
+      summary: {
+        type: resource.type,
+        id: resource.id,
+        name: resource.name || "",
+        bytes: resource.bytes,
+        attributes: resource.attributes,
+        refOffset: resource.refOffset,
+        nameOffset: resource.nameOffset,
+        sha256: resource.sha256,
+      },
+    });
+    addUnique(output.entities, {
+      id: entityId,
+      type: "resource",
+      label: resource.name ? `${printableType} ${resource.id}: ${resource.name}` : `${printableType} ${resource.id}`,
+      confidence: "fixture-backed",
+      source: "Scenario resource fork",
+      recordRef,
+      summary: {
+        resourceType: resource.type,
+        id: resource.id,
+        name: resource.name || "",
+        bytes: resource.bytes,
+        attributes: resource.attributes,
+        sha256: resource.sha256,
+      },
+    });
+    output.links.push({
+      id: `link:${output.links.length}`,
+      from: entityId,
+      to: `resource-type:${printableType}`,
+      kind: "member_of_resource_type",
+      confidence: "fixture-backed",
+      evidence: [recordRef],
+    });
+  }
+}
+
+function addResourceReferenceEntity(output, type, id, evidence) {
+  const printableType = printableToken(type);
+  addUnique(output.entities, {
+    id: resourceEntityId(type, id),
+    type: "resource reference",
+    label: `${printableType} ${id}`,
+    confidence: "source-backed",
+    source: "Resource resolution reference",
+    summary: {
+      resourceType: type,
+      id,
+      evidence,
+      note: "Referenced by scenario data; the bytes may live in the scenario resource fork or in shared Realmz resources.",
+    },
+  });
 }
 
 function addRecordsAndEntities(output, records) {

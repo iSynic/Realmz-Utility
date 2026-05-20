@@ -727,8 +727,9 @@ function parseResourceFork(buffer) {
       const id = i16(buffer, refOffset);
       const nameRelativeOffset = i16(buffer, refOffset + 2);
       let name = "";
+      let nameOffset = null;
       if (nameRelativeOffset >= 0) {
-        const nameOffset = nameListOffset + nameRelativeOffset;
+        nameOffset = nameListOffset + nameRelativeOffset;
         if (nameOffset < buffer.length) {
           name = decodeClassicText(buffer.subarray(nameOffset + 1, nameOffset + 1 + buffer[nameOffset]));
         }
@@ -741,6 +742,11 @@ function parseResourceFork(buffer) {
         type,
         id,
         name,
+        attributes: buffer[refOffset + 4],
+        offset: lengthOffset + 4,
+        length,
+        refOffset,
+        nameOffset,
         data: buffer.subarray(lengthOffset + 4, lengthOffset + 4 + length),
       });
     }
@@ -826,9 +832,22 @@ async function parseScenarioResources(scenarioPath) {
   const resourcePath = await scenarioResourcePath(scenarioPath);
   const buffer = resourcePath ? await readFileIfExists(resourcePath) : null;
   if (!buffer) {
-    return { resourcePath: null, mapNames: [], catalog: buildResourceCatalog([]) };
+    return { resourcePath: null, mapNames: [], resources: [], catalog: buildResourceCatalog([]) };
   }
   const resources = parseResourceFork(buffer);
+  const resourceRecords = resources
+    .map((resource) => ({
+      type: resource.type,
+      id: resource.id,
+      name: cleanResourceName(resource.name),
+      bytes: resource.length ?? resource.data?.length ?? 0,
+      attributes: resource.attributes,
+      offset: resource.offset,
+      refOffset: resource.refOffset,
+      nameOffset: resource.nameOffset,
+      sha256: resource.data ? shaPrefix(resource.data) : null,
+    }))
+    .sort((a, b) => a.type.localeCompare(b.type) || a.id - b.id);
   const lists = new Map();
   for (const resource of resources) {
     if (resource.type === "STR#" && resource.name === "Map Names" && MAP_NAME_RESOURCE_IDS.includes(resource.id)) {
@@ -844,7 +863,7 @@ async function parseScenarioResources(scenarioPath) {
     primaryName: cleanResourceName(primary[id]),
     secondaryName: cleanResourceName(secondary[id]),
   })).filter((entry) => entry.name || entry.primaryName || entry.secondaryName);
-  return { resourcePath, mapNames, catalog: buildResourceCatalog(resources) };
+  return { resourcePath, mapNames, resources: resourceRecords, catalog: buildResourceCatalog(resources) };
 }
 
 function parseMapRecord(buffer, index) {
@@ -1222,6 +1241,28 @@ function describeExtracodeUsage(action, values, output) {
       addLink(output, { type: "level", levelType: action.code < 0 ? "dungeon" : "land", id: values[0], role: "mutates random region" });
       addBattleLinks(output, values[3], values[4], "random region battle range");
       break;
+    case 30:
+      usage.summary = `Selects picked characters by ${values[3] ? "attribute" : "special ability"} check ${values[0]}.`;
+      usage.fields = [
+        field(0, "ability/attribute id; negative reverses result", values[0]),
+        field(1, "difficulty adjustment", values[1]),
+        field(2, "source set: 0 current picked, 1 all, 2 living", values[2]),
+        field(3, "attribute-check flag; 0 means special ability", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 31:
+      usage.summary = `Branches on a picked character ${values[2] ? "attribute" : "special ability"} check.`;
+      usage.fields = [
+        field(0, "ability/attribute id", values[0]),
+        field(1, "difficulty adjustment", values[1]),
+        field(2, "attribute-check flag; 0 means special ability", values[2]),
+        field(3, "success macro", values[3]),
+        field(4, "failure macro", values[4]),
+      ];
+      addLink(output, { type: "macro", id: values[3], role: "ability check success branch" });
+      addLink(output, { type: "macro", id: values[4], role: "ability check failure branch" });
+      break;
     case 33:
       usage.summary = `${values[0] > 0 ? "Takes" : "Checks"} ${Math.abs(values[0])} gold, then branches through the shared branch path.`;
       usage.fields = [
@@ -1279,6 +1320,27 @@ function describeExtracodeUsage(action, values, output) {
       ];
       addBranchTarget(output, values[2], values[3], "percent chance branch", values[4]);
       break;
+    case 41:
+      usage.summary = `Eliminates choice slot ${values[1]} from simple encounter ${values[0]}.`;
+      usage.fields = [
+        field(0, "simple encounter id", values[0]),
+        field(1, "one-based choice/result slot", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      addLink(output, { type: "encounter", kind: "simple", id: values[0], role: "mutates encounter option" });
+      break;
+    case 43:
+      usage.summary = `Applies condition ${values[1]} to ${values[0] === 1 ? "picked characters" : values[0] === 2 ? "living characters" : "the party"}.`;
+      usage.fields = [
+        field(0, "target scope: 0 party, 1 picked, 2 alive", values[0]),
+        field(1, "condition index", values[1]),
+        field(2, "condition duration/value delta", values[2]),
+        field(3, "sound id", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
     case 48:
     case 56:
     case 107:
@@ -1296,11 +1358,31 @@ function describeExtracodeUsage(action, values, output) {
       if (action.code === 107) addLink(output, { type: "macro", id: values[4], role: "battle outcome branch" });
       if (action.code === 48 && positiveRef(values[4])) addLink(output, { type: "treasure", id: values[4], role: "selective battle treasure" });
       break;
+    case 50:
+      usage.summary = `Selects characters by race, gender, caste, or class selector ${values[0]}.`;
+      usage.fields = [
+        field(0, "selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class", values[0]),
+        field(1, "gender value", values[1]),
+        field(2, "race/caste/class value", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "living-only flag", values[4]),
+      ];
+      break;
     case 52:
       usage.summary = `Selects characters by ${values[0]} using comparison value ${values[1]}.`;
       usage.fields = [
         field(0, "selector: 0 move, 1 position, 2 item, 3 percent, 4 attribute save, 5 spell save, 6 selected PC, 7 worn item, 8 exact position", values[0]),
         field(1, "selector value", values[1]),
+        field(2, "source set: 0 all, 1 living, 2 current picked", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 53:
+      usage.summary = `Selects characters by exact caste ${values[0]} or caste group ${values[1]}.`;
+      usage.fields = [
+        field(0, "exact caste id", values[0]),
+        field(1, "caste group: 1 fighter, 2 magical, 3 thief/monk", values[1]),
         field(2, "source set: 0 all, 1 living, 2 current picked", values[2]),
         field(3, "unused / legacy", values[3]),
         field(4, "unused / legacy", values[4]),
@@ -1341,11 +1423,63 @@ function describeExtracodeUsage(action, values, output) {
       if (values[1] === 1) addLink(output, { type: "macro", id: values[4], role: "picked false branch" });
       if (values[1] === 2) addMessageLink(output, values[4], "picked false message");
       break;
+    case 57:
+      usage.summary = `Changes land level ${values[2]} to landlook ${values[0]} with dark flag ${values[1]}.`;
+      usage.fields = [
+        field(0, "new landlook", values[0]),
+        field(1, "new darkness flag", values[1]),
+        field(2, "target land level", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      addLink(output, { type: "level", levelType: "land", id: values[2], role: "mutates landlook" });
+      break;
     case 60:
       usage.summary = `Clears party money type ${values[0]} for ${values[1] ? "picked characters" : "all characters"}.`;
       usage.fields = [
         field(0, "money type: 1 gold, 2 gems, 3 jewelry", values[0]),
         field(1, "picked-only flag", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 67:
+      usage.summary = `Branches on item ${values[0]} having at least ${values[2]} charges.`;
+      usage.fields = [
+        field(0, "item id", values[0]),
+        field(1, "branch mode: 0 macro, 1 simple, 2 complex", values[1]),
+        field(2, "minimum charges", values[2]),
+        field(3, "enough-charges target", values[3]),
+        field(4, "not-enough-charges target", values[4]),
+      ];
+      addBranchPair(output, values[1], values[4], values[3], "item charges");
+      break;
+    case 68:
+      usage.summary = `Alters party fatigue using mode ${values[0]}.`;
+      usage.fields = [
+        field(0, "mode: 1 set exhausted, 2 set rested, 3 scale by percent", values[0]),
+        field(1, "unused / legacy", values[1]),
+        field(2, "percent for scale mode", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 69:
+      usage.summary = `Sets combat spell casting and charging flags.`;
+      usage.fields = [
+        field(0, "spellcasting flag", values[0]),
+        field(1, "monstercasting flag", values[1]),
+        field(2, "spellcharging flag", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 70:
+      usage.summary = `${values[0] === 2 ? "Restores" : "Saves"} the party position.`;
+      usage.fields = [
+        field(0, "mode: 1 save position, 2 restore position", values[0]),
+        field(1, "unused / legacy", values[1]),
         field(2, "unused / legacy", values[2]),
         field(3, "unused / legacy", values[3]),
         field(4, "unused / legacy", values[4]),
@@ -1404,6 +1538,17 @@ function describeExtracodeUsage(action, values, output) {
         field(4, "branch target", values[4]),
       ];
       addBranchTarget(output, values[3], values[4], action.label);
+      break;
+    case 74:
+      usage.summary = `${values[0] < 0 ? "Takes" : "Gives"} spell points to picked characters using ${Math.abs(values[0])} roll(s) of ${values[1]}-${values[2]}.`;
+      usage.fields = [
+        field(0, "roll count; negative subtracts spell points", values[0]),
+        field(1, "random spell-point low / source sound id in game path", values[1]),
+        field(2, "random spell-point high", values[2]),
+        field(3, "play-sound flag", values[3]),
+        field(4, "message id", values[4]),
+      ];
+      addMessageLink(output, values[4], "spell point change message");
       break;
     case 73:
       usage.summary = `Opens shop ${Math.abs(values[0])} with item restrictions.`;
@@ -1477,6 +1622,16 @@ function describeExtracodeUsage(action, values, output) {
       addBranchPair(output, values[1], values[4], values[3], action.label);
       if (action.code === 87 && values[2] === 2) addMessageLink(output, values[4], "allies missing message");
       break;
+    case 90:
+      usage.summary = `Removes ${values[0]} victory/experience from ${values[1] === 1 ? "picked characters" : values[1] === 2 ? "the party split evenly" : "each party member"}.`;
+      usage.fields = [
+        field(0, "experience/victory amount", values[0]),
+        field(1, "scope: 1 picked, 2 spread around, other each", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
     case 92:
       usage.summary = `Changes random rectangle ${values[1]} on level ${values[0]}.`;
       usage.fields = [
@@ -1507,6 +1662,32 @@ function describeExtracodeUsage(action, values, output) {
         field(4, "unused / legacy", values[4]),
       ];
       break;
+    case 108:
+      usage.summary = `Alters selected-character stat ${values[0]} by ${values[1]}.`;
+      usage.fields = [
+        field(0, "stat selector: attacks, spells, movement, damage, SP, hand-to-hand, stamina, AR, to-hit, missile, magic resistance, prestige", values[0]),
+        field(1, "stat delta", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "unused / legacy", values[4]),
+      ];
+      break;
+    case 120:
+      usage.summary = `Alters up to ${values[2]} combat monster/NPC instance(s) matching monster ${values[1]}.`;
+      usage.fields = [
+        field(0, "target class: 1 summoned/NPC-like, 2 normal monster-like", values[0]),
+        field(1, "monster name/id to match", values[1]),
+        field(2, "maximum instances to alter", values[2]),
+        field(3, "replacement icon id; -1 means keep", values[3]),
+        field(4, "traitor override; -1 means keep", values[4]),
+      ];
+      addLink(output, { type: "monster", id: values[1], role: "combat alteration target" });
+      addLink(output, { type: "resource", resourceType: "cicn", id: values[3], role: "replacement combat icon" });
+      break;
+    case 121:
+      usage.summary = `Destroys lower-level undead during combat; EDCD row is loaded but not read by the source path.`;
+      usage.fields = values.map((value, slot) => field(slot, "unused / legacy", value));
+      break;
     case 122:
       usage.summary = `Causes a fumble and can show message ${values[0]}.`;
       usage.fields = [
@@ -1518,6 +1699,19 @@ function describeExtracodeUsage(action, values, output) {
       ];
       addMessageLink(output, values[0], "fumble message");
       break;
+    case 123:
+      usage.summary = `Causes matching monsters to rout using up to five monster ids.`;
+      usage.fields = [
+        field(0, "monster id 1", values[0]),
+        field(1, "monster id 2", values[1]),
+        field(2, "monster id 3", values[2]),
+        field(3, "monster id 4", values[3]),
+        field(4, "monster id 5", values[4]),
+      ];
+      for (const monsterId of values) {
+        addLink(output, { type: "monster", id: monsterId, role: "rout target" });
+      }
+      break;
     case 124:
       usage.summary = `Spawns ${values[2] < 0 ? "a random count of" : values[2]} monster ${values[1]}.`;
       usage.fields = [
@@ -1528,6 +1722,17 @@ function describeExtracodeUsage(action, values, output) {
         field(4, "traiter override", values[4]),
       ];
       addLink(output, { type: "monster", id: values[1], role: "spawns monster" });
+      break;
+    case 125:
+      usage.summary = `Destroys up to ${values[1] || 100} related monster ${values[0]} instance(s).`;
+      usage.fields = [
+        field(0, "monster name/id to destroy", values[0]),
+        field(1, "maximum instances; 0 means 100", values[1]),
+        field(2, "unused / legacy", values[2]),
+        field(3, "unused / legacy", values[3]),
+        field(4, "include traitor-side flag", values[4]),
+      ];
+      addLink(output, { type: "monster", id: values[0], role: "destroy related monsters target" });
       break;
     case 126:
       usage.summary = `Runs a battle macro branch.`;

@@ -15,6 +15,12 @@ with known value in:
 - `STR#`: map/scenario names and string lists;
 - other legacy types that should remain inventoried even when not decoded.
 
+Each decoded resource fork entry is now preserved in the semantic schema as both
+a raw `record:resource:<type>:<id>` and a browsable `resource:<type>:<id>`
+entity. Its byte range is relative to the normalized resource fork after
+AppleSingle/AppleDouble extraction, with the resource-map reference offset kept
+separately as evidence.
+
 Resource names are useful display evidence. They should not silently override
 source-backed IDs. The schema should store both:
 
@@ -96,9 +102,10 @@ schema should mark them as runtime state sources.
 
 Recommended entities:
 
-- `asset:pict:<id>`;
-- `asset:cicn:<id>`;
-- `asset:str-list:<id>`;
+- `resource:PICT:<id>`;
+- `resource:cicn:<id>`;
+- `resource:STR#:<id>`;
+- `resource-type:<type>`;
 - `render_profile:<map-id>`;
 - `runtime_cache:<name>`;
 - `asset_fallback`.

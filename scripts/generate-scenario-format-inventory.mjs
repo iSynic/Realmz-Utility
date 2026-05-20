@@ -58,6 +58,26 @@ function sortedCounts(map, limit = 1000) {
     .map(([key, count]) => ({ key, count }));
 }
 
+function addResourceCoverage(map, type, count, named) {
+  const key = printableToken(type);
+  const entry = map.get(key) || { key, resources: 0, named: 0, scenarios: 0 };
+  entry.resources += count || 0;
+  entry.named += named || 0;
+  entry.scenarios += 1;
+  map.set(key, entry);
+}
+
+function sortedResourceCoverage(map, limit = 1000) {
+  return [...map.values()]
+    .sort((a, b) => b.resources - a.resources || a.key.localeCompare(b.key))
+    .slice(0, limit)
+    .map((entry) => ({
+      ...entry,
+      unnamed: Math.max(0, entry.resources - entry.named),
+      namedPercent: entry.resources ? Math.round((entry.named / entry.resources) * 1000) / 10 : 0,
+    }));
+}
+
 function summarizeAlignment(alignment) {
   const issues = [];
   for (const [name, info] of Object.entries(alignment || {})) {
@@ -249,6 +269,17 @@ ${renderTable(summary.aggregate.resourceTypes.slice(0, 80), [
   { label: "Resources", value: (row) => row.count },
 ])}
 
+## Aggregate Resource Naming Coverage
+
+${renderTable(summary.aggregate.resourceNamingCoverage.slice(0, 80), [
+  { label: "Type", value: (row) => row.key },
+  { label: "Resources", value: (row) => row.resources },
+  { label: "Named", value: (row) => row.named },
+  { label: "Unnamed", value: (row) => row.unnamed },
+  { label: "Named %", value: (row) => row.namedPercent },
+  { label: "Scenarios", value: (row) => row.scenarios },
+])}
+
 ## Aggregate Opcode Usage
 
 ${renderTable(summary.aggregate.opcodeUsage.slice(0, 120), [
@@ -358,6 +389,7 @@ async function main() {
   const aggregateUnknownOpcodes = new Map();
   const aggregateEdcdShapes = new Map();
   const aggregateLinks = new Map();
+  const aggregateResourceCoverage = new Map();
 
   for (const scenario of discovered) {
     const resolved = path.resolve(scenario.path).toLowerCase();
@@ -372,6 +404,7 @@ async function main() {
       }
       for (const resourceType of analysis.resources?.catalog?.types || []) {
         increment(aggregateResources, printableToken(resourceType.type), resourceType.count);
+        addResourceCoverage(aggregateResourceCoverage, resourceType.type, resourceType.count, resourceType.named);
       }
       for (const action of analysis.graph?.actions || []) {
         increment(aggregateOpcodes, `${action.code}:${action.label}`);
@@ -413,6 +446,7 @@ async function main() {
     aggregate: {
       filePresence: sortedCounts(aggregateFiles),
       resourceTypes: sortedCounts(aggregateResources),
+      resourceNamingCoverage: sortedResourceCoverage(aggregateResourceCoverage),
       opcodeUsage: sortedCounts(aggregateOpcodes),
       unknownOpcodes: sortedCounts(aggregateUnknownOpcodes),
       edcdShapes: sortedCounts(aggregateEdcdShapes),

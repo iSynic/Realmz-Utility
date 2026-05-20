@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T06:15:24.290Z",
+  "generatedAt": "2026-05-20T13:44:18.604Z",
   "roots": {
     "requested": [
       "F:\\Realmz\\base\\Realmz\\Scenarios",
@@ -147,6 +147,80 @@
       {
         "key": "\\x00\\x00\\x00\\x00",
         "count": 2
+      }
+    ],
+    "resourceNamingCoverage": [
+      {
+        "key": "cicn",
+        "resources": 7535,
+        "named": 1107,
+        "scenarios": 44,
+        "unnamed": 6428,
+        "namedPercent": 14.7
+      },
+      {
+        "key": "snd ",
+        "resources": 386,
+        "named": 386,
+        "scenarios": 23,
+        "unnamed": 0,
+        "namedPercent": 100
+      },
+      {
+        "key": "RLMZ",
+        "resources": 259,
+        "named": 0,
+        "scenarios": 25,
+        "unnamed": 259,
+        "namedPercent": 0
+      },
+      {
+        "key": "STR#",
+        "resources": 222,
+        "named": 222,
+        "scenarios": 44,
+        "unnamed": 0,
+        "namedPercent": 100
+      },
+      {
+        "key": "PICT",
+        "resources": 160,
+        "named": 5,
+        "scenarios": 44,
+        "unnamed": 155,
+        "namedPercent": 3.1
+      },
+      {
+        "key": "TEXT",
+        "resources": 150,
+        "named": 11,
+        "scenarios": 26,
+        "unnamed": 139,
+        "namedPercent": 7.3
+      },
+      {
+        "key": "styl",
+        "resources": 91,
+        "named": 8,
+        "scenarios": 26,
+        "unnamed": 83,
+        "namedPercent": 8.8
+      },
+      {
+        "key": "vers",
+        "resources": 31,
+        "named": 0,
+        "scenarios": 31,
+        "unnamed": 31,
+        "namedPercent": 0
+      },
+      {
+        "key": "\\x00\\x00\\x00\\x00",
+        "resources": 2,
+        "named": 0,
+        "scenarios": 1,
+        "unnamed": 2,
+        "namedPercent": 0
       }
     ],
     "opcodeUsage": [
@@ -8279,7 +8353,7 @@
         "count": 301
       },
       {
-        "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
         "count": 260
       },
       {
@@ -8295,7 +8369,7 @@
         "count": 193
       },
       {
-        "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
         "count": 154
       },
       {
@@ -8311,11 +8385,11 @@
         "count": 117
       },
       {
-        "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
         "count": 105
       },
       {
-        "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
         "count": 104
       },
       {
@@ -8335,15 +8409,15 @@
         "count": 81
       },
       {
-        "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
         "count": 71
       },
       {
-        "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
         "count": 65
       },
       {
-        "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
         "count": 61
       },
       {
@@ -8351,7 +8425,7 @@
         "count": 61
       },
       {
-        "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
         "count": 56
       },
       {
@@ -8359,7 +8433,7 @@
         "count": 45
       },
       {
-        "key": "108:alter selected character | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "108:alter selected character | stat selector: attacks, spells, movement, damage, SP, hand-to-hand, stamina, AR, to-hit, missile, magic resistance, prestige; stat delta; unused / legacy; unused / legacy; unused / legacy",
         "count": 40
       },
       {
@@ -8371,11 +8445,11 @@
         "count": 30
       },
       {
-        "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
         "count": 25
       },
       {
-        "key": "68:alter party fatigue | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "68:alter party fatigue | mode: 1 set exhausted, 2 set rested, 3 scale by percent; unused / legacy; percent for scale mode; unused / legacy; unused / legacy",
         "count": 25
       },
       {
@@ -8395,31 +8469,31 @@
         "count": 19
       },
       {
-        "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
         "count": 18
       },
       {
-        "key": "70:save / restore party position | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "70:save / restore party position | mode: 1 save position, 2 restore position; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
         "count": 14
       },
       {
-        "key": "120:alter NPC or monster during combat | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "120:alter NPC or monster during combat | target class: 1 summoned/NPC-like, 2 normal monster-like; monster name/id to match; maximum instances to alter; replacement icon id; -1 means keep; traitor override; -1 means keep",
         "count": 12
       },
       {
-        "key": "74:take / give spell points | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "74:take / give spell points | roll count; negative subtracts spell points; random spell-point low / source sound id in game path; random spell-point high; play-sound flag; message id",
         "count": 10
       },
       {
-        "key": "67:branch on item charges | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "67:branch on item charges | item id; branch mode: 0 macro, 1 simple, 2 complex; minimum charges; enough-charges target; not-enough-charges target",
         "count": 9
       },
       {
-        "key": "57:change land look | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "57:change land look | new landlook; new darkness flag; target land level; unused / legacy; unused / legacy",
         "count": 7
       },
       {
-        "key": "121:de-animate lower level undead | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+        "key": "121:de-animate lower level undead | unused / legacy; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
         "count": 5
       },
       {
@@ -8467,6 +8541,10 @@
       {
         "key": "forcebranch",
         "count": 10490
+      },
+      {
+        "key": "member_of_resource_type",
+        "count": 8836
       },
       {
         "key": "uses_icon_resource",
@@ -8603,6 +8681,10 @@
       {
         "key": "random message range end",
         "count": 726
+      },
+      {
+        "key": "rout target",
+        "count": 650
       },
       {
         "key": "describes_map",
@@ -8749,6 +8831,10 @@
         "count": 205
       },
       {
+        "key": "mutates encounter option",
+        "count": 204
+      },
+      {
         "key": "copy into door 20",
         "count": 202
       },
@@ -8825,6 +8911,14 @@
         "count": 144
       },
       {
+        "key": "ability check failure branch",
+        "count": 142
+      },
+      {
+        "key": "ability check success branch",
+        "count": 142
+      },
+      {
         "key": "copy into door 26",
         "count": 142
       },
@@ -8858,6 +8952,10 @@
       },
       {
         "key": "copy into door 43",
+        "count": 122
+      },
+      {
+        "key": "destroy related monsters target",
         "count": 122
       },
       {
@@ -9137,6 +9235,10 @@
         "count": 24
       },
       {
+        "key": "combat alteration target",
+        "count": 24
+      },
+      {
         "key": "replace result",
         "count": 20
       },
@@ -9157,12 +9259,24 @@
         "count": 16
       },
       {
+        "key": "item charges true branch",
+        "count": 14
+      },
+      {
         "key": "branch on tile parameters false branch",
+        "count": 10
+      },
+      {
+        "key": "item charges false branch",
         "count": 10
       },
       {
         "key": "selective battle treasure",
         "count": 10
+      },
+      {
+        "key": "mutates landlook",
+        "count": 7
       },
       {
         "key": "branch on tile id",
@@ -9186,6 +9300,10 @@
       },
       {
         "key": "random branch message",
+        "count": 1
+      },
+      {
+        "key": "replacement combat icon",
         "count": 1
       }
     ]
@@ -9546,7 +9664,7 @@
           "count": 2
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 2
         },
         {
@@ -9587,6 +9705,10 @@
         {
           "key": "uses_monster",
           "count": 85
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 51
         },
         {
           "key": "occupies_region",
@@ -9719,10 +9841,6 @@
         {
           "key": "calls_death_macro",
           "count": 1
-        },
-        {
-          "key": "gives or displays map",
-          "count": 1
         }
       ],
       "diagnostics": {
@@ -9732,9 +9850,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 1077,
-        "entityCount": 668,
-        "linkCount": 1073,
+        "recordCount": 1128,
+        "entityCount": 826,
+        "linkCount": 1124,
         "diagnosticCount": 27
       }
     },
@@ -9755,7 +9873,7 @@
         "simpleEncounters": 18,
         "complexEncounters": 32,
         "scriptNodes": 1192,
-        "scriptEdges": 1293,
+        "scriptEdges": 1295,
         "overlayBoxes": 551
       },
       "files": {
@@ -10222,7 +10340,7 @@
           "count": 2
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 2
         },
         {
@@ -10234,7 +10352,7 @@
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -10246,7 +10364,7 @@
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
@@ -10325,6 +10443,10 @@
         {
           "key": "occupies_region",
           "count": 68
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 57
         },
         {
           "key": "mutates tile on level",
@@ -10425,10 +10547,6 @@
         {
           "key": "percent chance branch",
           "count": 6
-        },
-        {
-          "key": "random region battle range",
-          "count": 5
         }
       ],
       "diagnostics": {
@@ -10438,9 +10556,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 5187,
-        "entityCount": 2490,
-        "linkCount": 4627,
+        "recordCount": 5244,
+        "entityCount": 2651,
+        "linkCount": 4688,
         "diagnosticCount": 497
       }
     },
@@ -10461,7 +10579,7 @@
         "simpleEncounters": 18,
         "complexEncounters": 32,
         "scriptNodes": 1192,
-        "scriptEdges": 1293,
+        "scriptEdges": 1295,
         "overlayBoxes": 551
       },
       "files": {
@@ -10928,7 +11046,7 @@
           "count": 2
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 2
         },
         {
@@ -10940,7 +11058,7 @@
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -10952,7 +11070,7 @@
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
@@ -11031,6 +11149,10 @@
         {
           "key": "occupies_region",
           "count": 68
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 57
         },
         {
           "key": "mutates tile on level",
@@ -11131,10 +11253,6 @@
         {
           "key": "percent chance branch",
           "count": 6
-        },
-        {
-          "key": "random region battle range",
-          "count": 5
         }
       ],
       "diagnostics": {
@@ -11144,9 +11262,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 5187,
-        "entityCount": 2490,
-        "linkCount": 4627,
+        "recordCount": 5244,
+        "entityCount": 2651,
+        "linkCount": 4688,
         "diagnosticCount": 497
       }
     },
@@ -11462,6 +11580,10 @@
           "count": 46
         },
         {
+          "key": "member_of_resource_type",
+          "count": 42
+        },
+        {
           "key": "keepcodes",
           "count": 27
         },
@@ -11553,9 +11675,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 2985,
-        "entityCount": 1222,
-        "linkCount": 552,
+        "recordCount": 3027,
+        "entityCount": 1362,
+        "linkCount": 594,
         "diagnosticCount": 2
       }
     },
@@ -11576,7 +11698,7 @@
         "simpleEncounters": 19,
         "complexEncounters": 22,
         "scriptNodes": 1664,
-        "scriptEdges": 1733,
+        "scriptEdges": 1780,
         "overlayBoxes": 674
       },
       "files": {
@@ -11919,7 +12041,7 @@
           "count": 15
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 15
         },
         {
@@ -11943,11 +12065,11 @@
           "count": 9
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 9
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 8
         },
         {
@@ -11979,7 +12101,7 @@
           "count": 3
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 3
         },
         {
@@ -11995,11 +12117,11 @@
           "count": 2
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 1
         },
         {
@@ -12007,11 +12129,11 @@
           "count": 1
         },
         {
-          "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
           "count": 1
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         }
       ],
@@ -12078,12 +12200,20 @@
           "count": 86
         },
         {
+          "key": "rout target",
+          "count": 80
+        },
+        {
           "key": "occupies_region",
           "count": 79
         },
         {
           "key": "mutates tile on level",
           "count": 77
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 73
         },
         {
           "key": "mutates trigger percent on level",
@@ -12168,14 +12298,6 @@
         {
           "key": "pre-battle message",
           "count": 8
-        },
-        {
-          "key": "copy into door 10",
-          "count": 6
-        },
-        {
-          "key": "copy into door 39",
-          "count": 6
         }
       ],
       "diagnostics": {
@@ -12185,9 +12307,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 29317,
-        "entityCount": 2760,
-        "linkCount": 5951,
+        "recordCount": 29390,
+        "entityCount": 2931,
+        "linkCount": 6118,
         "diagnosticCount": 1
       }
     },
@@ -12208,7 +12330,7 @@
         "simpleEncounters": 19,
         "complexEncounters": 22,
         "scriptNodes": 1664,
-        "scriptEdges": 1733,
+        "scriptEdges": 1780,
         "overlayBoxes": 674
       },
       "files": {
@@ -12551,7 +12673,7 @@
           "count": 15
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 15
         },
         {
@@ -12575,11 +12697,11 @@
           "count": 9
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 9
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 8
         },
         {
@@ -12611,7 +12733,7 @@
           "count": 3
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 3
         },
         {
@@ -12627,11 +12749,11 @@
           "count": 2
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 1
         },
         {
@@ -12639,11 +12761,11 @@
           "count": 1
         },
         {
-          "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
           "count": 1
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         }
       ],
@@ -12710,12 +12832,20 @@
           "count": 86
         },
         {
+          "key": "rout target",
+          "count": 80
+        },
+        {
           "key": "occupies_region",
           "count": 79
         },
         {
           "key": "mutates tile on level",
           "count": 77
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 73
         },
         {
           "key": "mutates trigger percent on level",
@@ -12800,14 +12930,6 @@
         {
           "key": "pre-battle message",
           "count": 8
-        },
-        {
-          "key": "copy into door 10",
-          "count": 6
-        },
-        {
-          "key": "copy into door 39",
-          "count": 6
         }
       ],
       "diagnostics": {
@@ -12817,9 +12939,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 29317,
-        "entityCount": 2760,
-        "linkCount": 5951,
+        "recordCount": 29390,
+        "entityCount": 2931,
+        "linkCount": 6118,
         "diagnosticCount": 1
       }
     },
@@ -12840,7 +12962,7 @@
         "simpleEncounters": 20,
         "complexEncounters": 14,
         "scriptNodes": 1383,
-        "scriptEdges": 1420,
+        "scriptEdges": 1440,
         "overlayBoxes": 737
       },
       "files": {
@@ -13275,7 +13397,7 @@
           "count": 7
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 7
         },
         {
@@ -13287,7 +13409,7 @@
           "count": 5
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 4
         },
         {
@@ -13295,7 +13417,7 @@
           "count": 4
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 3
         },
         {
@@ -13323,7 +13445,7 @@
           "count": 2
         },
         {
-          "key": "121:de-animate lower level undead | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "121:de-animate lower level undead | unused / legacy; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
@@ -13335,11 +13457,11 @@
           "count": 1
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
-          "key": "57:change land look | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "57:change land look | new landlook; new darkness flag; target land level; unused / legacy; unused / legacy",
           "count": 1
         },
         {
@@ -13474,11 +13596,19 @@
           "count": 30
         },
         {
+          "key": "rout target",
+          "count": 30
+        },
+        {
           "key": "starts battle range end",
           "count": 22
         },
         {
           "key": "battle message",
+          "count": 21
+        },
+        {
+          "key": "member_of_resource_type",
           "count": 21
         },
         {
@@ -13514,6 +13644,10 @@
           "count": 10
         },
         {
+          "key": "destroy related monsters target",
+          "count": 8
+        },
+        {
           "key": "opcode 7 action-data link",
           "count": 8
         },
@@ -13524,18 +13658,6 @@
         {
           "key": "percent chance branch",
           "count": 6
-        },
-        {
-          "key": "opens shop",
-          "count": 5
-        },
-        {
-          "key": "battle outcome check range end",
-          "count": 4
-        },
-        {
-          "key": "branch on allies in party true branch",
-          "count": 4
         }
       ],
       "diagnostics": {
@@ -13545,9 +13667,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 8080,
-        "entityCount": 2452,
-        "linkCount": 5179,
+        "recordCount": 8101,
+        "entityCount": 2592,
+        "linkCount": 5241,
         "diagnosticCount": 492
       }
     },
@@ -13568,7 +13690,7 @@
         "simpleEncounters": 20,
         "complexEncounters": 14,
         "scriptNodes": 1383,
-        "scriptEdges": 1420,
+        "scriptEdges": 1440,
         "overlayBoxes": 737
       },
       "files": {
@@ -14003,7 +14125,7 @@
           "count": 7
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 7
         },
         {
@@ -14015,7 +14137,7 @@
           "count": 5
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 4
         },
         {
@@ -14023,7 +14145,7 @@
           "count": 4
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 3
         },
         {
@@ -14051,7 +14173,7 @@
           "count": 2
         },
         {
-          "key": "121:de-animate lower level undead | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "121:de-animate lower level undead | unused / legacy; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
@@ -14063,11 +14185,11 @@
           "count": 1
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
-          "key": "57:change land look | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "57:change land look | new landlook; new darkness flag; target land level; unused / legacy; unused / legacy",
           "count": 1
         },
         {
@@ -14202,11 +14324,19 @@
           "count": 30
         },
         {
+          "key": "rout target",
+          "count": 30
+        },
+        {
           "key": "starts battle range end",
           "count": 22
         },
         {
           "key": "battle message",
+          "count": 21
+        },
+        {
+          "key": "member_of_resource_type",
           "count": 21
         },
         {
@@ -14242,6 +14372,10 @@
           "count": 10
         },
         {
+          "key": "destroy related monsters target",
+          "count": 8
+        },
+        {
           "key": "opcode 7 action-data link",
           "count": 8
         },
@@ -14252,18 +14386,6 @@
         {
           "key": "percent chance branch",
           "count": 6
-        },
-        {
-          "key": "opens shop",
-          "count": 5
-        },
-        {
-          "key": "battle outcome check range end",
-          "count": 4
-        },
-        {
-          "key": "branch on allies in party true branch",
-          "count": 4
         }
       ],
       "diagnostics": {
@@ -14273,9 +14395,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 8080,
-        "entityCount": 2452,
-        "linkCount": 5179,
+        "recordCount": 8101,
+        "entityCount": 2592,
+        "linkCount": 5241,
         "diagnosticCount": 492
       }
     },
@@ -14296,7 +14418,7 @@
         "simpleEncounters": 22,
         "complexEncounters": 17,
         "scriptNodes": 926,
-        "scriptEdges": 1102,
+        "scriptEdges": 1106,
         "overlayBoxes": 452
       },
       "files": {
@@ -14657,7 +14779,7 @@
           "count": 4
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 4
         },
         {
@@ -14673,11 +14795,11 @@
           "count": 2
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -14697,7 +14819,7 @@
           "count": 1
         },
         {
-          "key": "67:branch on item charges | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "67:branch on item charges | item id; branch mode: 0 macro, 1 simple, 2 complex; minimum charges; enough-charges target; not-enough-charges target",
           "count": 1
         }
       ],
@@ -14726,6 +14848,10 @@
         {
           "key": "uses_icon_resource",
           "count": 131
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 95
         },
         {
           "key": "encounter",
@@ -14858,10 +14984,6 @@
         {
           "key": "calls_battle_macro",
           "count": 7
-        },
-        {
-          "key": "gives or displays map",
-          "count": 7
         }
       ],
       "diagnostics": {
@@ -14871,9 +14993,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 3136,
-        "entityCount": 1866,
-        "linkCount": 3587,
+        "recordCount": 3231,
+        "entityCount": 2030,
+        "linkCount": 3690,
         "diagnosticCount": 1
       }
     },
@@ -14894,7 +15016,7 @@
         "simpleEncounters": 14,
         "complexEncounters": 18,
         "scriptNodes": 1550,
-        "scriptEdges": 1830,
+        "scriptEdges": 1836,
         "overlayBoxes": 749
       },
       "files": {
@@ -15276,7 +15398,7 @@
           "count": 3
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 3
         },
         {
@@ -15284,7 +15406,7 @@
           "count": 3
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 3
         },
         {
@@ -15292,7 +15414,7 @@
           "count": 2
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 2
         },
         {
@@ -15308,7 +15430,7 @@
           "count": 2
         },
         {
-          "key": "67:branch on item charges | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "67:branch on item charges | item id; branch mode: 0 macro, 1 simple, 2 complex; minimum charges; enough-charges target; not-enough-charges target",
           "count": 2
         },
         {
@@ -15341,6 +15463,10 @@
         {
           "key": "uses_monster",
           "count": 454
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 176
         },
         {
           "key": "uses_icon_resource",
@@ -15477,10 +15603,6 @@
         {
           "key": "battle message",
           "count": 9
-        },
-        {
-          "key": "copy into door 9",
-          "count": 8
         }
       ],
       "diagnostics": {
@@ -15490,9 +15612,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 4414,
-        "entityCount": 2724,
-        "linkCount": 5940,
+        "recordCount": 4590,
+        "entityCount": 2969,
+        "linkCount": 6128,
         "diagnosticCount": 1
       }
     },
@@ -15904,7 +16026,7 @@
           "count": 6
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 6
         },
         {
@@ -15912,11 +16034,11 @@
           "count": 5
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 3
         },
         {
-          "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
           "count": 3
         },
         {
@@ -15928,7 +16050,7 @@
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         },
         {
@@ -15940,7 +16062,7 @@
           "count": 2
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -16001,6 +16123,10 @@
         {
           "key": "extend door codes",
           "count": 208
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 188
         },
         {
           "key": "starts battle",
@@ -16129,10 +16255,6 @@
         {
           "key": "random region battle range",
           "count": 5
-        },
-        {
-          "key": "random region battle range range end",
-          "count": 5
         }
       ],
       "diagnostics": {
@@ -16142,9 +16264,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 3791,
-        "entityCount": 2748,
-        "linkCount": 5301,
+        "recordCount": 3979,
+        "entityCount": 3036,
+        "linkCount": 5489,
         "diagnosticCount": 3
       }
     },
@@ -16556,7 +16678,7 @@
           "count": 6
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 6
         },
         {
@@ -16564,11 +16686,11 @@
           "count": 5
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 3
         },
         {
-          "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
           "count": 3
         },
         {
@@ -16580,7 +16702,7 @@
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         },
         {
@@ -16592,7 +16714,7 @@
           "count": 2
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -16653,6 +16775,10 @@
         {
           "key": "extend door codes",
           "count": 208
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 188
         },
         {
           "key": "starts battle",
@@ -16781,10 +16907,6 @@
         {
           "key": "random region battle range",
           "count": 5
-        },
-        {
-          "key": "random region battle range range end",
-          "count": 5
         }
       ],
       "diagnostics": {
@@ -16794,9 +16916,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 3791,
-        "entityCount": 2748,
-        "linkCount": 5301,
+        "recordCount": 3979,
+        "entityCount": 3036,
+        "linkCount": 5489,
         "diagnosticCount": 3
       }
     },
@@ -16817,7 +16939,7 @@
         "simpleEncounters": 17,
         "complexEncounters": 14,
         "scriptNodes": 748,
-        "scriptEdges": 590,
+        "scriptEdges": 600,
         "overlayBoxes": 430
       },
       "files": {
@@ -17179,11 +17301,11 @@
           "count": 3
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 3
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 3
         },
         {
@@ -17199,7 +17321,7 @@
           "count": 2
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 1
         },
         {
@@ -17211,7 +17333,7 @@
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
@@ -17244,6 +17366,10 @@
         {
           "key": "shows message",
           "count": 303
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 170
         },
         {
           "key": "keepcodes",
@@ -17322,6 +17448,10 @@
           "count": 11
         },
         {
+          "key": "rout target",
+          "count": 10
+        },
+        {
           "key": "starts battle range end",
           "count": 9
         },
@@ -17339,6 +17469,10 @@
         },
         {
           "key": "choice prompt",
+          "count": 6
+        },
+        {
+          "key": "destroy related monsters target",
           "count": 6
         },
         {
@@ -17376,18 +17510,6 @@
         {
           "key": "damage/heal message",
           "count": 4
-        },
-        {
-          "key": "dungeon move message",
-          "count": 2
-        },
-        {
-          "key": "battle message",
-          "count": 1
-        },
-        {
-          "key": "complex encounter jump",
-          "count": 1
         }
       ],
       "diagnostics": {
@@ -17397,9 +17519,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 2468,
-        "entityCount": 1476,
-        "linkCount": 2543,
+        "recordCount": 2638,
+        "entityCount": 1681,
+        "linkCount": 2733,
         "diagnosticCount": 3
       }
     },
@@ -17420,7 +17542,7 @@
         "simpleEncounters": 33,
         "complexEncounters": 36,
         "scriptNodes": 2207,
-        "scriptEdges": 3151,
+        "scriptEdges": 3188,
         "overlayBoxes": 637
       },
       "files": {
@@ -17826,7 +17948,7 @@
           "count": 10
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 10
         },
         {
@@ -17834,7 +17956,7 @@
           "count": 9
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 5
         },
         {
@@ -17846,7 +17968,7 @@
           "count": 3
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -17866,7 +17988,7 @@
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
@@ -17886,7 +18008,7 @@
           "count": 1
         },
         {
-          "key": "74:take / give spell points | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "74:take / give spell points | roll count; negative subtracts spell points; random spell-point low / source sound id in game path; random spell-point high; play-sound flag; message id",
           "count": 1
         },
         {
@@ -17919,6 +18041,10 @@
         {
           "key": "uses_icon_resource",
           "count": 215
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 214
         },
         {
           "key": "extend door codes",
@@ -17985,6 +18111,10 @@
           "count": 53
         },
         {
+          "key": "rout target",
+          "count": 50
+        },
+        {
           "key": "opcode 7 action-data link",
           "count": 42
         },
@@ -18033,6 +18163,10 @@
           "count": 21
         },
         {
+          "key": "mutates encounter option",
+          "count": 20
+        },
+        {
           "key": "copy into door 29",
           "count": 18
         },
@@ -18043,18 +18177,6 @@
         {
           "key": "copy into door 5",
           "count": 16
-        },
-        {
-          "key": "copy into door 77",
-          "count": 16
-        },
-        {
-          "key": "copy into door 9",
-          "count": 16
-        },
-        {
-          "key": "opens shop",
-          "count": 16
         }
       ],
       "diagnostics": {
@@ -18064,9 +18186,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 5367,
-        "entityCount": 3322,
-        "linkCount": 7998,
+        "recordCount": 5581,
+        "entityCount": 3661,
+        "linkCount": 8286,
         "diagnosticCount": 31
       }
     },
@@ -18087,7 +18209,7 @@
         "simpleEncounters": 33,
         "complexEncounters": 36,
         "scriptNodes": 2207,
-        "scriptEdges": 3151,
+        "scriptEdges": 3188,
         "overlayBoxes": 637
       },
       "files": {
@@ -18493,7 +18615,7 @@
           "count": 10
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 10
         },
         {
@@ -18501,7 +18623,7 @@
           "count": 9
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 5
         },
         {
@@ -18513,7 +18635,7 @@
           "count": 3
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -18533,7 +18655,7 @@
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
@@ -18553,7 +18675,7 @@
           "count": 1
         },
         {
-          "key": "74:take / give spell points | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "74:take / give spell points | roll count; negative subtracts spell points; random spell-point low / source sound id in game path; random spell-point high; play-sound flag; message id",
           "count": 1
         },
         {
@@ -18586,6 +18708,10 @@
         {
           "key": "uses_icon_resource",
           "count": 215
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 214
         },
         {
           "key": "extend door codes",
@@ -18652,6 +18778,10 @@
           "count": 53
         },
         {
+          "key": "rout target",
+          "count": 50
+        },
+        {
           "key": "opcode 7 action-data link",
           "count": 42
         },
@@ -18700,6 +18830,10 @@
           "count": 21
         },
         {
+          "key": "mutates encounter option",
+          "count": 20
+        },
+        {
           "key": "copy into door 29",
           "count": 18
         },
@@ -18710,18 +18844,6 @@
         {
           "key": "copy into door 5",
           "count": 16
-        },
-        {
-          "key": "copy into door 77",
-          "count": 16
-        },
-        {
-          "key": "copy into door 9",
-          "count": 16
-        },
-        {
-          "key": "opens shop",
-          "count": 16
         }
       ],
       "diagnostics": {
@@ -18731,9 +18853,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 5367,
-        "entityCount": 3322,
-        "linkCount": 7998,
+        "recordCount": 5581,
+        "entityCount": 3661,
+        "linkCount": 8286,
         "diagnosticCount": 31
       }
     },
@@ -18754,7 +18876,7 @@
         "simpleEncounters": 22,
         "complexEncounters": 38,
         "scriptNodes": 2627,
-        "scriptEdges": 2895,
+        "scriptEdges": 2911,
         "overlayBoxes": 980
       },
       "files": {
@@ -19127,7 +19249,7 @@
           "count": 16
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 15
         },
         {
@@ -19151,11 +19273,11 @@
           "count": 6
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 5
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 5
         },
         {
@@ -19175,7 +19297,7 @@
           "count": 4
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 4
         },
         {
@@ -19183,11 +19305,11 @@
           "count": 4
         },
         {
-          "key": "70:save / restore party position | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "70:save / restore party position | mode: 1 save position, 2 restore position; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 4
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 2
         },
         {
@@ -19203,7 +19325,7 @@
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         },
         {
@@ -19248,6 +19370,10 @@
         {
           "key": "uses_monster",
           "count": 536
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 487
         },
         {
           "key": "teleport target level",
@@ -19370,19 +19496,15 @@
           "count": 11
         },
         {
+          "key": "ability check failure branch",
+          "count": 10
+        },
+        {
+          "key": "ability check success branch",
+          "count": 10
+        },
+        {
           "key": "branch on range of quest flags",
-          "count": 10
-        },
-        {
-          "key": "copy into door 74",
-          "count": 10
-        },
-        {
-          "key": "copy into door 76",
-          "count": 10
-        },
-        {
-          "key": "copy into door 77",
           "count": 10
         }
       ],
@@ -19393,9 +19515,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 6206,
-        "entityCount": 4492,
-        "linkCount": 9664,
+        "recordCount": 6693,
+        "entityCount": 5020,
+        "linkCount": 10183,
         "diagnosticCount": 11
       }
     },
@@ -19416,7 +19538,7 @@
         "simpleEncounters": 22,
         "complexEncounters": 38,
         "scriptNodes": 2627,
-        "scriptEdges": 2895,
+        "scriptEdges": 2911,
         "overlayBoxes": 980
       },
       "files": {
@@ -19789,7 +19911,7 @@
           "count": 16
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 15
         },
         {
@@ -19813,11 +19935,11 @@
           "count": 6
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 5
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 5
         },
         {
@@ -19837,7 +19959,7 @@
           "count": 4
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 4
         },
         {
@@ -19845,11 +19967,11 @@
           "count": 4
         },
         {
-          "key": "70:save / restore party position | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "70:save / restore party position | mode: 1 save position, 2 restore position; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 4
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 2
         },
         {
@@ -19865,7 +19987,7 @@
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         },
         {
@@ -19910,6 +20032,10 @@
         {
           "key": "uses_monster",
           "count": 536
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 487
         },
         {
           "key": "teleport target level",
@@ -20032,19 +20158,15 @@
           "count": 11
         },
         {
+          "key": "ability check failure branch",
+          "count": 10
+        },
+        {
+          "key": "ability check success branch",
+          "count": 10
+        },
+        {
           "key": "branch on range of quest flags",
-          "count": 10
-        },
-        {
-          "key": "copy into door 74",
-          "count": 10
-        },
-        {
-          "key": "copy into door 76",
-          "count": 10
-        },
-        {
-          "key": "copy into door 77",
           "count": 10
         }
       ],
@@ -20055,9 +20177,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 6206,
-        "entityCount": 4492,
-        "linkCount": 9664,
+        "recordCount": 6693,
+        "entityCount": 5020,
+        "linkCount": 10183,
         "diagnosticCount": 11
       }
     },
@@ -20078,7 +20200,7 @@
         "simpleEncounters": 33,
         "complexEncounters": 38,
         "scriptNodes": 2918,
-        "scriptEdges": 3671,
+        "scriptEdges": 3706,
         "overlayBoxes": 660
       },
       "files": {
@@ -20479,7 +20601,7 @@
           "count": 12
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 10
         },
         {
@@ -20491,11 +20613,11 @@
           "count": 8
         },
         {
-          "key": "120:alter NPC or monster during combat | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "120:alter NPC or monster during combat | target class: 1 summoned/NPC-like, 2 normal monster-like; monster name/id to match; maximum instances to alter; replacement icon id; -1 means keep; traitor override; -1 means keep",
           "count": 8
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 7
         },
         {
@@ -20507,7 +20629,7 @@
           "count": 5
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 5
         },
         {
@@ -20523,11 +20645,11 @@
           "count": 3
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 2
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 2
         },
         {
@@ -20535,7 +20657,7 @@
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         },
         {
@@ -20572,6 +20694,10 @@
         {
           "key": "extend door codes",
           "count": 348
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 301
         },
         {
           "key": "branch on quest flag",
@@ -20678,6 +20804,14 @@
           "count": 20
         },
         {
+          "key": "mutates encounter option",
+          "count": 20
+        },
+        {
+          "key": "rout target",
+          "count": 20
+        },
+        {
           "key": "simple encounter jump",
           "count": 20
         },
@@ -20692,18 +20826,6 @@
         {
           "key": "percent chance branch",
           "count": 18
-        },
-        {
-          "key": "party condition branch",
-          "count": 16
-        },
-        {
-          "key": "battle outcome branch",
-          "count": 14
-        },
-        {
-          "key": "copy into door 35",
-          "count": 14
         }
       ],
       "diagnostics": {
@@ -20713,9 +20835,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 68949,
-        "entityCount": 4105,
-        "linkCount": 9923,
+        "recordCount": 69250,
+        "entityCount": 4473,
+        "linkCount": 10294,
         "diagnosticCount": 2
       }
     },
@@ -20736,7 +20858,7 @@
         "simpleEncounters": 8,
         "complexEncounters": 6,
         "scriptNodes": 708,
-        "scriptEdges": 580,
+        "scriptEdges": 593,
         "overlayBoxes": 348
       },
       "files": {
@@ -21074,7 +21196,7 @@
           "count": 6
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 4
         },
         {
@@ -21090,7 +21212,7 @@
           "count": 3
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 2
         },
         {
@@ -21118,11 +21240,11 @@
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
@@ -21155,6 +21277,10 @@
         {
           "key": "uses_monster",
           "count": 313
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 147
         },
         {
           "key": "keepcodes",
@@ -21210,6 +21336,10 @@
         },
         {
           "key": "encounter",
+          "count": 20
+        },
+        {
+          "key": "rout target",
           "count": 20
         },
         {
@@ -21269,6 +21399,14 @@
           "count": 3
         },
         {
+          "key": "ability check failure branch",
+          "count": 2
+        },
+        {
+          "key": "ability check success branch",
+          "count": 2
+        },
+        {
           "key": "gives or displays map",
           "count": 2
         },
@@ -21277,28 +21415,12 @@
           "count": 2
         },
         {
-          "key": "percent chance branch",
+          "key": "mutates encounter option",
           "count": 2
         },
         {
-          "key": "battle message",
-          "count": 1
-        },
-        {
-          "key": "damage/heal message",
-          "count": 1
-        },
-        {
-          "key": "mutates timed encounter",
-          "count": 1
-        },
-        {
-          "key": "selective battle",
-          "count": 1
-        },
-        {
-          "key": "selective battle treasure",
-          "count": 1
+          "key": "percent chance branch",
+          "count": 2
         }
       ],
       "diagnostics": {
@@ -21308,9 +21430,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 2434,
-        "entityCount": 1352,
-        "linkCount": 2498,
+        "recordCount": 2581,
+        "entityCount": 1547,
+        "linkCount": 2671,
         "diagnosticCount": 1
       }
     },
@@ -21331,7 +21453,7 @@
         "simpleEncounters": 12,
         "complexEncounters": 33,
         "scriptNodes": 1230,
-        "scriptEdges": 1153,
+        "scriptEdges": 1155,
         "overlayBoxes": 444
       },
       "files": {
@@ -21664,7 +21786,7 @@
           "count": 16
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 14
         },
         {
@@ -21716,15 +21838,15 @@
           "count": 5
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 4
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 4
         },
         {
-          "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
           "count": 3
         },
         {
@@ -21744,7 +21866,7 @@
           "count": 2
         },
         {
-          "key": "68:alter party fatigue | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "68:alter party fatigue | mode: 1 set exhausted, 2 set rested, 3 scale by percent; unused / legacy; percent for scale mode; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -21764,7 +21886,7 @@
           "count": 1
         },
         {
-          "key": "67:branch on item charges | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "67:branch on item charges | item id; branch mode: 0 macro, 1 simple, 2 complex; minimum charges; enough-charges target; not-enough-charges target",
           "count": 1
         },
         {
@@ -21801,6 +21923,10 @@
         {
           "key": "uses_icon_resource",
           "count": 166
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 147
         },
         {
           "key": "teleport target level",
@@ -21929,10 +22055,6 @@
         {
           "key": "branch on quest flag",
           "count": 4
-        },
-        {
-          "key": "copy into door 15",
-          "count": 4
         }
       ],
       "diagnostics": {
@@ -21942,9 +22064,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 5462,
-        "entityCount": 2376,
-        "linkCount": 4309,
+        "recordCount": 5609,
+        "entityCount": 2594,
+        "linkCount": 4460,
         "diagnosticCount": 0
       }
     },
@@ -22247,7 +22369,7 @@
           "count": 1
         },
         {
-          "key": "68:alter party fatigue | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "68:alter party fatigue | mode: 1 set exhausted, 2 set rested, 3 scale by percent; unused / legacy; percent for scale mode; unused / legacy; unused / legacy",
           "count": 1
         }
       ],
@@ -22264,6 +22386,10 @@
         {
           "key": "uses_icon_resource",
           "count": 113
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 96
         },
         {
           "key": "located_on",
@@ -22389,9 +22515,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 1122,
-        "entityCount": 630,
-        "linkCount": 806,
+        "recordCount": 1218,
+        "entityCount": 807,
+        "linkCount": 902,
         "diagnosticCount": 1
       }
     },
@@ -22412,7 +22538,7 @@
         "simpleEncounters": 23,
         "complexEncounters": 48,
         "scriptNodes": 1180,
-        "scriptEdges": 978,
+        "scriptEdges": 987,
         "overlayBoxes": 478
       },
       "files": {
@@ -22791,7 +22917,7 @@
           "count": 19
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 17
         },
         {
@@ -22851,7 +22977,7 @@
           "count": 3
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 2
         },
         {
@@ -22879,11 +23005,11 @@
           "count": 2
         },
         {
-          "key": "68:alter party fatigue | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "68:alter party fatigue | mode: 1 set exhausted, 2 set rested, 3 scale by percent; unused / legacy; percent for scale mode; unused / legacy; unused / legacy",
           "count": 2
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 1
         },
         {
@@ -22891,7 +23017,7 @@
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
@@ -22916,6 +23042,10 @@
         {
           "key": "located_on",
           "count": 382
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 207
         },
         {
           "key": "keepcodes",
@@ -23042,6 +23172,10 @@
           "count": 10
         },
         {
+          "key": "rout target",
+          "count": 10
+        },
+        {
           "key": "mutates timed encounter",
           "count": 9
         },
@@ -23052,14 +23186,6 @@
         {
           "key": "sets flag false",
           "count": 7
-        },
-        {
-          "key": "branch on misc true branch",
-          "count": 6
-        },
-        {
-          "key": "copy into door 23",
-          "count": 6
         }
       ],
       "diagnostics": {
@@ -23069,9 +23195,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 3857,
-        "entityCount": 2386,
-        "linkCount": 4055,
+        "recordCount": 4064,
+        "entityCount": 2666,
+        "linkCount": 4280,
         "diagnosticCount": 16
       }
     },
@@ -23092,7 +23218,7 @@
         "simpleEncounters": 19,
         "complexEncounters": 35,
         "scriptNodes": 1944,
-        "scriptEdges": 1672,
+        "scriptEdges": 1689,
         "overlayBoxes": 711
       },
       "files": {
@@ -23458,7 +23584,7 @@
           "count": 18
         },
         {
-          "key": "108:alter selected character | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "108:alter selected character | stat selector: attacks, spells, movement, damage, SP, hand-to-hand, stamina, AR, to-hit, missile, magic resistance, prestige; stat delta; unused / legacy; unused / legacy; unused / legacy",
           "count": 13
         },
         {
@@ -23470,11 +23596,11 @@
           "count": 12
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 10
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 10
         },
         {
@@ -23514,7 +23640,7 @@
           "count": 5
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 4
         },
         {
@@ -23534,7 +23660,7 @@
           "count": 3
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 3
         },
         {
@@ -23554,7 +23680,7 @@
           "count": 2
         },
         {
-          "key": "70:save / restore party position | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "70:save / restore party position | mode: 1 save position, 2 restore position; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -23579,6 +23705,10 @@
         {
           "key": "uses_monster",
           "count": 543
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 329
         },
         {
           "key": "extend door codes",
@@ -23677,6 +23807,10 @@
           "count": 20
         },
         {
+          "key": "destroy related monsters target",
+          "count": 20
+        },
+        {
           "key": "mutates random region",
           "count": 20
         },
@@ -23715,14 +23849,6 @@
         {
           "key": "branch on allies in party false branch",
           "count": 8
-        },
-        {
-          "key": "item possession false branch",
-          "count": 8
-        },
-        {
-          "key": "pre-battle message",
-          "count": 8
         }
       ],
       "diagnostics": {
@@ -23732,9 +23858,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 5672,
-        "entityCount": 3260,
-        "linkCount": 6468,
+        "recordCount": 6001,
+        "entityCount": 3627,
+        "linkCount": 6831,
         "diagnosticCount": 10
       }
     },
@@ -23755,7 +23881,7 @@
         "simpleEncounters": 19,
         "complexEncounters": 35,
         "scriptNodes": 1944,
-        "scriptEdges": 1672,
+        "scriptEdges": 1689,
         "overlayBoxes": 711
       },
       "files": {
@@ -24121,7 +24247,7 @@
           "count": 18
         },
         {
-          "key": "108:alter selected character | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "108:alter selected character | stat selector: attacks, spells, movement, damage, SP, hand-to-hand, stamina, AR, to-hit, missile, magic resistance, prestige; stat delta; unused / legacy; unused / legacy; unused / legacy",
           "count": 13
         },
         {
@@ -24133,11 +24259,11 @@
           "count": 12
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 10
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 10
         },
         {
@@ -24177,7 +24303,7 @@
           "count": 5
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 4
         },
         {
@@ -24197,7 +24323,7 @@
           "count": 3
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 3
         },
         {
@@ -24217,7 +24343,7 @@
           "count": 2
         },
         {
-          "key": "70:save / restore party position | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "70:save / restore party position | mode: 1 save position, 2 restore position; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -24242,6 +24368,10 @@
         {
           "key": "uses_monster",
           "count": 543
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 329
         },
         {
           "key": "extend door codes",
@@ -24340,6 +24470,10 @@
           "count": 20
         },
         {
+          "key": "destroy related monsters target",
+          "count": 20
+        },
+        {
           "key": "mutates random region",
           "count": 20
         },
@@ -24378,14 +24512,6 @@
         {
           "key": "branch on allies in party false branch",
           "count": 8
-        },
-        {
-          "key": "item possession false branch",
-          "count": 8
-        },
-        {
-          "key": "pre-battle message",
-          "count": 8
         }
       ],
       "diagnostics": {
@@ -24395,9 +24521,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 5672,
-        "entityCount": 3260,
-        "linkCount": 6468,
+        "recordCount": 6001,
+        "entityCount": 3627,
+        "linkCount": 6831,
         "diagnosticCount": 10
       }
     },
@@ -24561,6 +24687,10 @@
           "count": 107
         },
         {
+          "key": "member_of_resource_type",
+          "count": 43
+        },
+        {
           "key": "configures_map",
           "count": 2
         },
@@ -24596,9 +24726,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 546,
-        "entityCount": 339,
-        "linkCount": 118,
+        "recordCount": 589,
+        "entityCount": 476,
+        "linkCount": 161,
         "diagnosticCount": 0
       }
     },
@@ -24619,7 +24749,7 @@
         "simpleEncounters": 25,
         "complexEncounters": 20,
         "scriptNodes": 1089,
-        "scriptEdges": 1567,
+        "scriptEdges": 1581,
         "overlayBoxes": 319
       },
       "files": {
@@ -24946,7 +25076,7 @@
           "count": 30
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 14
         },
         {
@@ -25006,7 +25136,7 @@
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -25014,7 +25144,7 @@
           "count": 2
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 1
         },
         {
@@ -25085,6 +25215,10 @@
           "count": 56
         },
         {
+          "key": "member_of_resource_type",
+          "count": 52
+        },
+        {
           "key": "shows_message_before",
           "count": 45
         },
@@ -25107,6 +25241,10 @@
         {
           "key": "calls_battle_macro",
           "count": 35
+        },
+        {
+          "key": "mutates encounter option",
+          "count": 28
         },
         {
           "key": "opcode 7 action-data link",
@@ -25175,14 +25313,6 @@
         {
           "key": "random message range start",
           "count": 11
-        },
-        {
-          "key": "copy into door 21",
-          "count": 10
-        },
-        {
-          "key": "copy into door 1",
-          "count": 8
         }
       ],
       "diagnostics": {
@@ -25192,9 +25322,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 2815,
-        "entityCount": 1980,
-        "linkCount": 4927,
+        "recordCount": 2867,
+        "entityCount": 2132,
+        "linkCount": 5007,
         "diagnosticCount": 1
       }
     },
@@ -25215,7 +25345,7 @@
         "simpleEncounters": 25,
         "complexEncounters": 20,
         "scriptNodes": 1089,
-        "scriptEdges": 1567,
+        "scriptEdges": 1581,
         "overlayBoxes": 319
       },
       "files": {
@@ -25542,7 +25672,7 @@
           "count": 30
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 14
         },
         {
@@ -25602,7 +25732,7 @@
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -25610,7 +25740,7 @@
           "count": 2
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 1
         },
         {
@@ -25681,6 +25811,10 @@
           "count": 56
         },
         {
+          "key": "member_of_resource_type",
+          "count": 52
+        },
+        {
           "key": "shows_message_before",
           "count": 45
         },
@@ -25703,6 +25837,10 @@
         {
           "key": "calls_battle_macro",
           "count": 35
+        },
+        {
+          "key": "mutates encounter option",
+          "count": 28
         },
         {
           "key": "opcode 7 action-data link",
@@ -25771,14 +25909,6 @@
         {
           "key": "random message range start",
           "count": 11
-        },
-        {
-          "key": "copy into door 21",
-          "count": 10
-        },
-        {
-          "key": "copy into door 1",
-          "count": 8
         }
       ],
       "diagnostics": {
@@ -25788,9 +25918,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 2815,
-        "entityCount": 1980,
-        "linkCount": 4927,
+        "recordCount": 2867,
+        "entityCount": 2132,
+        "linkCount": 5007,
         "diagnosticCount": 1
       }
     },
@@ -25811,7 +25941,7 @@
         "simpleEncounters": 12,
         "complexEncounters": 43,
         "scriptNodes": 3298,
-        "scriptEdges": 3826,
+        "scriptEdges": 3904,
         "overlayBoxes": 1442
       },
       "files": {
@@ -26164,7 +26294,7 @@
           "count": 34
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 29
         },
         {
@@ -26220,7 +26350,7 @@
           "count": 4
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 4
         },
         {
@@ -26228,11 +26358,11 @@
           "count": 4
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 4
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 3
         },
         {
@@ -26240,7 +26370,7 @@
           "count": 3
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 3
         },
         {
@@ -26260,11 +26390,11 @@
           "count": 3
         },
         {
-          "key": "108:alter selected character | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "108:alter selected character | stat selector: attacks, spells, movement, damage, SP, hand-to-hand, stamina, AR, to-hit, missile, magic resistance, prestige; stat delta; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         }
       ],
@@ -26293,6 +26423,10 @@
         {
           "key": "mutates tile on level",
           "count": 378
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 293
         },
         {
           "key": "extend door codes",
@@ -26351,6 +26485,14 @@
           "count": 70
         },
         {
+          "key": "ability check failure branch",
+          "count": 58
+        },
+        {
+          "key": "ability check success branch",
+          "count": 58
+        },
+        {
           "key": "item possession true branch",
           "count": 54
         },
@@ -26387,6 +26529,10 @@
           "count": 34
         },
         {
+          "key": "rout target",
+          "count": 30
+        },
+        {
           "key": "spawns monster",
           "count": 30
         },
@@ -26413,22 +26559,6 @@
         {
           "key": "gives or displays map",
           "count": 15
-        },
-        {
-          "key": "calls_battle_macro",
-          "count": 13
-        },
-        {
-          "key": "battle macro branch",
-          "count": 12
-        },
-        {
-          "key": "calls_death_macro",
-          "count": 12
-        },
-        {
-          "key": "copy into door 35",
-          "count": 12
         }
       ],
       "diagnostics": {
@@ -26438,9 +26568,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 6420,
-        "entityCount": 4845,
-        "linkCount": 11692,
+        "recordCount": 6713,
+        "entityCount": 5209,
+        "linkCount": 12141,
         "diagnosticCount": 3
       }
     },
@@ -26778,7 +26908,7 @@
           "count": 3
         },
         {
-          "key": "57:change land look | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "57:change land look | new landlook; new darkness flag; target land level; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -26796,6 +26926,10 @@
       ],
       "missingExtracodes": [],
       "linkKinds": [
+        {
+          "key": "member_of_resource_type",
+          "count": 344
+        },
         {
           "key": "uses action-data row",
           "count": 290
@@ -26917,6 +27051,10 @@
           "count": 2
         },
         {
+          "key": "mutates landlook",
+          "count": 2
+        },
+        {
           "key": "dungeon move message",
           "count": 1
         },
@@ -26940,9 +27078,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 1666,
-        "entityCount": 704,
-        "linkCount": 1291,
+        "recordCount": 2010,
+        "entityCount": 1100,
+        "linkCount": 1637,
         "diagnosticCount": 0
       }
     },
@@ -26963,7 +27101,7 @@
         "simpleEncounters": 9,
         "complexEncounters": 4,
         "scriptNodes": 950,
-        "scriptEdges": 685,
+        "scriptEdges": 687,
         "overlayBoxes": 541
       },
       "files": {
@@ -27309,7 +27447,7 @@
           "count": 3
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 2
         },
         {
@@ -27317,7 +27455,7 @@
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -27333,7 +27471,7 @@
           "count": 1
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 1
         },
         {
@@ -27366,6 +27504,10 @@
         {
           "key": "uses_monster",
           "count": 163
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 156
         },
         {
           "key": "mutates tile on level",
@@ -27440,6 +27582,10 @@
           "count": 5
         },
         {
+          "key": "destroy related monsters target",
+          "count": 4
+        },
+        {
           "key": "pre-battle message",
           "count": 3
         },
@@ -27495,9 +27641,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 23519,
-        "entityCount": 1418,
-        "linkCount": 2843,
+        "recordCount": 23675,
+        "entityCount": 1630,
+        "linkCount": 3003,
         "diagnosticCount": 4
       }
     },
@@ -27518,7 +27664,7 @@
         "simpleEncounters": 20,
         "complexEncounters": 14,
         "scriptNodes": 1385,
-        "scriptEdges": 1417,
+        "scriptEdges": 1442,
         "overlayBoxes": 737
       },
       "files": {
@@ -27953,7 +28099,7 @@
           "count": 7
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 7
         },
         {
@@ -27965,11 +28111,11 @@
           "count": 5
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 4
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 4
         },
         {
@@ -28001,7 +28147,7 @@
           "count": 2
         },
         {
-          "key": "121:de-animate lower level undead | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "121:de-animate lower level undead | unused / legacy; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
@@ -28013,11 +28159,11 @@
           "count": 1
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 1
         },
         {
-          "key": "57:change land look | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "57:change land look | new landlook; new darkness flag; target land level; unused / legacy; unused / legacy",
           "count": 1
         },
         {
@@ -28136,6 +28282,10 @@
           "count": 52
         },
         {
+          "key": "rout target",
+          "count": 40
+        },
+        {
           "key": "choice result",
           "count": 38
         },
@@ -28161,6 +28311,10 @@
         },
         {
           "key": "battle message",
+          "count": 21
+        },
+        {
+          "key": "member_of_resource_type",
           "count": 21
         },
         {
@@ -28196,6 +28350,10 @@
           "count": 10
         },
         {
+          "key": "destroy related monsters target",
+          "count": 8
+        },
+        {
           "key": "opcode 7 action-data link",
           "count": 8
         },
@@ -28206,18 +28364,6 @@
         {
           "key": "percent chance branch",
           "count": 6
-        },
-        {
-          "key": "opens shop",
-          "count": 5
-        },
-        {
-          "key": "battle outcome check range end",
-          "count": 4
-        },
-        {
-          "key": "branch on allies in party true branch",
-          "count": 4
         }
       ],
       "diagnostics": {
@@ -28227,9 +28373,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 8196,
-        "entityCount": 2568,
-        "linkCount": 5180,
+        "recordCount": 8217,
+        "entityCount": 2708,
+        "linkCount": 5252,
         "diagnosticCount": 492
       }
     },
@@ -28531,6 +28677,10 @@
           "count": 52
         },
         {
+          "key": "member_of_resource_type",
+          "count": 50
+        },
+        {
           "key": "located_on",
           "count": 27
         },
@@ -28650,9 +28800,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 1110,
-        "entityCount": 408,
-        "linkCount": 314,
+        "recordCount": 1160,
+        "entityCount": 546,
+        "linkCount": 364,
         "diagnosticCount": 0
       }
     },
@@ -29079,7 +29229,7 @@
           "count": 6
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 6
         },
         {
@@ -29131,7 +29281,7 @@
           "count": 2
         },
         {
-          "key": "67:branch on item charges | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "67:branch on item charges | item id; branch mode: 0 macro, 1 simple, 2 complex; minimum charges; enough-charges target; not-enough-charges target",
           "count": 2
         },
         {
@@ -29202,6 +29352,10 @@
         {
           "key": "located_on",
           "count": 186
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 170
         },
         {
           "key": "uses_monster",
@@ -29346,10 +29500,6 @@
         {
           "key": "battle message",
           "count": 1
-        },
-        {
-          "key": "random message range end",
-          "count": 1
         }
       ],
       "diagnostics": {
@@ -29359,9 +29509,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 15973,
-        "entityCount": 998,
-        "linkCount": 1727,
+        "recordCount": 16143,
+        "entityCount": 1225,
+        "linkCount": 1897,
         "diagnosticCount": 244
       }
     },
@@ -29382,7 +29532,7 @@
         "simpleEncounters": 136,
         "complexEncounters": 93,
         "scriptNodes": 8546,
-        "scriptEdges": 14817,
+        "scriptEdges": 14842,
         "overlayBoxes": 2371
       },
       "files": {
@@ -29775,7 +29925,7 @@
           "count": 38
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 38
         },
         {
@@ -29803,7 +29953,7 @@
           "count": 18
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 13
         },
         {
@@ -29815,7 +29965,7 @@
           "count": 11
         },
         {
-          "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
           "count": 11
         },
         {
@@ -29823,7 +29973,7 @@
           "count": 8
         },
         {
-          "key": "68:alter party fatigue | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "68:alter party fatigue | mode: 1 set exhausted, 2 set rested, 3 scale by percent; unused / legacy; percent for scale mode; unused / legacy; unused / legacy",
           "count": 8
         },
         {
@@ -29835,7 +29985,7 @@
           "count": 6
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 5
         },
         {
@@ -29916,6 +30066,10 @@
         {
           "key": "occupies_region",
           "count": 312
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 291
         },
         {
           "key": "shows_message_before",
@@ -30000,10 +30154,6 @@
         {
           "key": "battle macro branch",
           "count": 62
-        },
-        {
-          "key": "copy into door 14",
-          "count": 52
         }
       ],
       "diagnostics": {
@@ -30013,9 +30163,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 24923,
-        "entityCount": 9179,
-        "linkCount": 38163,
+        "recordCount": 25214,
+        "entityCount": 9544,
+        "linkCount": 38504,
         "diagnosticCount": 3
       }
     },
@@ -30036,7 +30186,7 @@
         "simpleEncounters": 136,
         "complexEncounters": 93,
         "scriptNodes": 8546,
-        "scriptEdges": 14817,
+        "scriptEdges": 14842,
         "overlayBoxes": 2371
       },
       "files": {
@@ -30429,7 +30579,7 @@
           "count": 38
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 38
         },
         {
@@ -30457,7 +30607,7 @@
           "count": 18
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 13
         },
         {
@@ -30469,7 +30619,7 @@
           "count": 11
         },
         {
-          "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
           "count": 11
         },
         {
@@ -30477,7 +30627,7 @@
           "count": 8
         },
         {
-          "key": "68:alter party fatigue | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "68:alter party fatigue | mode: 1 set exhausted, 2 set rested, 3 scale by percent; unused / legacy; percent for scale mode; unused / legacy; unused / legacy",
           "count": 8
         },
         {
@@ -30489,7 +30639,7 @@
           "count": 6
         },
         {
-          "key": "123:cause rout | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "123:cause rout | monster id 1; monster id 2; monster id 3; monster id 4; monster id 5",
           "count": 5
         },
         {
@@ -30570,6 +30720,10 @@
         {
           "key": "occupies_region",
           "count": 312
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 291
         },
         {
           "key": "shows_message_before",
@@ -30654,10 +30808,6 @@
         {
           "key": "battle macro branch",
           "count": 62
-        },
-        {
-          "key": "copy into door 14",
-          "count": 52
         }
       ],
       "diagnostics": {
@@ -30667,9 +30817,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 24923,
-        "entityCount": 9179,
-        "linkCount": 38163,
+        "recordCount": 25214,
+        "entityCount": 9544,
+        "linkCount": 38504,
         "diagnosticCount": 3
       }
     },
@@ -30690,7 +30840,7 @@
         "simpleEncounters": 17,
         "complexEncounters": 10,
         "scriptNodes": 297,
-        "scriptEdges": 326,
+        "scriptEdges": 332,
         "overlayBoxes": 144
       },
       "files": {
@@ -31015,7 +31165,7 @@
           "count": 2
         },
         {
-          "key": "120:alter NPC or monster during combat | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "120:alter NPC or monster during combat | target class: 1 summoned/NPC-like, 2 normal monster-like; monster name/id to match; maximum instances to alter; replacement icon id; -1 means keep; traitor override; -1 means keep",
           "count": 2
         },
         {
@@ -31039,7 +31189,7 @@
           "count": 2
         },
         {
-          "key": "57:change land look | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "57:change land look | new landlook; new darkness flag; target land level; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -31051,7 +31201,7 @@
           "count": 2
         },
         {
-          "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
           "count": 2
         },
         {
@@ -31059,11 +31209,11 @@
           "count": 2
         },
         {
-          "key": "70:save / restore party position | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "70:save / restore party position | mode: 1 save position, 2 restore position; unused / legacy; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
-          "key": "74:take / give spell points | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "74:take / give spell points | roll count; negative subtracts spell points; random spell-point low / source sound id in game path; random spell-point high; play-sound flag; message id",
           "count": 2
         },
         {
@@ -31107,11 +31257,11 @@
           "count": 1
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 1
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 1
         },
         {
@@ -31127,7 +31277,7 @@
           "count": 1
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 1
         },
         {
@@ -31143,7 +31293,7 @@
           "count": 1
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 1
         },
         {
@@ -31172,6 +31322,10 @@
         {
           "key": "uses_icon_resource",
           "count": 131
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 25
         },
         {
           "key": "gosub",
@@ -31218,6 +31372,10 @@
           "count": 4
         },
         {
+          "key": "combat alteration target",
+          "count": 4
+        },
+        {
           "key": "extend door codes",
           "count": 4
         },
@@ -31236,6 +31394,14 @@
         {
           "key": "occupies_region",
           "count": 3
+        },
+        {
+          "key": "ability check failure branch",
+          "count": 2
+        },
+        {
+          "key": "ability check success branch",
+          "count": 2
         },
         {
           "key": "battle outcome branch",
@@ -31290,27 +31456,11 @@
           "count": 2
         },
         {
-          "key": "item possession true branch",
+          "key": "item charges false branch",
           "count": 2
         },
         {
-          "key": "missing condition branch",
-          "count": 2
-        },
-        {
-          "key": "mutates random region",
-          "count": 2
-        },
-        {
-          "key": "opens shop",
-          "count": 2
-        },
-        {
-          "key": "party condition branch",
-          "count": 2
-        },
-        {
-          "key": "percent chance branch",
+          "key": "item charges true branch",
           "count": 2
         }
       ],
@@ -31321,9 +31471,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 947,
-        "entityCount": 716,
-        "linkCount": 1044,
+        "recordCount": 972,
+        "entityCount": 845,
+        "linkCount": 1084,
         "diagnosticCount": 4
       }
     },
@@ -31344,7 +31494,7 @@
         "simpleEncounters": 21,
         "complexEncounters": 33,
         "scriptNodes": 1640,
-        "scriptEdges": 2107,
+        "scriptEdges": 2127,
         "overlayBoxes": 547
       },
       "files": {
@@ -31714,7 +31864,7 @@
           "count": 14
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 12
         },
         {
@@ -31742,7 +31892,7 @@
           "count": 6
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 4
         },
         {
@@ -31754,7 +31904,7 @@
           "count": 3
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 3
         },
         {
@@ -31774,7 +31924,7 @@
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -31815,6 +31965,10 @@
         {
           "key": "extend door codes",
           "count": 152
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 139
         },
         {
           "key": "choice result",
@@ -31885,6 +32039,10 @@
           "count": 28
         },
         {
+          "key": "mutates encounter option",
+          "count": 24
+        },
+        {
           "key": "gosub",
           "count": 23
         },
@@ -31939,14 +32097,6 @@
         {
           "key": "battle macro branch",
           "count": 12
-        },
-        {
-          "key": "copy into door 75",
-          "count": 12
-        },
-        {
-          "key": "gives or displays map",
-          "count": 11
         }
       ],
       "diagnostics": {
@@ -31956,9 +32106,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 8025,
-        "entityCount": 2724,
-        "linkCount": 5658,
+        "recordCount": 8164,
+        "entityCount": 2959,
+        "linkCount": 5837,
         "diagnosticCount": 5
       }
     },
@@ -31979,7 +32129,7 @@
         "simpleEncounters": 21,
         "complexEncounters": 33,
         "scriptNodes": 1640,
-        "scriptEdges": 2107,
+        "scriptEdges": 2127,
         "overlayBoxes": 547
       },
       "files": {
@@ -32349,7 +32499,7 @@
           "count": 14
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 12
         },
         {
@@ -32377,7 +32527,7 @@
           "count": 6
         },
         {
-          "key": "31:branch on ability check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "31:branch on ability check | ability/attribute id; difficulty adjustment; attribute-check flag; 0 means special ability; success macro; failure macro",
           "count": 4
         },
         {
@@ -32389,7 +32539,7 @@
           "count": 3
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 3
         },
         {
@@ -32409,7 +32559,7 @@
           "count": 2
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 2
         },
         {
@@ -32450,6 +32600,10 @@
         {
           "key": "extend door codes",
           "count": 152
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 139
         },
         {
           "key": "choice result",
@@ -32520,6 +32674,10 @@
           "count": 28
         },
         {
+          "key": "mutates encounter option",
+          "count": 24
+        },
+        {
           "key": "gosub",
           "count": 23
         },
@@ -32574,14 +32732,6 @@
         {
           "key": "battle macro branch",
           "count": 12
-        },
-        {
-          "key": "copy into door 75",
-          "count": 12
-        },
-        {
-          "key": "gives or displays map",
-          "count": 11
         }
       ],
       "diagnostics": {
@@ -32591,9 +32741,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 8025,
-        "entityCount": 2724,
-        "linkCount": 5658,
+        "recordCount": 8164,
+        "entityCount": 2959,
+        "linkCount": 5837,
         "diagnosticCount": 5
       }
     },
@@ -32614,7 +32764,7 @@
         "simpleEncounters": 151,
         "complexEncounters": 91,
         "scriptNodes": 11381,
-        "scriptEdges": 25180,
+        "scriptEdges": 25195,
         "overlayBoxes": 2339
       },
       "files": {
@@ -33059,11 +33209,11 @@
           "count": 23
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 17
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 15
         },
         {
@@ -33075,7 +33225,7 @@
           "count": 11
         },
         {
-          "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
           "count": 9
         },
         {
@@ -33148,6 +33298,10 @@
         {
           "key": "battle message",
           "count": 601
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 571
         },
         {
           "key": "teleport target level",
@@ -33240,10 +33394,6 @@
         {
           "key": "starts battle range end",
           "count": 104
-        },
-        {
-          "key": "battle macro branch",
-          "count": 100
         }
       ],
       "diagnostics": {
@@ -33253,9 +33403,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 75857,
-        "entityCount": 11646,
-        "linkCount": 58229,
+        "recordCount": 76428,
+        "entityCount": 12281,
+        "linkCount": 58830,
         "diagnosticCount": 57
       }
     },
@@ -33276,7 +33426,7 @@
         "simpleEncounters": 151,
         "complexEncounters": 91,
         "scriptNodes": 11381,
-        "scriptEdges": 25180,
+        "scriptEdges": 25195,
         "overlayBoxes": 2339
       },
       "files": {
@@ -33721,11 +33871,11 @@
           "count": 23
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 17
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 15
         },
         {
@@ -33737,7 +33887,7 @@
           "count": 11
         },
         {
-          "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
           "count": 9
         },
         {
@@ -33810,6 +33960,10 @@
         {
           "key": "battle message",
           "count": 601
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 571
         },
         {
           "key": "teleport target level",
@@ -33902,10 +34056,6 @@
         {
           "key": "starts battle range end",
           "count": 104
-        },
-        {
-          "key": "battle macro branch",
-          "count": 100
         }
       ],
       "diagnostics": {
@@ -33915,9 +34065,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 75857,
-        "entityCount": 11646,
-        "linkCount": 58229,
+        "recordCount": 76428,
+        "entityCount": 12281,
+        "linkCount": 58830,
         "diagnosticCount": 57
       }
     },
@@ -33938,7 +34088,7 @@
         "simpleEncounters": 14,
         "complexEncounters": 26,
         "scriptNodes": 3051,
-        "scriptEdges": 2381,
+        "scriptEdges": 2383,
         "overlayBoxes": 402
       },
       "files": {
@@ -34369,7 +34519,7 @@
           "count": 15
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 13
         },
         {
@@ -34405,11 +34555,11 @@
           "count": 5
         },
         {
-          "key": "108:alter selected character | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "108:alter selected character | stat selector: attacks, spells, movement, damage, SP, hand-to-hand, stamina, AR, to-hit, missile, magic resistance, prestige; stat delta; unused / legacy; unused / legacy; unused / legacy",
           "count": 3
         },
         {
-          "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
           "count": 3
         },
         {
@@ -34417,15 +34567,15 @@
           "count": 2
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         },
         {
-          "key": "74:take / give spell points | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "74:take / give spell points | roll count; negative subtracts spell points; random spell-point low / source sound id in game path; random spell-point high; play-sound flag; message id",
           "count": 2
         },
         {
@@ -34433,11 +34583,11 @@
           "count": 1
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 1
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 1
         },
         {
@@ -34702,6 +34852,10 @@
           "count": 165
         },
         {
+          "key": "member_of_resource_type",
+          "count": 140
+        },
+        {
           "key": "mutates tile on level",
           "count": 129
         },
@@ -34816,10 +34970,6 @@
         {
           "key": "copy into door 37",
           "count": 8
-        },
-        {
-          "key": "gives or displays map",
-          "count": 7
         }
       ],
       "diagnostics": {
@@ -34829,9 +34979,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 6321,
-        "entityCount": 3831,
-        "linkCount": 12699,
+        "recordCount": 6461,
+        "entityCount": 4031,
+        "linkCount": 12843,
         "diagnosticCount": 3319
       }
     },
@@ -34852,7 +35002,7 @@
         "simpleEncounters": 14,
         "complexEncounters": 26,
         "scriptNodes": 3051,
-        "scriptEdges": 2381,
+        "scriptEdges": 2383,
         "overlayBoxes": 402
       },
       "files": {
@@ -35283,7 +35433,7 @@
           "count": 15
         },
         {
-          "key": "43:give condition | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "43:give condition | target scope: 0 party, 1 picked, 2 alive; condition index; condition duration/value delta; sound id; unused / legacy",
           "count": 13
         },
         {
@@ -35319,11 +35469,11 @@
           "count": 5
         },
         {
-          "key": "108:alter selected character | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "108:alter selected character | stat selector: attacks, spells, movement, damage, SP, hand-to-hand, stamina, AR, to-hit, missile, magic resistance, prestige; stat delta; unused / legacy; unused / legacy; unused / legacy",
           "count": 3
         },
         {
-          "key": "53:pick on caste | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "53:pick on caste | exact caste id; caste group: 1 fighter, 2 magical, 3 thief/monk; source set: 0 all, 1 living, 2 current picked; unused / legacy; unused / legacy",
           "count": 3
         },
         {
@@ -35331,15 +35481,15 @@
           "count": 2
         },
         {
-          "key": "41:eliminate simple encounter option | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "41:eliminate simple encounter option | simple encounter id; one-based choice/result slot; unused / legacy; unused / legacy; unused / legacy",
           "count": 2
         },
         {
-          "key": "50:pick by race / caste / gender | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "50:pick by race / caste / gender | selector: 0 race, 1 gender, 2 caste, 3 race class, 4 caste class; gender value; race/caste/class value; unused / legacy; living-only flag",
           "count": 2
         },
         {
-          "key": "74:take / give spell points | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "74:take / give spell points | roll count; negative subtracts spell points; random spell-point low / source sound id in game path; random spell-point high; play-sound flag; message id",
           "count": 2
         },
         {
@@ -35347,11 +35497,11 @@
           "count": 1
         },
         {
-          "key": "125:destroy related monsters | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "125:destroy related monsters | monster name/id to destroy; maximum instances; 0 means 100; unused / legacy; unused / legacy; include traitor-side flag",
           "count": 1
         },
         {
-          "key": "30:pick by ability or attribute check | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "30:pick by ability or attribute check | ability/attribute id; negative reverses result; difficulty adjustment; source set: 0 current picked, 1 all, 2 living; attribute-check flag; 0 means special ability; unused / legacy",
           "count": 1
         },
         {
@@ -35616,6 +35766,10 @@
           "count": 165
         },
         {
+          "key": "member_of_resource_type",
+          "count": 140
+        },
+        {
           "key": "mutates tile on level",
           "count": 129
         },
@@ -35730,10 +35884,6 @@
         {
           "key": "copy into door 37",
           "count": 8
-        },
-        {
-          "key": "gives or displays map",
-          "count": 7
         }
       ],
       "diagnostics": {
@@ -35743,9 +35893,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 6321,
-        "entityCount": 3831,
-        "linkCount": 12699,
+        "recordCount": 6461,
+        "entityCount": 4031,
+        "linkCount": 12843,
         "diagnosticCount": 3319
       }
     },
@@ -35766,7 +35916,7 @@
         "simpleEncounters": 57,
         "complexEncounters": 85,
         "scriptNodes": 7459,
-        "scriptEdges": 16012,
+        "scriptEdges": 16029,
         "overlayBoxes": 2032
       },
       "files": {
@@ -36211,7 +36361,7 @@
           "count": 15
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 13
         },
         {
@@ -36219,7 +36369,7 @@
           "count": 7
         },
         {
-          "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
           "count": 7
         },
         {
@@ -36276,6 +36426,10 @@
         {
           "key": "coward branch",
           "count": 836
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 589
         },
         {
           "key": "time in range branch",
@@ -36388,10 +36542,6 @@
         {
           "key": "sets flag true",
           "count": 79
-        },
-        {
-          "key": "branch on misc true branch",
-          "count": 76
         }
       ],
       "diagnostics": {
@@ -36401,9 +36551,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 12277,
-        "entityCount": 8306,
-        "linkCount": 37188,
+        "recordCount": 12866,
+        "entityCount": 8984,
+        "linkCount": 37811,
         "diagnosticCount": 17
       }
     },
@@ -36424,7 +36574,7 @@
         "simpleEncounters": 57,
         "complexEncounters": 85,
         "scriptNodes": 7459,
-        "scriptEdges": 16012,
+        "scriptEdges": 16029,
         "overlayBoxes": 2032
       },
       "files": {
@@ -36869,7 +37019,7 @@
           "count": 15
         },
         {
-          "key": "90:take away victory | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "90:take away victory | experience/victory amount; scope: 1 picked, 2 spread around, other each; unused / legacy; unused / legacy; unused / legacy",
           "count": 13
         },
         {
@@ -36877,7 +37027,7 @@
           "count": 7
         },
         {
-          "key": "69:set spell casting / charging flags | extracode[0]; extracode[1]; extracode[2]; extracode[3]; extracode[4]",
+          "key": "69:set spell casting / charging flags | spellcasting flag; monstercasting flag; spellcharging flag; unused / legacy; unused / legacy",
           "count": 7
         },
         {
@@ -36934,6 +37084,10 @@
         {
           "key": "coward branch",
           "count": 836
+        },
+        {
+          "key": "member_of_resource_type",
+          "count": 589
         },
         {
           "key": "time in range branch",
@@ -37046,10 +37200,6 @@
         {
           "key": "sets flag true",
           "count": 79
-        },
-        {
-          "key": "branch on misc true branch",
-          "count": 76
         }
       ],
       "diagnostics": {
@@ -37059,9 +37209,9 @@
       },
       "schemaSummary": {
         "sourceCount": 24,
-        "recordCount": 12277,
-        "entityCount": 8306,
-        "linkCount": 37188,
+        "recordCount": 12866,
+        "entityCount": 8984,
+        "linkCount": 37811,
         "diagnosticCount": 17
       }
     }

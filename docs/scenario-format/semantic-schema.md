@@ -37,6 +37,8 @@ existing parser output. Existing fields remain in place for UI compatibility.
 | Scenario | `scenario:<name>` |
 | File source | `source:file:<file name>` |
 | Resource fork source | `source:resource-fork:Scenario` |
+| Resource type | `resource-type:<type>` |
+| Resource entry/reference | `resource:<type>:<id>` |
 | Map | `map:<land|dungeon>:<level>` |
 | Trigger | `trigger:<land|dungeon>:<level>:<record>` |
 | Macro | `macro:<record>` |
@@ -94,10 +96,11 @@ The first version normalizes the surfaces already parsed by the utility:
 - fixed record collections for battles, monsters, shops, strings, maps,
   treasure, thief/time encounters, contact info, solids, and menu cache, with
   per-record byte ranges
-- scenario resource type inventory
+- scenario resource type inventory plus individual resource-fork records/entities
+  for every decoded `PICT`, `cicn`, `STR#`, and other resource entry
 - graph/action links, unresolved-reference diagnostics, unknown-opcode
   diagnostics, and missing-EDCD diagnostics
-- monster links to icon resource type evidence and death macros
+- monster links to individual `cicn` resource references and death macros
 
 ## Planned Expansion
 
@@ -105,7 +108,7 @@ Next passes should add:
 
 - reverse index generation for "what links here?"
 - complete opcode-specific link expansion by opcode and `extracode` shape
-- resource-level asset entities for individual `PICT`, `cicn`, `STR#`, and
-  custom tile/icon resources
+- shared-resource provenance that distinguishes scenario resource bytes from
+  Family Jewels/base-resource fallback bytes
 - generated-cache and save-state entities for one-shot and runtime-mutating
   behaviors

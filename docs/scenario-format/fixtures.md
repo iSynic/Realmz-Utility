@@ -24,8 +24,8 @@ minimal parser smoke test.
 
 Current fixture-specific assertions also check message links, battle-to-monster
 links, City of Bywater battle/map links, Prelude dungeon `PICT 302` render
-evidence, custom `cicn` coverage for War/Mithril, and `Data MENU` decoding when
-that file is present in the selected fixture root.
+evidence, custom `cicn` coverage for War/Mithril, individual resource entities,
+and `Data MENU` decoding when that file is present in the selected fixture root.
 
 ## Fixture Assertions To Add
 
@@ -37,6 +37,7 @@ that file is present in the selected fixture root.
 | Map names | Resource-backed map names link to `Data MD2` and level entities with labeled evidence. |
 | Dungeon rendering | `Data DL` uses top-down dungeon field bits and shared `PICT 302` art, not landlook tile atlases. |
 | Custom assets | Scenario `cicn`/`PICT` resources override or supplement Family Jewels resources where the game would. |
+| Resource links | Monster icon links target individual `resource:cicn:<id>` references; show-picture actions target individual `resource:PICT:<id>` references. |
 | Partial records | Partial legacy encounter/string records are reported as compatibility diagnostics, not crashes. |
 | Mutations | Opcode/state changes emit links for quest flags, map mutation, generated caches, and one-shot behavior. |
 

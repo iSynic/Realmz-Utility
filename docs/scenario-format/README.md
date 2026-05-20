@@ -28,6 +28,8 @@ live in this repository.
   highlights, endian behavior, and compatibility rules.
 - [Opcode Runtime Reference](opcode-runtime-reference.md): normalized action
   opcode rules, EDCD coverage policy, and high-linkage opcode shapes.
+- [Resource Fork Taxonomy](resource-fork-taxonomy.md): observed `PICT`, `cicn`,
+  `STR#`, sound/text/style, and unknown resource families.
 - [Container Specs](containers/README.md): deeper source-backed notes for action
   records, maps/random metadata, encounters, support records, assets, and
   runtime caches.

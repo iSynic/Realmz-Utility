@@ -29,15 +29,19 @@ ranges, installed reference counts, EDCD-use markers, and branch markers.
 | `12` / `13` / `25` | map icon or trigger/door mutation | `mutates_tile`, `mutates_trigger` |
 | `20` / `45` | teleport or teleport-only | `loads_map`, `moves_party`, `shows_message` |
 | `23` / `-23` / `92` | random-region mutation | `mutates_random_region` |
-| `27` | show picture | `uses_resource:PICT` |
+| `27` | show picture | `uses_resource:PICT:<id>` |
 | `29` | give/display map | `uses_map_record` |
+| `30` / `31` | pick/branch by attribute or special ability check | `branches_to`, `calls_macro` |
 | `39` | extend/load more door codes | `calls_macro` |
+| `41` / `43` | mutate encounter option or apply condition | `mutates_encounter_state`, `alters_character_state` |
 | `46` / `47` / `72` / `76` / `77` | quest flag/value read/write | `reads_flag`, `writes_flag`, `branches_to` |
 | `48` / `56` / `107` | selective/battle outcome flow | `starts_battle`, `calls_macro`, `shows_message` |
+| `50` / `52` / `53` | character selection filters | `selects_characters` |
 | `54` | timed encounter mutation | `mutates_time_encounter` |
 | `57` / `106` | landlook/darkness mutation | `changes_rendering`, `mutates_runtime_state` |
+| `67` / `68` / `69` / `70` / `74` / `90` / `108` | item-charge branch and party/character state changes | `branches_to`, `alters_party_state`, `alters_character_state` |
 | `85` / `86` / `87` | random/misc/allies branch | `branches_to`, `calls_macro`, `shows_message` |
-| `124` / `126` | combat spawn or combat-round macro | `uses_monster`, `calls_macro` |
+| `120` / `123` / `124` / `125` / `126` | combat monster mutation/spawn/rout/destroy or combat-round macro | `uses_monster`, `uses_resource:cicn:<id>`, `calls_macro` |
 
 ## EDCD Coverage Policy
 
