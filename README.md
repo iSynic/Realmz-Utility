@@ -117,6 +117,28 @@ This imports every render landlook used by the scenario, plus raw metadata landl
 
 See `docs/format-decoder-roadmap.md` for the current resource-decoding model and next evidence targets.
 
+## Scenario Format Archeology
+
+The repo now includes a source-backed scenario format documentation and schema
+track under `docs/scenario-format`. The parser still returns the existing UI
+fields, but also emits `semanticSchema` from `analyzeScenario()` with normalized
+sources, records, entities, links, evidence, and diagnostics.
+
+Generate a compact corpus inventory:
+
+```powershell
+npm run scenario:inventory
+```
+
+Smoke-check the docs and schema fixtures:
+
+```powershell
+npm run scenario:check
+```
+
+The generator treats `F:\Realmz` as read-only evidence and writes reports under
+`docs\scenario-format\generated`.
+
 ## Next Format Passes
 
 Good next slices:

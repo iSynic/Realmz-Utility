@@ -2,6 +2,10 @@
 
 This project should converge on a modern, inspectable schema for classic Fantasoft, third-party, and Divinity scenario data. The working rule is that raw bytes, decoded records, semantic links, and observed engine behavior should stay separate until the evidence says they are the same thing.
 
+The active documentation and schema track now lives under
+[`docs/scenario-format`](scenario-format/README.md). This roadmap remains the
+scratchpad for focused decoder discoveries.
+
 ## Current Model
 
 - `raw`: source file/resource, record index, byte offsets, primitive values, and checksums.

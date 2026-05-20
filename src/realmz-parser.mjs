@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { extractResourceFork } from "./resource-fork.mjs";
+import { buildSemanticSchema } from "./semantic-schema.mjs";
 import crypto from "node:crypto";
 
 const MAP_SIZE = 90;
@@ -1525,14 +1526,55 @@ export async function analyzeScenario(scenarioPath) {
     "Data MENU",
     "Data Solids",
   ];
+  const scenario = {
+    name: path.basename(resolvedPath),
+    path: resolvedPath,
+    analyzedAt: new Date().toISOString(),
+  };
+  const files = await Promise.all(trackedFiles.map((name) => fileSummary(resolvedPath, name)));
+  const alignment = {
+    landFields: inputCount(dataLD, FIELD_BYTES),
+    dungeonFields: inputCount(dataDL, FIELD_BYTES),
+    landDoors: inputCount(dataDD, DOOR_BYTES * DOORS_PER_LEVEL),
+    dungeonDoors: inputCount(dataDDD, DOOR_BYTES * DOORS_PER_LEVEL),
+    landRandom: inputCount(dataRD, RANDLEVEL_BYTES),
+    dungeonRandom: inputCount(dataRDD, RANDLEVEL_BYTES),
+    simpleEncounters: inputCount(dataED, SIMPLE_ENCOUNTER_BYTES, SIMPLE_STRUCT_BYTES),
+    complexEncounters: inputCount(dataED2, COMPLEX_ENCOUNTER_BYTES, COMPLEX_STRUCT_BYTES),
+    macros: inputCount(dataED3, DOOR_BYTES),
+    extracodes: inputCount(dataEDCD, EXTRACODE_BYTES),
+    battles: inputCount(dataBD, BATTLE_BYTES),
+    monsters: inputCount(dataMD, MONSTER_BYTES),
+    shops: inputCount(dataSD, SHOP_BYTES),
+    strings: inputCount(dataSD2, STRING_BYTES),
+    maps: inputCount(dataMD2, MAP_RECORD_BYTES),
+    treasure: inputCount(dataTD, TREASURE_BYTES),
+    thief: inputCount(dataTD2, THIEF_BYTES),
+    timeEncounters: inputCount(dataTD3, TIME_ENCOUNTER_BYTES),
+    contact: inputCount(dataCI, CONTACT_BYTES),
+    menu: inputCount(dataMENU, MENU_BYTES),
+    solids: inputCount(dataSolids, SOLIDS_BYTES),
+  };
+  const semanticSchema = buildSemanticSchema({
+    scenario,
+    files,
+    alignment,
+    assets,
+    resources,
+    levels,
+    randLevels,
+    doors,
+    activeDoors,
+    extracodes,
+    simpleEncounters,
+    complexEncounters,
+    graph,
+    records,
+  });
 
   return {
-    scenario: {
-      name: path.basename(resolvedPath),
-      path: resolvedPath,
-      analyzedAt: new Date().toISOString(),
-    },
-    files: await Promise.all(trackedFiles.map((name) => fileSummary(resolvedPath, name))),
+    scenario,
+    files,
     counts: {
       levels: levels.length,
       landLevels: levels.filter((level) => level.type === "land").length,
@@ -1549,29 +1591,7 @@ export async function analyzeScenario(scenarioPath) {
       scriptEdges: graph.edges.length,
       overlayBoxes: overlayBoxes.length,
     },
-    alignment: {
-      landFields: inputCount(dataLD, FIELD_BYTES),
-      dungeonFields: inputCount(dataDL, FIELD_BYTES),
-      landDoors: inputCount(dataDD, DOOR_BYTES * DOORS_PER_LEVEL),
-      dungeonDoors: inputCount(dataDDD, DOOR_BYTES * DOORS_PER_LEVEL),
-      landRandom: inputCount(dataRD, RANDLEVEL_BYTES),
-      dungeonRandom: inputCount(dataRDD, RANDLEVEL_BYTES),
-      simpleEncounters: inputCount(dataED, SIMPLE_ENCOUNTER_BYTES, SIMPLE_STRUCT_BYTES),
-      complexEncounters: inputCount(dataED2, COMPLEX_ENCOUNTER_BYTES, COMPLEX_STRUCT_BYTES),
-      macros: inputCount(dataED3, DOOR_BYTES),
-      extracodes: inputCount(dataEDCD, EXTRACODE_BYTES),
-      battles: inputCount(dataBD, BATTLE_BYTES),
-      monsters: inputCount(dataMD, MONSTER_BYTES),
-      shops: inputCount(dataSD, SHOP_BYTES),
-      strings: inputCount(dataSD2, STRING_BYTES),
-      maps: inputCount(dataMD2, MAP_RECORD_BYTES),
-      treasure: inputCount(dataTD, TREASURE_BYTES),
-      thief: inputCount(dataTD2, THIEF_BYTES),
-      timeEncounters: inputCount(dataTD3, TIME_ENCOUNTER_BYTES),
-      contact: inputCount(dataCI, CONTACT_BYTES),
-      menu: inputCount(dataMENU, MENU_BYTES),
-      solids: inputCount(dataSolids, SOLIDS_BYTES),
-    },
+    alignment,
     assets,
     resources,
     levels,
@@ -1586,6 +1606,7 @@ export async function analyzeScenario(scenarioPath) {
       highRiskOpcodes: graph.highRiskOpcodes,
     },
     records,
+    semanticSchema,
     overlayBoxes,
     encounters: {
       simple: simpleEncounters,

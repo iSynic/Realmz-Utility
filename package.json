@@ -12,6 +12,8 @@
     "tauri": "tauri",
     "desktop": "tauri dev",
     "prepare:runtime": "node scripts/prepare-runtime-assets.mjs",
+    "scenario:inventory": "node scripts/generate-scenario-format-inventory.mjs",
+    "scenario:check": "node scripts/check-scenario-format-artifacts.mjs",
     "dist": "npm run prepare:runtime && tauri build",
     "dist:win": "npm run prepare:runtime && tauri build --bundles nsis",
     "dist:linux": "npm run prepare:runtime && tauri build --bundles appimage"
