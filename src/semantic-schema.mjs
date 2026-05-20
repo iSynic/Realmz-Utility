@@ -285,13 +285,22 @@ function addRecordsAndEntities(output, records) {
       status: collection.status,
     });
     for (const record of collection.records || []) {
+      const recordRef = `record:${layout.source}:${record.id}`;
+      output.records.push({
+        id: recordRef,
+        source: sourceId(layout.source),
+        type: collection.kind,
+        byteRange: byteRange(record.id * collection.recordBytes, collection.recordBytes),
+        confidence: layout.confidence,
+        summary: { ...record },
+      });
       const entity = {
         id: `${layout.linkPrefix}:${record.id}`,
         type: layout.entityType,
         label: record.name || record.preview || `${layout.entityType} ${record.id}`,
         confidence: layout.confidence,
         source: layout.source,
-        recordRef: `${layout.source}:${record.id}`,
+        recordRef,
         summary: {},
       };
       if (collectionName === "strings") {
@@ -352,6 +361,46 @@ function addDiagnostics(output, alignment, graph) {
       message: `${ref.source} references missing ${ref.refType} ${ref.refId}: ${ref.reason}`,
       data: ref,
     });
+  }
+  for (const action of graph?.actions || []) {
+    if (action.category === "unknown" || String(action.label || "").startsWith("opcode ")) {
+      output.diagnostics.push({
+        id: `diagnostic:unknown-opcode:${output.diagnostics.length}`,
+        type: "unknown-opcode",
+        confidence: "fixture-backed",
+        source: action.source,
+        message: `${action.source} action ${action.rawCode} at record ${action.recordIndex}, slot ${action.slot} is not yet semantically classified.`,
+        data: {
+          source: action.source,
+          levelType: action.levelType,
+          levelIndex: action.levelIndex,
+          recordIndex: action.recordIndex,
+          slot: action.slot,
+          rawCode: action.rawCode,
+          normalizedCode: action.code,
+          id: action.id,
+        },
+      });
+    }
+    if (action.missingExtracode) {
+      output.diagnostics.push({
+        id: `diagnostic:missing-edcd:${output.diagnostics.length}`,
+        type: "missing-edcd",
+        confidence: "source-backed",
+        source: action.source,
+        message: `${action.source} opcode ${action.code} expects EDCD row ${action.id}, but that row is missing.`,
+        data: {
+          source: action.source,
+          levelType: action.levelType,
+          levelIndex: action.levelIndex,
+          recordIndex: action.recordIndex,
+          slot: action.slot,
+          code: action.code,
+          rawCode: action.rawCode,
+          edcdId: action.id,
+        },
+      });
+    }
   }
 }
 

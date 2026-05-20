@@ -79,7 +79,12 @@ function summarizeScenario(analysis, root) {
   const opcodeCounts = new Map();
   const linkCounts = new Map();
   const resourceCounts = new Map();
+  const unknownOpcodeCounts = new Map();
+  const edcdShapeCounts = new Map();
   const fileSummaries = {};
+  const missingExtracodes = [];
+  let namedResources = 0;
+  let totalResources = 0;
 
   for (const file of analysis.files || []) {
     fileSummaries[file.name] = file.exists
@@ -88,12 +93,34 @@ function summarizeScenario(analysis, root) {
   }
   for (const action of analysis.graph?.actions || []) {
     increment(opcodeCounts, `${action.code}:${action.label}`);
+    if (action.category === "unknown" || String(action.label || "").startsWith("opcode ")) {
+      increment(unknownOpcodeCounts, `${action.rawCode}:${action.label}`);
+    }
+    if (action.missingExtracode) {
+      missingExtracodes.push({
+        source: action.source,
+        levelType: action.levelType,
+        levelIndex: action.levelIndex,
+        recordIndex: action.recordIndex,
+        slot: action.slot,
+        code: action.code,
+        edcdId: action.id,
+      });
+    }
+    if (action.extracodeUsage) {
+      const fieldShape = (action.extracodeUsage.fields || [])
+        .map((field) => field.label)
+        .join("; ");
+      increment(edcdShapeCounts, `${action.code}:${action.label} | ${fieldShape || "generic five-short row"}`);
+    }
   }
   for (const link of analysis.semanticSchema?.links || []) {
     increment(linkCounts, link.kind);
   }
   for (const resourceType of analysis.resources?.catalog?.types || []) {
     increment(resourceCounts, printableToken(resourceType.type), resourceType.count);
+    totalResources += resourceType.count || 0;
+    namedResources += resourceType.named || 0;
   }
 
   return {
@@ -104,7 +131,15 @@ function summarizeScenario(analysis, root) {
     files: fileSummaries,
     alignmentIssues: summarizeAlignment(analysis.alignment),
     resourceTypes: sortedCounts(resourceCounts),
+    resourceNaming: {
+      totalResources,
+      namedResources,
+      unnamedResources: Math.max(0, totalResources - namedResources),
+    },
     opcodeUsage: sortedCounts(opcodeCounts, 40),
+    unknownOpcodes: sortedCounts(unknownOpcodeCounts, 20),
+    edcdShapes: sortedCounts(edcdShapeCounts, 40),
+    missingExtracodes: missingExtracodes.slice(0, 40),
     linkKinds: sortedCounts(linkCounts, 40),
     diagnostics: {
       unresolvedRefs: analysis.graph?.unresolvedRefs?.length || 0,
@@ -133,8 +168,25 @@ function renderMarkdown(summary) {
     actions: scenario.counts.actions,
     links: scenario.schemaSummary?.linkCount || 0,
     diagnostics: scenario.diagnostics.semanticDiagnostics,
+    unknownOpcodes: scenario.unknownOpcodes.reduce((sum, item) => sum + item.count, 0),
+    missingExtracodes: scenario.missingExtracodes.length,
     path: scenario.path,
   }));
+  const anomalyRows = summary.scenarios
+    .filter((scenario) =>
+      scenario.diagnostics.semanticDiagnostics ||
+      scenario.diagnostics.unresolvedRefs ||
+      scenario.unknownOpcodes.length ||
+      scenario.missingExtracodes.length ||
+      scenario.alignmentIssues.length)
+    .map((scenario) => ({
+      scenario: scenario.name,
+      diagnostics: scenario.diagnostics.semanticDiagnostics,
+      unresolvedRefs: scenario.diagnostics.unresolvedRefs,
+      unknownOpcodes: scenario.unknownOpcodes.reduce((sum, item) => sum + item.count, 0),
+      missingExtracodes: scenario.missingExtracodes.length,
+      alignmentIssues: scenario.alignmentIssues.length,
+    }));
   const issueRows = summary.scenarios.flatMap((scenario) =>
     scenario.alignmentIssues.map((issue) => ({
       scenario: scenario.name,
@@ -149,6 +201,16 @@ function renderMarkdown(summary) {
     path: failure.path,
     error: failure.error,
   }));
+  const missingEdcdRows = summary.scenarios.flatMap((scenario) =>
+    scenario.missingExtracodes.map((item) => ({
+      scenario: scenario.name,
+      source: item.source,
+      record: item.recordIndex,
+      slot: item.slot,
+      code: item.code,
+      edcdId: item.edcdId,
+    }))
+  );
 
   return `# Scenario Corpus Inventory
 
@@ -194,11 +256,36 @@ ${renderTable(summary.aggregate.opcodeUsage.slice(0, 120), [
   { label: "Uses", value: (row) => row.count },
 ])}
 
+## Aggregate Unknown Opcode Usage
+
+${renderTable(summary.aggregate.unknownOpcodes.slice(0, 120), [
+  { label: "Opcode", value: (row) => row.key },
+  { label: "Uses", value: (row) => row.count },
+])}
+
+## Aggregate EDCD Shape Coverage
+
+${renderTable(summary.aggregate.edcdShapes.slice(0, 160), [
+  { label: "Opcode Shape", value: (row) => row.key },
+  { label: "Uses", value: (row) => row.count },
+])}
+
 ## Aggregate Link Kinds
 
 ${renderTable(summary.aggregate.linkKinds.slice(0, 120), [
   { label: "Link Kind", value: (row) => row.key },
   { label: "Links", value: (row) => row.count },
+])}
+
+## Diagnostics And Anomalies
+
+${renderTable(anomalyRows, [
+  { label: "Scenario", value: (row) => row.scenario },
+  { label: "Diagnostics", value: (row) => row.diagnostics },
+  { label: "Unresolved Refs", value: (row) => row.unresolvedRefs },
+  { label: "Unknown Opcodes", value: (row) => row.unknownOpcodes },
+  { label: "Missing EDCD", value: (row) => row.missingExtracodes },
+  { label: "Alignment Issues", value: (row) => row.alignmentIssues },
 ])}
 
 ## Alignment And Compatibility Notes
@@ -211,6 +298,17 @@ ${renderTable(issueRows, [
   { label: "Partial", value: (row) => row.partial },
 ])}
 
+## Missing EDCD References
+
+${renderTable(missingEdcdRows, [
+  { label: "Scenario", value: (row) => row.scenario },
+  { label: "Source", value: (row) => row.source },
+  { label: "Record", value: (row) => row.record },
+  { label: "Slot", value: (row) => row.slot },
+  { label: "Opcode", value: (row) => row.code },
+  { label: "EDCD Row", value: (row) => row.edcdId },
+])}
+
 ## Scenario Index
 
 ${renderTable(scenarioRows, [
@@ -220,6 +318,8 @@ ${renderTable(scenarioRows, [
   { label: "Actions", value: (row) => row.actions },
   { label: "Links", value: (row) => row.links },
   { label: "Diagnostics", value: (row) => row.diagnostics },
+  { label: "Unknown Opcodes", value: (row) => row.unknownOpcodes },
+  { label: "Missing EDCD", value: (row) => row.missingExtracodes },
   { label: "Path", value: (row) => row.path },
 ])}
 
@@ -255,6 +355,8 @@ async function main() {
   const aggregateFiles = new Map();
   const aggregateResources = new Map();
   const aggregateOpcodes = new Map();
+  const aggregateUnknownOpcodes = new Map();
+  const aggregateEdcdShapes = new Map();
   const aggregateLinks = new Map();
 
   for (const scenario of discovered) {
@@ -273,6 +375,15 @@ async function main() {
       }
       for (const action of analysis.graph?.actions || []) {
         increment(aggregateOpcodes, `${action.code}:${action.label}`);
+        if (action.category === "unknown" || String(action.label || "").startsWith("opcode ")) {
+          increment(aggregateUnknownOpcodes, `${action.rawCode}:${action.label}`);
+        }
+        if (action.extracodeUsage) {
+          const fieldShape = (action.extracodeUsage.fields || [])
+            .map((field) => field.label)
+            .join("; ");
+          increment(aggregateEdcdShapes, `${action.code}:${action.label} | ${fieldShape || "generic five-short row"}`);
+        }
       }
       for (const link of analysis.semanticSchema?.links || []) {
         increment(aggregateLinks, link.kind);
@@ -303,6 +414,8 @@ async function main() {
       filePresence: sortedCounts(aggregateFiles),
       resourceTypes: sortedCounts(aggregateResources),
       opcodeUsage: sortedCounts(aggregateOpcodes),
+      unknownOpcodes: sortedCounts(aggregateUnknownOpcodes),
+      edcdShapes: sortedCounts(aggregateEdcdShapes),
       linkKinds: sortedCounts(aggregateLinks),
     },
     scenarios,

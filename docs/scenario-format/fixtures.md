@@ -8,7 +8,8 @@ runtime logs are supporting evidence.
 
 `npm run scenario:check` looks for these scenarios in local read-only Realmz
 roots and checks that `analyzeScenario().semanticSchema` has valid sources,
-records, map entities, and links:
+records, map entities, links, link evidence, unknown-opcode diagnostics, and
+missing-EDCD diagnostics:
 
 | Scenario | Why It Matters |
 | --- | --- |
@@ -20,6 +21,11 @@ records, map entities, and links:
 
 If none are present, the checker will use the first discoverable scenario as a
 minimal parser smoke test.
+
+Current fixture-specific assertions also check message links, battle-to-monster
+links, City of Bywater battle/map links, Prelude dungeon `PICT 302` render
+evidence, custom `cicn` coverage for War/Mithril, and `Data MENU` decoding when
+that file is present in the selected fixture root.
 
 ## Fixture Assertions To Add
 

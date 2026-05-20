@@ -13,3 +13,7 @@ The generator writes:
 
 These files are intentionally stored in the utility repository so parser and
 schema changes can be compared against the local scenario corpus.
+
+The inventory includes aggregate file/resource coverage, opcode usage, unknown
+opcode diagnostics, EDCD field-shape coverage, semantic link kinds, alignment
+notes, missing EDCD references, and per-scenario anomaly counts.

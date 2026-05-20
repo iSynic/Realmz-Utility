@@ -49,6 +49,13 @@ These pages expand the table above into source-backed field notes:
 
 - [Action Records](containers/action-records.md): `Data DD`, `Data DDD`,
   `Data ED3`, `Data EDCD`, dispatch, macro loading, and mutation behavior.
+- [Runtime Consumer Matrix](runtime-consumer-matrix.md): every known scenario
+  container mapped to source consumers, cache/save behavior, semantic outputs,
+  and remaining gaps.
+- [Byte Layout Reference](byte-layout-reference.md): fixed record sizes,
+  confirmed offsets, endian behavior, and compatibility rules.
+- [Opcode Runtime Reference](opcode-runtime-reference.md): normalized opcode
+  behavior, EDCD coverage policy, and high-linkage action shapes.
 - [Maps, Random Metadata, And Fields](containers/maps-random-and-fields.md):
   `Data LD`, `Data DL`, `Data RD`, `Data RDD`, landlook, dungeon bitfields,
   LOS, darkness, random regions, and secret/pass-through modeling.

@@ -92,15 +92,16 @@ The first version normalizes the surfaces already parsed by the utility:
 - simple and complex encounter entities
 - quest flag read/write entities
 - fixed record collections for battles, monsters, shops, strings, maps,
-  treasure, thief/time encounters, contact info, solids, and menu cache
+  treasure, thief/time encounters, contact info, solids, and menu cache, with
+  per-record byte ranges
 - scenario resource type inventory
-- graph/action links and unresolved-reference diagnostics
+- graph/action links, unresolved-reference diagnostics, unknown-opcode
+  diagnostics, and missing-EDCD diagnostics
 
 ## Planned Expansion
 
 Next passes should add:
 
-- byte-backed records for every currently summarized fixed collection item
 - reverse index generation for "what links here?"
 - complete opcode-specific link expansion by opcode and `extracode` shape
 - resource-level asset entities for individual `PICT`, `cicn`, `STR#`, and

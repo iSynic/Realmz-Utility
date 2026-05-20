@@ -22,6 +22,12 @@ live in this repository.
   five-short parameter shapes.
 - [Source Anchor Index](source-anchors.md): durable trail from scenario bytes to
   original Realmz source callsites.
+- [Runtime Consumer Matrix](runtime-consumer-matrix.md): source file to runtime
+  consumer, cache/writeback, semantic output, and gap mapping.
+- [Byte Layout Reference](byte-layout-reference.md): record sizes, offset
+  highlights, endian behavior, and compatibility rules.
+- [Opcode Runtime Reference](opcode-runtime-reference.md): normalized action
+  opcode rules, EDCD coverage policy, and high-linkage opcode shapes.
 - [Container Specs](containers/README.md): deeper source-backed notes for action
   records, maps/random metadata, encounters, support records, assets, and
   runtime caches.
