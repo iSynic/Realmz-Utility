@@ -848,6 +848,7 @@ function openSearchResultsPanel(query) {
   state.projectSearch.pageQuery = query || state.projectSearch.query || "";
   closeProjectSearch();
   renderSearchPanel();
+  setSidebarCollapsed(false);
   activateInspectorPanel("search");
 }
 
@@ -3444,6 +3445,15 @@ function activeInspectorPanelName() {
   return active?.id?.replace(/Panel$/, "") || "selection";
 }
 
+function setSidebarCollapsed(collapsed) {
+  state.sidebarCollapsed = collapsed;
+  els.app.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
+  els.sidebarToggle.textContent = state.sidebarCollapsed ? ">" : "<";
+  els.sidebarToggle.title = state.sidebarCollapsed ? "Expand explorer" : "Collapse explorer";
+  els.sidebarToggle.setAttribute("aria-label", els.sidebarToggle.title);
+  els.sidebarToggle.setAttribute("aria-expanded", String(!state.sidebarCollapsed));
+}
+
 function activateInspectorPanel(name) {
   const panelId = name === "selection" ? "explorerSelectionPanel" : `${name}Panel`;
   document.querySelectorAll(".explorer-tab").forEach((entry) => entry.classList.toggle("active", entry.dataset.panel === name));
@@ -3939,12 +3949,7 @@ function wireEvents() {
   });
 
   els.sidebarToggle.addEventListener("click", () => {
-    state.sidebarCollapsed = !state.sidebarCollapsed;
-    els.app.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
-    els.sidebarToggle.textContent = state.sidebarCollapsed ? ">" : "<";
-    els.sidebarToggle.title = state.sidebarCollapsed ? "Expand explorer" : "Collapse explorer";
-    els.sidebarToggle.setAttribute("aria-label", els.sidebarToggle.title);
-    els.sidebarToggle.setAttribute("aria-expanded", String(!state.sidebarCollapsed));
+    setSidebarCollapsed(!state.sidebarCollapsed);
   });
 
   els.levelSelect.addEventListener("change", () => {
