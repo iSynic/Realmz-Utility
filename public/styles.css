@@ -162,6 +162,10 @@ label {
 }
 
 .brand {
+  position: relative;
+  z-index: 2;
+  grid-column: 1;
+  grid-row: 1;
   flex: 0 0 auto;
   padding: 16px 16px 13px;
   border-right: 1px solid var(--line-warm);
@@ -329,6 +333,9 @@ select {
 }
 
 .topbar {
+  z-index: 1;
+  grid-column: 1 / -1;
+  grid-row: 1;
   flex: 0 0 auto;
   min-height: 78px;
   display: grid;
@@ -1629,6 +1636,23 @@ input[type="range"] {
 
   .shell.sidebar-collapsed .map-hud {
     left: 62px;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand,
+  .topbar {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .brand {
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
   }
 }
 
