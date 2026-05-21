@@ -30,6 +30,7 @@
             <kbd>Ctrl+Space</kbd>
           </button>
         </section>
+        <div class="header-inspector-panel" aria-hidden="true"></div>
       </header>
 
       <div class="app-body">
@@ -56,6 +57,7 @@
           <div id="searchPanel" class="panel explorer-panel"></div>
           <div id="filesPanel" class="panel explorer-panel"></div>
         </aside>
+        <div id="explorerResizer" class="sidebar-resizer explorer-resizer" role="separator" aria-orientation="vertical" aria-label="Resize explorer"></div>
 
         <main class="main">
         <section class="workspace">
@@ -66,13 +68,6 @@
                   <span>Map</span>
                   <select id="levelSelect"></select>
                 </label>
-              </div>
-              <div class="controls">
-                <div class="control-group map-source" aria-label="Map source controls">
-                  <label class="toggle"><input type="checkbox" id="toggleRealTiles" checked /> Real tiles</label>
-                  <label class="toggle"><input type="checkbox" id="toggleDecodedColors" /> Decoded colors</label>
-                  <label class="toggle" title="Use the original Realmz field[x][y] map cell order"><input type="checkbox" id="toggleRealmzOrder" checked /> Realmz XY</label>
-                </div>
                 <div class="overlay-menu-wrap" aria-label="Overlay filters">
                   <button id="overlayFilterButton" class="tool-button overlay-filter-button" type="button" aria-expanded="false" aria-controls="overlayFilterMenu">
                     Overlays <strong id="overlayFilterCount">8/9</strong>
@@ -132,10 +127,15 @@
                     </div>
                   </div>
                 </div>
+                <label class="zoom">Zoom <input type="range" id="zoom" min="2" max="64" value="8" /><span id="zoomValue" class="zoom-value">8px</span></label>
+              </div>
+              <div class="controls">
+                <div class="control-group map-source" aria-label="Map source controls">
+                  <label class="toggle" title="Turn off to show decoded color tiles"><input type="checkbox" id="toggleRealTiles" checked /> Real tiles</label>
+                </div>
                 <div class="control-group tool-cluster" aria-label="Map tools">
                   <button class="tool-button" id="importTiles" type="button">Import tilemaps</button>
                   <button class="tool-button" id="exportMap" type="button" hidden>Export PNG</button>
-                  <label class="zoom">Zoom <input type="range" id="zoom" min="2" max="64" value="8" /><span id="zoomValue" class="zoom-value">8px</span></label>
                 </div>
               </div>
             </div>
@@ -150,6 +150,7 @@
             </div>
           </div>
 
+          <div id="inspectorResizer" class="sidebar-resizer inspector-resizer" role="separator" aria-orientation="vertical" aria-label="Resize inspector"></div>
           <aside class="inspector">
             <div class="inspector-nav" aria-label="Selection history">
               <button id="inspectorBack" class="icon-button" type="button" title="Back" aria-label="Back" disabled>&lt;</button>

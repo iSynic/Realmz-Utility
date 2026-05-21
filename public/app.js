@@ -11,6 +11,10 @@ const state = {
   selectionHistory: [],
   selectionHistoryIndex: -1,
   sidebarCollapsed: false,
+  layout: {
+    explorerWidth: 320,
+    inspectorWidth: 390,
+  },
   highlightedQuest: null,
   hoverTile: null,
   renderMode: "real",
@@ -68,6 +72,8 @@ const els = {
   scenarioTitle: document.querySelector("#scenarioTitle"),
   app: document.querySelector("#app"),
   sidebarToggle: document.querySelector("#sidebarToggle"),
+  explorerResizer: document.querySelector("#explorerResizer"),
+  inspectorResizer: document.querySelector("#inspectorResizer"),
   levelSelect: document.querySelector("#levelSelect"),
   mapStage: document.querySelector("#mapStage"),
   mapScroller: document.querySelector("#mapScroller"),
@@ -85,8 +91,6 @@ const els = {
   inspectorBack: document.querySelector("#inspectorBack"),
   inspectorForward: document.querySelector("#inspectorForward"),
   toggleRealTiles: document.querySelector("#toggleRealTiles"),
-  toggleDecodedColors: document.querySelector("#toggleDecodedColors"),
-  toggleRealmzOrder: document.querySelector("#toggleRealmzOrder"),
   toggleDoors: document.querySelector("#toggleDoors"),
   toggleRandom: document.querySelector("#toggleRandom"),
   toggleEncounters: document.querySelector("#toggleEncounters"),
@@ -164,6 +168,79 @@ function setOverlayFilterMenu(open) {
   if (!els.overlayFilterMenu || !els.overlayFilterButton) return;
   els.overlayFilterMenu.hidden = !open;
   els.overlayFilterButton.setAttribute("aria-expanded", String(open));
+}
+
+const LAYOUT_STORAGE_KEY = "realmz-scenario-utility-layout";
+const EXPLORER_WIDTH_RANGE = { min: 240, max: 520 };
+const INSPECTOR_WIDTH_RANGE = { min: 300, max: 620 };
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function applyLayoutWidths() {
+  document.documentElement.style.setProperty("--explorer-width", `${state.layout.explorerWidth}px`);
+  document.documentElement.style.setProperty("--inspector-width", `${state.layout.inspectorWidth}px`);
+}
+
+function saveLayoutWidths() {
+  try {
+    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(state.layout));
+  } catch {
+    // Layout persistence is a convenience; resizing should still work if storage is unavailable.
+  }
+}
+
+function loadLayoutWidths() {
+  let saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem(LAYOUT_STORAGE_KEY) || "null");
+  } catch {
+    saved = null;
+  }
+  if (!saved) {
+    applyLayoutWidths();
+    return;
+  }
+  state.layout.explorerWidth = clamp(Number(saved.explorerWidth) || state.layout.explorerWidth, EXPLORER_WIDTH_RANGE.min, EXPLORER_WIDTH_RANGE.max);
+  state.layout.inspectorWidth = clamp(Number(saved.inspectorWidth) || state.layout.inspectorWidth, INSPECTOR_WIDTH_RANGE.min, INSPECTOR_WIDTH_RANGE.max);
+  applyLayoutWidths();
+}
+
+function beginSidebarResize(kind, event) {
+  if (event.button != null && event.button !== 0) return;
+  event.preventDefault();
+  const resizer = kind === "explorer" ? els.explorerResizer : els.inspectorResizer;
+  const startX = event.clientX;
+  const startWidth = kind === "explorer" ? state.layout.explorerWidth : state.layout.inspectorWidth;
+  const workspaceRect = els.app.querySelector(".workspace")?.getBoundingClientRect();
+  const appRect = els.app.getBoundingClientRect();
+  resizer?.classList.add("dragging");
+
+  const onPointerMove = (moveEvent) => {
+    if (kind === "explorer") {
+      const nextWidth = startWidth + (moveEvent.clientX - startX);
+      state.layout.explorerWidth = clamp(nextWidth, EXPLORER_WIDTH_RANGE.min, EXPLORER_WIDTH_RANGE.max);
+    } else {
+      const rightEdge = workspaceRect?.right || appRect.right;
+      const nextWidth = rightEdge - moveEvent.clientX;
+      state.layout.inspectorWidth = clamp(nextWidth, INSPECTOR_WIDTH_RANGE.min, INSPECTOR_WIDTH_RANGE.max);
+    }
+    applyLayoutWidths();
+    drawMap();
+  };
+
+  const onPointerUp = () => {
+    resizer?.classList.remove("dragging");
+    saveLayoutWidths();
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+    window.removeEventListener("pointercancel", onPointerUp);
+  };
+
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
+  window.addEventListener("pointercancel", onPointerUp);
 }
 
 async function api(path) {
@@ -3904,7 +3981,6 @@ async function importTilemaps() {
     state.tileAtlasCache.clear();
     state.renderMode = "real";
     els.toggleRealTiles.checked = true;
-    els.toggleDecodedColors.checked = false;
     setStatus(`Imported ${imported} tilemap${imported === 1 ? "" : "s"}${failed ? `, ${failed} failed` : ""}`);
     drawMap();
   } catch (error) {
@@ -4068,6 +4144,8 @@ function wireEvents() {
   els.sidebarToggle.addEventListener("click", () => {
     setSidebarCollapsed(!state.sidebarCollapsed);
   });
+  els.explorerResizer?.addEventListener("pointerdown", (event) => beginSidebarResize("explorer", event));
+  els.inspectorResizer?.addEventListener("pointerdown", (event) => beginSidebarResize("inspector", event));
 
   els.levelSelect.addEventListener("change", () => {
     state.selectedLevelId = els.levelSelect.value;
@@ -4094,17 +4172,6 @@ function wireEvents() {
   });
   els.toggleRealTiles.addEventListener("change", () => {
     state.renderMode = els.toggleRealTiles.checked ? "real" : "color";
-    els.toggleDecodedColors.checked = state.renderMode === "color";
-    drawMap();
-  });
-  els.toggleDecodedColors.addEventListener("change", () => {
-    state.renderMode = els.toggleDecodedColors.checked ? "color" : "real";
-    els.toggleRealTiles.checked = state.renderMode === "real";
-    drawMap();
-  });
-  els.toggleRealmzOrder.addEventListener("change", () => {
-    state.useRealmzOrder = els.toggleRealmzOrder.checked;
-    state.secretWalkableCache.clear();
     drawMap();
   });
   els.toggleRandom.addEventListener("change", () => {
@@ -4177,6 +4244,7 @@ function wireEvents() {
 }
 
 async function init() {
+  loadLayoutWidths();
   wireEvents();
   updateLauncherControls();
   window.setTimeout(updateLauncherControls, 250);
