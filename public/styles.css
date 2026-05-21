@@ -576,15 +576,33 @@ kbd {
   line-height: 1.4;
 }
 
-.folder-picker-path-row {
+.folder-picker-location {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 4px;
   padding: 12px;
+  border-bottom: 1px solid rgba(63, 73, 66, 0.58);
+  background: rgba(8, 10, 9, 0.22);
+}
+
+.folder-picker-location span {
+  color: var(--lake);
+  font-size: 10px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.folder-picker-location strong {
+  overflow: hidden;
+  color: var(--parchment-dim);
+  font-size: 12px;
+  font-weight: 620;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .folder-picker-status {
-  padding: 0 12px 10px;
+  padding: 10px 12px;
 }
 
 .folder-picker-list {

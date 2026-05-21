@@ -186,9 +186,10 @@
           </div>
           <button id="folderPickerClose" class="icon-button" type="button" aria-label="Close folder picker">×</button>
         </div>
-        <div class="folder-picker-path-row">
-          <input id="folderPickerPath" type="text" autocomplete="off" spellcheck="false" />
-          <button id="folderPickerGo" class="tool-button" type="button">Go</button>
+        <div class="folder-picker-location">
+          <span>Current folder</span>
+          <strong id="folderPickerPathLabel"></strong>
+          <input id="folderPickerPath" type="hidden" />
         </div>
         <div id="folderPickerStatus" class="folder-picker-status"></div>
         <div id="folderPickerList" class="folder-picker-list"></div>

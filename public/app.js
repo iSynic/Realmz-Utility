@@ -119,7 +119,7 @@ const els = {
   folderPickerClose: document.querySelector("#folderPickerClose"),
   folderPickerCancel: document.querySelector("#folderPickerCancel"),
   folderPickerPath: document.querySelector("#folderPickerPath"),
-  folderPickerGo: document.querySelector("#folderPickerGo"),
+  folderPickerPathLabel: document.querySelector("#folderPickerPathLabel"),
   folderPickerStatus: document.querySelector("#folderPickerStatus"),
   folderPickerList: document.querySelector("#folderPickerList"),
   folderPickerOpen: document.querySelector("#folderPickerOpen"),
@@ -3748,6 +3748,9 @@ async function browseFolder(folderPath) {
       info = await legacyScenarioFolderList(folderPath || state.config?.defaultScenarioRoot || "");
     }
     els.folderPickerPath.value = info.path || folderPath || "";
+    if (els.folderPickerPathLabel) {
+      els.folderPickerPathLabel.textContent = info.path || folderPath || "";
+    }
     const canOpenLegacyPath = info.legacyScenarioDiscovery && !info.scenarioCount && Boolean(els.folderPickerPath.value.trim());
     els.folderPickerOpen.disabled = !info.isScenarioFolder && !canOpenLegacyPath;
     const summary = info.legacyScenarioDiscovery
@@ -4044,13 +4047,6 @@ function wireEvents() {
   });
   els.folderPickerClose?.addEventListener("click", closeFolderPicker);
   els.folderPickerCancel?.addEventListener("click", closeFolderPicker);
-  els.folderPickerGo?.addEventListener("click", () => browseFolder(els.folderPickerPath.value.trim()));
-  els.folderPickerPath?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      browseFolder(els.folderPickerPath.value.trim());
-    }
-  });
   els.folderPickerOpen?.addEventListener("click", () => {
     openFolderPickerSelection().catch((error) => setStatus(error.message));
   });
