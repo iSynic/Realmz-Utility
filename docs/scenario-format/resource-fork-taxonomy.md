@@ -40,10 +40,10 @@ The current corpus inventory sees these resource families:
 | `cicn` | Color icon resources | monsters, NPCs, boats, props, custom scenario sprites |
 | `STR#` | String-list resources | map-name lists, scenario/name metadata candidates |
 | `snd ` | Sound resources | action/combat/UI sound ids; individual semantic links still pending |
-| `TEXT` | Text resources | external text blobs; exact runtime consumers still pending |
-| `styl` | Text style resources | paired styled text metadata; exact runtime consumers still pending |
+| `TEXT` | Text resources | external/movie text blobs loaded by classic presentation paths |
+| `styl` | Text style resources | paired styled text metadata loaded alongside matching `TEXT` entries |
 | `vers` | Version resources | scenario/application version metadata |
-| `RLMZ` | Realmz-specific metadata | type observed in many scenarios; field taxonomy still unknown |
+| `RLMZ` | Realmz-specific metadata | counted by setup/load/save compatibility paths; field taxonomy still unknown |
 | `\x00\x00\x00\x00` | malformed/legacy type entry | should remain inventoried and diagnostically visible |
 
 ## Current Semantic Links
@@ -52,7 +52,8 @@ The current corpus inventory sees these resource families:
   `resource:cicn:<id>`.
 - Opcode `27` creates `shows picture` links to `resource:PICT:<id>`.
 - `STR# -102` and `STR# -101` named `Map Names` provide map-name evidence for
-  `Data MD2`/level labels.
+  `Data MD2`/level labels. `Data MD2` still source-backs the map-note-to-level
+  relation when a resource-backed display name is absent.
 - Landlook rendering uses `PICT 300 + landlook` through scenario or shared
   resource lookup, but per-cell `renders_with` links are still future work.
 
@@ -65,12 +66,13 @@ fork does not contain the bytes.
 
 | Claim | Confidence | Evidence |
 | --- | --- | --- |
-| Resource map structure and byte ranges | fixture-backed | parser resource-map walk plus corpus inventory |
+| Resource map structure and byte ranges | source-backed | ResourceManager source/report anchors plus parser resource-map walk |
 | `STR#` map names | source-backed | map-name resource ids and runtime-observed labels |
 | `cicn` monster icon references | source-backed | `Data MD.iconid`, icon importer, custom icon fixtures |
 | Opcode `27` picture references | source-backed | `newland.c` show-picture path and action links |
-| `RLMZ` field taxonomy | unknown | observed by corpus inventory only |
-| `TEXT`/`styl` runtime linking | inferred | resource presence and classic Mac conventions; consumers still need source anchors |
+| `RLMZ` scenario marker role | source-backed | `CountResources('RLMZ')` setup/load/save paths |
+| `RLMZ` field taxonomy | inferred | observed payloads remain undecoded after the role is classified |
+| `TEXT`/`styl` runtime linking | source-backed | movie/presentation resource load callsites |
 
 ## Open Work
 

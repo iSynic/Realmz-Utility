@@ -58,10 +58,13 @@ function assertSchemaShape(analysis) {
   if (!schema.decoding || schema.decoding.schemaVersion !== 1) {
     throw new Error(`${analysis.scenario.name}: missing semantic decoding v1`);
   }
-  for (const key of ["coverage", "unknownClusters", "hypotheses", "formatNotes"]) {
+  for (const key of ["coverage", "unknownClusters", "dispatcherNoops", "hypotheses", "formatNotes", "confidenceLedger", "confidenceDebt"]) {
     if (!Array.isArray(schema.decoding[key])) {
       throw new Error(`${analysis.scenario.name}: schema.decoding.${key} is not an array`);
     }
+  }
+  if (!schema.decoding.ed3Reachability || !Array.isArray(schema.decoding.ed3Reachability.cases)) {
+    throw new Error(`${analysis.scenario.name}: missing ED3 reachability cases`);
   }
   if (!schema.decoding.coverage.some((entry) => entry.id === "decoding:coverage:actions")) {
     throw new Error(`${analysis.scenario.name}: missing action decoding coverage`);
@@ -74,12 +77,43 @@ function assertSchemaShape(analysis) {
     record.summary?.active === false &&
     Array.isArray(record.summary?.actions) &&
     record.summary.actions.length > 0);
-  const unreferencedMacroDiagnostics = schema.diagnostics.filter((diagnostic) => diagnostic.clusterKey === "format-gap:Data ED3:unreferenced-macro");
+  const ed3Cases = schema.decoding.ed3Reachability.cases;
+  const unreferencedEd3Cases = ed3Cases.filter((entry) => entry.classification !== "reachable-known-path");
+  const unreferencedMacroDiagnostics = schema.diagnostics.filter((diagnostic) => String(diagnostic.clusterKey || "").startsWith("ed3-reachability:"));
+  if (unreferencedEd3Cases.length !== inactiveMacroRecords.length) {
+    throw new Error(`${analysis.scenario.name}: unreferenced Data ED3 case count does not match inactive macro records`);
+  }
   if (unreferencedMacroDiagnostics.length !== inactiveMacroRecords.length) {
     throw new Error(`${analysis.scenario.name}: unreferenced Data ED3 diagnostic count does not match inactive macro records`);
   }
-  if ((schema.decoding.summary?.unreferencedMacroCount || 0) !== unreferencedMacroDiagnostics.length) {
+  if ((schema.decoding.summary?.unreferencedMacroCount || 0) !== unreferencedEd3Cases.length) {
     throw new Error(`${analysis.scenario.name}: decoding summary unreferenced macro count is stale`);
+  }
+  const positiveBattleMacros = new Set((analysis.records?.battles?.records || [])
+    .map((battle) => battle.battleMacro)
+    .filter((id) => Number.isFinite(id) && id > 0));
+  for (const entry of ed3Cases) {
+    if (!entry.classification || !Array.isArray(entry.rawCodes) || !Array.isArray(entry.actionIds)) {
+      throw new Error(`${analysis.scenario.name}: ED3 reachability case ${entry.id} is missing classification or raw slot evidence`);
+    }
+    if (entry.classification === "reachable-known-path" && !entry.knownIncomingRefs?.length) {
+      throw new Error(`${analysis.scenario.name}: ED3 reachability case ${entry.id} is reachable without an incoming ref`);
+    }
+    if (entry.classification === "reachable-known-path" && !entry.sourceAnchors?.length) {
+      throw new Error(`${analysis.scenario.name}: ED3 reachability case ${entry.id} is reachable without a source anchor`);
+    }
+    if (!entry.classificationReason || !entry.promotionRule) {
+      throw new Error(`${analysis.scenario.name}: ED3 reachability case ${entry.id} lacks classification reason or promotion rule`);
+    }
+    if ((entry.possibleIncomingRefs || []).some((ref) => ref.rootType === "runtime-copy-candidate") &&
+        entry.classification === "reachable-known-path" &&
+        !entry.knownIncomingRefs?.length) {
+      throw new Error(`${analysis.scenario.name}: runtime copy candidate ${entry.id} was promoted without known incoming refs`);
+    }
+    if (positiveBattleMacros.has(entry.recordIndex) &&
+        (entry.knownIncomingRefs || []).some((ref) => ref.rootType === "battle-round-macro" || ref.kind === "calls_battle_macro")) {
+      throw new Error(`${analysis.scenario.name}: positive battle macro ${entry.recordIndex} was promoted through battle macro semantics`);
+    }
   }
   if (!schema.sources.some((source) => source.exists)) {
     throw new Error(`${analysis.scenario.name}: schema has no existing file sources`);
@@ -100,6 +134,10 @@ function assertSchemaShape(analysis) {
         !schema.diagnostics.some((diagnostic) => diagnostic.type === "format-gap" && diagnostic.data?.rawCode === action.rawCode)) {
       throw new Error(`${analysis.scenario.name}: format gap ${action.rawCode}/${action.id} was not reported as a diagnostic`);
     }
+    if (action.category === "dispatcher_noop" &&
+        !schema.diagnostics.some((diagnostic) => diagnostic.type === "dispatcher-noop" && diagnostic.data?.rawCode === action.rawCode)) {
+      throw new Error(`${analysis.scenario.name}: dispatcher no-op ${action.rawCode} was not reported as a diagnostic`);
+    }
     if ((action.category === "unknown" || String(action.label || "").startsWith("opcode ")) &&
         !schema.diagnostics.some((diagnostic) => diagnostic.type === "unknown-opcode" && diagnostic.data?.rawCode === action.rawCode)) {
       throw new Error(`${analysis.scenario.name}: unknown opcode ${action.rawCode} was not reported as a diagnostic`);
@@ -110,8 +148,19 @@ function assertSchemaShape(analysis) {
     }
   }
   for (const hypothesis of schema.decoding.hypotheses || []) {
-    if (!hypothesis.confidence || !hypothesis.evidenceRef) {
-      throw new Error(`${analysis.scenario.name}: decoding hypothesis ${hypothesis.id} lacks confidence or evidence`);
+    if (!hypothesis.confidence || !hypothesis.evidenceRef || !hypothesis.rawEvidenceHiddenByDefault) {
+      throw new Error(`${analysis.scenario.name}: decoding hypothesis ${hypothesis.id} lacks confidence, evidence, or raw-evidence policy`);
+    }
+  }
+  for (const debt of schema.decoding.confidenceDebt || []) {
+    if (!debt.examples?.length || !debt.recommendedNextStep || !debt.blockingQuestion || !debt.promotionTarget) {
+      throw new Error(`${analysis.scenario.name}: confidence debt ${debt.id} lacks examples or promotion guidance`);
+    }
+  }
+  for (const entry of schema.decoding.confidenceLedger || []) {
+    if (["unknown", "inferred", "fixture-backed"].includes(entry.currentConfidence) &&
+        (!entry.examples?.length || !entry.recommendedNextStep || !entry.promotionTarget || !entry.blockingQuestion)) {
+      throw new Error(`${analysis.scenario.name}: confidence ledger ${entry.id} lacks evidence workflow metadata`);
     }
   }
 }

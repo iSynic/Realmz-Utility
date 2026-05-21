@@ -30,7 +30,7 @@ existing parser output. Existing fields remain in place for UI compatibility.
 | `links` | Typed graph edges: `located_on`, `configures_map`, `shows_message`, `uses_monster`, `calls_battle_macro`, `describes_map`, opcode/control-flow edges, and action links. |
 | `evidence` | Source anchors, generated reports, fixtures, runtime observations, and confidence markers. |
 | `diagnostics` | Unknown/trailing bytes, partial records, unresolved references, malformed containers, and parser confidence gaps. |
-| `decoding` | Additive semantic clarity workbench data: coverage, unknown clusters, hypotheses, and format notes. |
+| `decoding` | Additive semantic clarity workbench data: coverage, open issue clusters, ED3 reachability, hypotheses, and format notes. |
 
 ## Stable ID Conventions
 
@@ -116,18 +116,41 @@ surfaces:
   runtime-cache coverage rows.
 - `unknownClusters`: grouped diagnostics and active unknown action examples,
   ranked by count and user-facing impact.
+- `dispatcherNoops`: source-backed nonzero action words that `newland.c` reads
+  but ignores because no dispatcher case exists.
+- `ed3Reachability`: classified `Data ED3` macro/action rows with conservative
+  reachability evidence, entry-path evidence, source anchors, incoming refs,
+  neighbor signatures, promotion rules, and next steps.
 - `hypotheses`: friendly inferred labels with `confidence` and `evidenceRef`.
   These remain hypotheses until promoted by the evidence rules.
 - `formatNotes`: registry notes for known containers, action semantics, and
   resource types.
+- `confidenceLedger`: one row per low-confidence semantic claim, with examples,
+  evidence refs, promotion target, blocking question, and next step.
+- `confidenceDebt`: ranked groups of ledger entries such as active unknowns,
+  inferred format evidence, fixture-backed taxonomy, fixture-backed resources,
+  inferred semantic labels, and missing source anchors.
 
-The decoding summary also reports `unreferencedMacroCount` for non-empty
-`Data ED3` rows that are preserved as macro/action bytes but not treated as live
-script. Reachable macro entities are seeded from decoded map triggers, recursive
-macro calls, battle macro fields, and monster death hooks.
+The decoding summary also reports `unreferencedMacroCount` and
+`ed3Reachability` counts for non-empty `Data ED3` rows. Reachable macro entities
+are seeded from decoded map triggers, recursive macro calls, `Global` macro
+slots, timed encounters, random-region doors, negative battle macro fields, and
+monster death hooks. Positive battle macro fields are not promoted unless
+another source-backed path reaches them. EDCD copy/replace references are shown
+as `runtime-mutation-candidate` evidence, not direct macro execution.
 
 Normal inspector views may show friendly labels first, but raw fields and JSON
 stay in Technical Evidence unless the user opens a Decoding detail.
+
+Tile atlas entities keep semantic confidence separate from preview/cache state:
+when a Land/Look value has a source-backed atlas clue, the entity is
+`source-backed` even if the generated PNG is unavailable. The unavailable preview
+remains visible in the entity summary as runtime status.
+
+Resource coverage confidence follows the weakest unresolved taxonomy note:
+catalogues whose resource types are all source-backed or explicitly inferred
+format evidence report source-backed coverage, while genuinely fixture-only
+resource roles remain in confidence debt.
 
 ## Planned Expansion
 

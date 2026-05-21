@@ -13,6 +13,7 @@ are defined in [Evidence Map](evidence-map.md).
 | `Data RDD` | `644` bytes per level | Dungeon random metadata and rectangles | `setupnewgame.c`, `editstring.c` | source-backed | Parsed for dungeon config and random encounter boxes. |
 | `Data ED3` | `40` bytes | Macro/action door records | `flashrange-loaddoor.c`, `newland.c` | source-backed | Parsed as reusable macros and script graph nodes. |
 | `Data EDCD` | `10` bytes | Five signed shorts of extra action parameters | `misc.c:loadextracode`, `newland.c` | source-backed | Parsed as EDCD rows and linked from action opcodes. |
+| `Global` | `30` signed shorts | Scenario-wide macro slots | `misc.c`, `partyloss.c`, `handlemenuchoice.c`, `buttonchoice.c` | source-backed | Parsed for named start/death/quit/shop/temple ED3 macro roots. |
 | `Data ED` | `426` bytes, partial legacy records accepted | Simple encounters | `setupnewgame.c`, `newland.c`, `saveshop.c` | source-backed | Parsed for choice action slots and text buffers. |
 | `Data ED2` | `520` bytes, partial legacy records accepted | Complex encounters | `setupnewgame.c`, `newland.c`, `saveshop.c` | source-backed | Parsed for choice, word, spell, item, thief, and text slots. |
 | `Data MD` | `210` bytes | Monsters | `beast.c`, `combatsetup.c`, `newland.c` | source-backed | Parsed for names, icon IDs, combat summary fields. |

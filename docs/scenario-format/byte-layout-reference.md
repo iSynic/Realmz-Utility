@@ -8,6 +8,7 @@ fixture work. It complements the narrative container specs.
 | `Data LD` | `16200` | signed big-endian shorts | `CvtFieldToPc`, `loadland` |
 | `Data DL` | `16200` | signed big-endian shorts | `CvtFieldToPc`, `threed.c` |
 | `Data DD` / `Data DDD` / `Data ED3` | `40` | `doorid`, `code[]`, `id[]` swapped; byte fields raw | `struct door`, `CvtDoorToPc` |
+| `Global` | `60` | 30 signed big-endian shorts | global macro readers and `CvtTabShortToPc` |
 | `Data RD` / `Data RDD` | `644` | Rects and shorts swapped; byte/Boolean fields raw | `struct randlevel`, `CvtRandLevelToPc` |
 | `Data EDCD` | `10` | five signed big-endian shorts | `loadextracode`, `CvtTabShortToPc` |
 | `Data ED` | `426` | 106-byte header plus four 80-byte text buffers | `struct encount`, `setupnewgame.c` |

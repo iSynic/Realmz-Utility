@@ -87,6 +87,10 @@ runtime table is in `src/realmz-parser.mjs`.
   diagnostics instead of being counted as executable unknown opcodes. They
   remain visible through Decoding and Technical Evidence until fixture or source
   evidence proves a stronger meaning.
+- Nonzero action words with no `newland.c` `switch (code)` case are classified
+  as source-backed dispatcher no-ops. The runtime effect is known: Realmz reads
+  the slot, finds no matching case, and continues. Their authored/editor intent
+  remains a separate archaeology question.
 - `Data ED3` macro records are now promoted to executable script only when they
   are reachable from decoded triggers, recursive macro calls, battle macros, or
   monster death hooks. Other non-empty ED3 rows remain raw format evidence under

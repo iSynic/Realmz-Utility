@@ -26,6 +26,13 @@ const THIEF_BYTES = 118;
 const CONTACT_BYTES = 4608;
 const SOLIDS_BYTES = 1024;
 const MENU_BYTES = 502;
+const GLOBAL_MACRO_SLOTS = new Map([
+  [0, { label: "scenario start macro", sourceAnchor: "anchor:global-start-macro" }],
+  [1, { label: "party death macro", sourceAnchor: "anchor:global-death-macro" }],
+  [2, { label: "scenario quit macro", sourceAnchor: "anchor:global-quit-macro" }],
+  [4, { label: "shop entry macro", sourceAnchor: "anchor:global-shop-macro" }],
+  [5, { label: "temple entry macro", sourceAnchor: "anchor:global-temple-macro" }],
+]);
 const MAP_NAME_RESOURCE_IDS = [-102, -101];
 const DUNGEON_TINY_PICT_ID = 302;
 
@@ -204,7 +211,19 @@ function normalizeOpcode(code) {
 
 function describeOpcode(rawCode) {
   const normalized = normalizeOpcode(rawCode);
-  const [label, category] = opcodeInfo.get(normalized) || [`opcode ${normalized}`, "unknown"];
+  const info = opcodeInfo.get(normalized);
+  if (!info) {
+    return {
+      rawCode,
+      code: normalized,
+      label: "dispatcher no-op",
+      category: "dispatcher_noop",
+      gosub: rawCode < 0 && rawCode !== -14 && rawCode !== -23,
+      sourceBackedNoop: true,
+      formatSuspicion: "newland.c has no switch case for this action word, so the runtime dispatcher ignores it. The authored reason for the leftover word is still unresolved.",
+    };
+  }
+  const [label, category] = info;
   return { rawCode, code: normalized, label, category, gosub: rawCode < 0 && rawCode !== -14 && rawCode !== -23 };
 }
 
@@ -885,6 +904,35 @@ function parseTimeEncounterRecord(buffer, index) {
   };
 }
 
+function parseGlobalMacros(buffer) {
+  const values = [];
+  if (buffer) {
+    const count = Math.min(30, Math.floor(buffer.length / 2));
+    for (let slot = 0; slot < count; slot += 1) {
+      values.push(readI16Safe(buffer, slot * 2));
+    }
+  }
+  const namedSlots = [];
+  for (const [slot, info] of GLOBAL_MACRO_SLOTS.entries()) {
+    namedSlots.push({
+      slot,
+      label: info.label,
+      value: values[slot] || 0,
+      sourceAnchor: info.sourceAnchor,
+    });
+  }
+  return {
+    kind: "Global macro slots",
+    status: buffer ? "decoded" : "missing",
+    recordBytes: 60,
+    count: buffer ? 1 : 0,
+    trailingBytes: buffer ? Math.max(0, buffer.length - 60) : 0,
+    values,
+    namedSlots,
+    records: buffer ? [{ id: 0, values, namedSlots }] : [],
+  };
+}
+
 function parseThiefRecord(buffer, index) {
   const codesSuccess = Array.from({ length: 8 }, (_, slot) => signedByte(buffer, 18 + slot));
   const codesFail = Array.from({ length: 8 }, (_, slot) => signedByte(buffer, 26 + slot));
@@ -940,6 +988,7 @@ function parseContactRecord(buffer) {
 
 function buildRecords(buffers) {
   return {
+    global: parseGlobalMacros(buffers.global),
     battles: parseFixedRecords(buffers.dataBD, BATTLE_BYTES, "Battles Data BD", "decoded", parseBattleRecord),
     monsters: parseFixedRecords(buffers.dataMD, MONSTER_BYTES, "Monsters Data MD", "decoded", parseMonsterRecord),
     shops: parseFixedRecords(buffers.dataSD, SHOP_BYTES, "Shops Data SD", "indexed", parseShopRecord),
@@ -956,6 +1005,45 @@ function buildRecords(buffers) {
 
 function positiveRef(id) {
   return Number.isFinite(id) && id > 0;
+}
+
+function macroSourceEvidence(rootType) {
+  const anchors = {
+    "map-trigger": "anchor:newland-mode1-macro-entry",
+    "macro-call": "anchor:newland-edcd-macro-branches",
+    "global-macro": "anchor:global-macro-slots",
+    "timed-encounter": "anchor:timed-encounter-macro",
+    "random-region-door": "anchor:random-region-macro",
+    "battle-round-macro": "anchor:battle-round-macro",
+    "monster-death-macro": "anchor:monster-death-macro",
+    "runtime-copy-candidate": "anchor:runtime-copy-candidate",
+  };
+  return anchors[rootType] || "anchor:newland-opcodes";
+}
+
+function macroRef(id, role, {
+  from = "",
+  rootType = "macro-call",
+  confidence = "source-backed",
+  evidence = [],
+  action = null,
+  slot = null,
+  rawValue = null,
+  direct = true,
+} = {}) {
+  return {
+    id,
+    role,
+    from,
+    rootType,
+    confidence,
+    sourceAnchor: macroSourceEvidence(rootType),
+    evidence,
+    action,
+    slot,
+    rawValue,
+    direct,
+  };
 }
 
 function linkableRef(link) {
@@ -1733,72 +1821,160 @@ function classifyAction(door, action, extracodeById) {
     }
   }
 
-  if (output.category === "unknown" && Math.abs(output.rawCode) > 127) {
-    output.formatSuspicion = "Opcode is outside the source-backed newland.c dispatcher range and may be packed data, misaligned legacy bytes, or an undocumented extension.";
+  if (output.category === "dispatcher_noop" && Math.abs(output.rawCode) > 127) {
+    output.formatSuspicion = "newland.c has no switch case for this action word, so the runtime dispatcher ignores it. Because the value is outside the source-backed dispatcher range, it may be packed data, misaligned legacy bytes, or an undocumented editor artifact.";
   }
 
   return output;
 }
 
-function macroLinksForDoor(door, extracodeById) {
-  const links = [];
+function isRuntimeMutationMacroRole(role) {
+  const normalized = String(role || "").toLowerCase();
+  return normalized.includes("replacement action source") || normalized.startsWith("copy into door");
+}
+
+function macroRefsForDoor(door, extracodeById, { rootType = null } = {}) {
+  const refs = [];
   for (const action of door.actions || []) {
     const classified = classifyAction(door, action, extracodeById);
     for (const link of classified.links || []) {
       if (link.type === "macro" && Number.isFinite(link.id) && link.id >= 0) {
-        links.push(link.id);
+        const mutation = isRuntimeMutationMacroRole(link.role);
+        const source = door.source === MACRO_SOURCE
+          ? `macro:${door.recordIndex}`
+          : `trigger:${door.levelType}:${door.levelIndex}:${door.recordIndex}`;
+        refs.push(macroRef(link.id, link.role || "macro call", {
+          from: source,
+          rootType: mutation ? "runtime-copy-candidate" : (rootType || (door.source === MACRO_SOURCE ? "macro-call" : "map-trigger")),
+          confidence: mutation ? "possible" : "source-backed",
+          evidence: [
+            `action:${door.source}:${door.levelIndex ?? "macro"}:${door.recordIndex}:${action.slot}`,
+            classified.extracodeUsage ? `record:Data EDCD:${classified.id}` : null,
+          ].filter(Boolean),
+          action: {
+            source: door.source,
+            levelType: door.levelType,
+            levelIndex: door.levelIndex,
+            recordIndex: door.recordIndex,
+            slot: action.slot,
+            rawCode: action.rawCode,
+            code: action.code,
+            id: action.id,
+          },
+          slot: action.slot,
+          direct: !mutation,
+        }));
       }
     }
   }
-  return links;
+  return refs;
 }
 
 function selectActiveDoors(doors, extracodes, records = null) {
   const extracodeById = new Map(extracodes.map((row) => [row.id, row]));
   const reachableMacros = new Set();
+  const macroIncomingRefs = new Map();
+  const macroPossibleRefs = new Map();
   const queue = [];
   const macroById = new Map(
     doors
       .filter((door) => door.source === MACRO_SOURCE && door.actions.length)
       .map((door) => [door.recordIndex, door])
   );
-  const enqueueMacro = (id) => {
-    if (!Number.isInteger(id) || !macroById.has(id) || reachableMacros.has(id)) return;
+  const addMacroRef = (store, ref) => {
+    if (!Number.isInteger(ref?.id) || !macroById.has(ref.id)) return;
+    if (!store.has(ref.id)) store.set(ref.id, []);
+    store.get(ref.id).push(ref);
+  };
+  const enqueueMacro = (id, ref = null) => {
+    if (!Number.isInteger(id) || !macroById.has(id)) return;
+    if (ref) addMacroRef(macroIncomingRefs, ref);
+    if (reachableMacros.has(id)) return;
     reachableMacros.add(id);
     queue.push(id);
   };
+  const addPossibleMacro = (ref) => addMacroRef(macroPossibleRefs, ref);
 
   for (const door of doors) {
     if (door.source === MACRO_SOURCE || !door.active) continue;
-    for (const macroId of macroLinksForDoor(door, extracodeById)) {
-      enqueueMacro(macroId);
+    for (const ref of macroRefsForDoor(door, extracodeById, { rootType: "map-trigger" })) {
+      if (ref.direct) enqueueMacro(ref.id, ref);
+      else addPossibleMacro(ref);
+    }
+  }
+  for (const slot of records?.global?.namedSlots || []) {
+    if (positiveRef(slot.value)) {
+      enqueueMacro(slot.value, macroRef(slot.value, slot.label, {
+        from: `global:${slot.slot}`,
+        rootType: "global-macro",
+        evidence: [`record:Global:${slot.slot}`, slot.sourceAnchor],
+        slot: slot.slot,
+      }));
+    }
+  }
+  for (const time of records?.time?.records || []) {
+    if (positiveRef(time.door)) {
+      enqueueMacro(time.door, macroRef(time.door, `timed encounter ${time.id} door`, {
+        from: `time:${time.id}`,
+        rootType: "timed-encounter",
+        evidence: [`record:Data TD3:${time.id}`, "anchor:timed-encounter-macro"],
+      }));
+    }
+  }
+  for (const randLevel of records?.randLevels || []) {
+    const source = randLevel.source || (randLevel.levelType === "land" ? "Data RD" : "Data RDD");
+    for (const rect of randLevel.rects || []) {
+      for (const [slot, id] of (rect.randDoor || []).entries()) {
+        const percent = (rect.randDoorPercent || [])[slot] || 0;
+        if (positiveRef(id) && percent !== 0) {
+          enqueueMacro(id, macroRef(id, `random region ${rect.rectIndex} door ${slot}`, {
+            from: `random:${randLevel.levelType}:${randLevel.levelIndex}:${rect.rectIndex}:${slot}`,
+            rootType: "random-region-door",
+            evidence: [`record:${source}:${randLevel.levelIndex}`, "anchor:random-region-macro"],
+            slot,
+          }));
+        }
+      }
     }
   }
   for (const battle of records?.battles?.records || []) {
-    if (positiveRef(battle.battleMacro)) {
-      enqueueMacro(battle.battleMacro);
+    if (Number.isFinite(battle.battleMacro) && battle.battleMacro < 0) {
+      const id = Math.abs(battle.battleMacro);
+      enqueueMacro(id, macroRef(id, `battle ${battle.id} round macro`, {
+        from: `battle:${battle.id}`,
+        rootType: "battle-round-macro",
+        evidence: [`record:Data BD:${battle.id}`, "anchor:battle-round-macro"],
+        rawValue: battle.battleMacro,
+      }));
     }
   }
   for (const monster of records?.monsters?.records || []) {
     if (positiveRef(monster.todoOnDeath)) {
-      enqueueMacro(monster.todoOnDeath);
+      enqueueMacro(monster.todoOnDeath, macroRef(monster.todoOnDeath, `monster ${monster.id} death macro`, {
+        from: `monster:${monster.id}`,
+        rootType: "monster-death-macro",
+        evidence: [`record:Data MD:${monster.id}`, "anchor:monster-death-macro"],
+      }));
     }
   }
 
   while (queue.length) {
     const macro = macroById.get(queue.shift());
     if (!macro) continue;
-    for (const macroId of macroLinksForDoor(macro, extracodeById)) {
-      enqueueMacro(macroId);
+    for (const ref of macroRefsForDoor(macro, extracodeById, { rootType: "macro-call" })) {
+      if (ref.direct) enqueueMacro(ref.id, ref);
+      else addPossibleMacro(ref);
     }
   }
 
   for (const door of doors) {
     if (door.source !== MACRO_SOURCE) continue;
     door.reachable = reachableMacros.has(door.recordIndex);
+    door.macroIncomingRefs = macroIncomingRefs.get(door.recordIndex) || [];
+    door.macroPossibleRefs = macroPossibleRefs.get(door.recordIndex) || [];
     if (door.actions.length && !door.reachable) {
       door.active = false;
-      door.inactiveReason = "Data ED3 row has action-like bytes but is not reachable from any decoded trigger, macro call, battle macro, or monster death hook.";
+      door.inactiveReason = "Data ED3 row has action-like bytes but is not reachable from a decoded source-backed macro entry path.";
     } else {
       door.active = Boolean(door.actions.length && door.reachable);
       door.inactiveReason = "";
@@ -2241,6 +2417,7 @@ export async function analyzeScenario(scenarioPath) {
     dataCI,
     dataMENU,
     dataSolids,
+    global,
   ] = await Promise.all([
     readFileIfExists(path.join(resolvedPath, "Data LD")),
     readFileIfExists(path.join(resolvedPath, "Data DL")),
@@ -2263,6 +2440,7 @@ export async function analyzeScenario(scenarioPath) {
     readFileIfExists(path.join(resolvedPath, "Data CI")),
     readFileIfExists(path.join(resolvedPath, "Data MENU")),
     readFileIfExists(path.join(resolvedPath, "Data Solids")),
+    readFileIfExists(path.join(resolvedPath, "Global")),
   ]);
 
   const levels = [
@@ -2282,7 +2460,8 @@ export async function analyzeScenario(scenarioPath) {
   const extracodes = parseExtracodes(dataEDCD);
   const simpleEncounters = parseEncounters(dataED, "simple");
   const complexEncounters = parseEncounters(dataED2, "complex");
-  const records = buildRecords({ dataMD, dataBD, dataSD, dataSD2, dataMD2, dataTD, dataTD2, dataTD3, dataCI, dataMENU, dataSolids });
+  const records = buildRecords({ dataMD, dataBD, dataSD, dataSD2, dataMD2, dataTD, dataTD2, dataTD3, dataCI, dataMENU, dataSolids, global });
+  records.randLevels = randLevels;
   const activeDoors = selectActiveDoors(doors, extracodes, records);
   const graph = buildGraph(activeDoors, extracodes, simpleEncounters, complexEncounters);
   const overlayBoxes = buildOverlayBoxes(activeDoors, randLevels, graph.actions);

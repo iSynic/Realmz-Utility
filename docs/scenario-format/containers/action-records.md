@@ -138,3 +138,10 @@ Recommended links:
   should be modeled as runtime mutation, not as a different source record.
 - Some third-party scenarios contain unreachable or editor-leftover action
   records. These should be reported as low-confidence/unlinked, not hidden.
+- ED3 reachability is rooted only in source-backed entry paths: map triggers,
+  recursive macro calls, named `Global` macro slots, timed encounters,
+  random-region doors, negative battle macros, and monster death hooks.
+- EDCD copy/replace behavior is reported as runtime mutation evidence. It can
+  justify a `runtime-mutation-candidate` classification, but it does not make
+  the referenced ED3 row executable unless a later source-backed path reaches
+  the runtime destination.

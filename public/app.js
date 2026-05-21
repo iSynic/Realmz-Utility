@@ -729,8 +729,8 @@ function buildWorkspaceSearchEntries() {
     {
       kind: "tab",
       title: "Decoding",
-      subtitle: "Review semantic coverage, unknown clusters, hypotheses, and format notes",
-      keywords: "decoding unknown opcodes hypotheses coverage evidence semantics format gaps",
+      subtitle: "Review semantic coverage, open format questions, ED3 reachability, hypotheses, and format notes",
+      keywords: "decoding open format questions ed3 reachability hypotheses coverage evidence semantics format gaps",
       defaultScore: 86,
       action: { type: "panel", panel: "decoding" },
     },
@@ -2814,6 +2814,7 @@ function actionSummary(action) {
   if (code === 112) return `Pops the script stack.`;
   if (code === 124) return `Spawns a combatant or combat event.`;
   if (code === 126) return `Runs battle macro ${action.id}.`;
+  if (action.category === "dispatcher_noop") return `The Realmz action dispatcher has no case for word ${action.rawCode}, so this slot has no runtime effect.`;
   return action.label ? `${action.label} (${action.id})` : `Runs opcode ${action.rawCode}/${action.id}.`;
 }
 
@@ -2882,6 +2883,7 @@ function actionReaderSummary(action) {
   if (code === 111 || code === 112) return "Controls script flow.";
   if (code === 124) return "Spawns a combatant or combat event.";
   if (code === 126) return "Runs a battle macro.";
+  if (action.category === "dispatcher_noop") return "Ignored by the action dispatcher.";
   return action.label ? `${labelize(action.label)}.` : "Runs an unclassified action.";
 }
 
@@ -2896,6 +2898,7 @@ function actionCategoryName(category) {
   if (category === "flow") return "script flow";
   if (category === "time") return "time";
   if (category === "state") return "party/scenario state";
+  if (category === "dispatcher_noop") return "dispatcher no-op";
   return category.replaceAll("_", " ");
 }
 
@@ -3173,7 +3176,11 @@ function renderLinkedEvidence(entityId) {
 function decodingItems() {
   const decoding = schema()?.decoding || {};
   return [
+    ...(decoding.confidenceDebt || []),
+    ...(decoding.confidenceLedger || []),
+    ...(decoding.ed3Reachability?.cases || []),
     ...(decoding.unknownClusters || []),
+    ...(decoding.dispatcherNoops || []),
     ...(decoding.hypotheses || []),
     ...(decoding.coverage || []),
     ...(decoding.formatNotes || []),
@@ -3201,9 +3208,10 @@ function renderDecodingMetric(label, value, meta = "") {
 
 function renderDecodingButton(item, options = {}) {
   const meta = [
+    item.group ? labelize(item.group) : "",
     item.type ? labelize(item.type) : "",
     item.count != null ? `${item.count} example${item.count === 1 ? "" : "s"}` : "",
-    item.confidence ? labelize(item.confidence) : "",
+    item.currentConfidence ? labelize(item.currentConfidence) : item.confidence ? labelize(item.confidence) : "",
   ].filter(Boolean).join(" | ");
   return `
     <button class="row-button decoding-row ${escapeHtml(options.className || "")}" data-decoding-id="${escapeHtml(item.id)}">
@@ -3252,14 +3260,41 @@ function renderDecodingExamples(examples = []) {
   }).join("")}</div>`;
 }
 
+function renderEntryPathEvidence(paths = []) {
+  if (!paths.length) return "";
+  return `
+    <div class="section">
+      <h3>Entry Path Evidence</h3>
+      <div class="list">
+        ${paths.map((path) => `
+          <div class="row-button">
+            <span class="row-title">
+              <strong>${escapeHtml(labelize(path.rootType || path.kind || path.reason || "macro path"))}</strong>
+              <span>${escapeHtml(path.from || path.source || "")}</span>
+            </span>
+            <span class="row-meta">${escapeHtml([
+              path.pathStatus ? labelize(path.pathStatus) : "",
+              path.kind || path.reason || "",
+              path.confidence ? labelize(path.confidence) : "",
+              path.sourceAnchor || "",
+            ].filter(Boolean).join(" | "))}</span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function renderDecodingDetail(item) {
   const examples = item.examples || [];
+  const ledgerItems = (item.ledgerIds || []).map((id) => decodingItemById(id)).filter(Boolean);
+  const evidenceRefs = item.evidenceRefs || (item.evidenceRef ? [item.evidenceRef] : []);
   return `
     <div class="section entity-header">
       <h3>${escapeHtml(item.title || item.id)}</h3>
       <div class="semantic-summary">${escapeHtml(item.summary || item.clusterKey || item.evidenceRef || "")}</div>
       <div class="badge-row">
-        ${confidenceBadge(item.confidence)}
+        ${confidenceBadge(item.currentConfidence || item.confidence)}
         ${item.severity ? `<span class="confidence-badge severity-${escapeHtml(item.severity)}">${escapeHtml(labelize(item.severity))}</span>` : ""}
         ${item.userFacingImpact ? `<span class="confidence-badge">${escapeHtml(labelize(item.userFacingImpact))} impact</span>` : ""}
       </div>
@@ -3267,11 +3302,40 @@ function renderDecodingDetail(item) {
     <div class="section">
       <h3>Meaning</h3>
       ${item.recommendedNextStep ? kv("next step", item.recommendedNextStep) : ""}
+      ${item.blockingQuestion ? kv("blocking question", item.blockingQuestion) : ""}
+      ${item.promotionTarget ? kv("promotion target", item.promotionTarget) : ""}
+      ${item.group ? kv("debt group", labelize(item.group)) : ""}
+      ${item.subjectId ? kv("subject", item.subjectId) : ""}
+      ${item.subjectType ? kv("subject type", labelize(item.subjectType)) : ""}
       ${item.clusterKey ? kv("cluster", item.clusterKey) : ""}
       ${item.evidenceRef ? kv("evidence", item.evidenceRef) : ""}
+      ${evidenceRefs.length && !item.evidenceRef ? kv("evidence", evidenceRefs.join(", ")) : ""}
+      ${item.evidenceKinds?.length ? kv("evidence kinds", item.evidenceKinds.join(", ")) : ""}
+      ${item.classification ? kv("classification", labelize(item.classification)) : ""}
+      ${item.classificationReason ? kv("classification reason", item.classificationReason) : ""}
+      ${item.promotionRule ? kv("promotion rule", item.promotionRule) : ""}
+      ${item.recordIndex != null ? kv("ED3 record", item.recordIndex) : ""}
+      ${item.actionCount != null ? kv("actions", item.actionCount) : ""}
+      ${item.rawCodes?.length ? kv("raw codes", item.rawCodes.join(", ")) : ""}
+      ${item.actionIds?.length ? kv("action ids", item.actionIds.join(", ")) : ""}
+      ${item.knownIncomingRefs?.length ? kv("known incoming refs", item.knownIncomingRefs.map((ref) => `${ref.from} (${labelize(ref.kind || "link")})`).join(", ")) : ""}
+      ${item.possibleIncomingRefs?.length ? kv("possible incoming refs", item.possibleIncomingRefs.map((ref) => `${ref.source || "source"} ${ref.reason || ""}`).join(", ")) : ""}
+      ${item.sourceAnchors?.length ? kv("source anchors", item.sourceAnchors.join(", ")) : ""}
+      ${item.neighborSignature ? kv("neighbors", formatSummaryValue(item.neighborSignature)) : ""}
       ${item.count != null ? kv("examples", item.count) : ""}
+      ${item.exampleCount != null ? kv("example count", item.exampleCount) : ""}
       ${item.known != null && item.total != null ? kv("coverage", `${item.known}/${item.total}`) : ""}
     </div>
+    ${renderEntryPathEvidence(item.entryPathEvidence || [])}
+    ${ledgerItems.length ? `
+      <div class="section">
+        <h3>Ledger Entries</h3>
+        <div class="list">
+          ${ledgerItems.slice(0, 24).map((entry) => renderDecodingButton(entry, { className: "ledger" })).join("")}
+          ${ledgerItems.length > 24 ? `<div class="row-meta">Showing 24 of ${ledgerItems.length} ledger entries.</div>` : ""}
+        </div>
+      </div>
+    ` : ""}
     <div class="section">
       <h3>Examples</h3>
       ${renderDecodingExamples(examples)}
@@ -3596,6 +3660,7 @@ function renderSelectionPanel() {
       ? renderDecodingDetail(item)
       : `<div class="empty">Decoding item ${escapeHtml(selected.decodingId)} was not found.</div>`;
     wireSchemaNavigation(els.selectionPanel);
+    wireDecodingNavigation(els.selectionPanel);
     return;
   }
   if (!selected) {
@@ -3890,27 +3955,56 @@ function renderDecodingPanel() {
   const summary = decoding.summary || {};
   const coverage = decoding.coverage || [];
   const clusters = decoding.unknownClusters || [];
+  const dispatcherNoops = decoding.dispatcherNoops || [];
+  const ed3Reachability = decoding.ed3Reachability || {};
+  const ed3Cases = ed3Reachability.cases || [];
   const hypotheses = decoding.hypotheses || [];
   const notes = decoding.formatNotes || [];
+  const debt = decoding.confidenceDebt || [];
   const confidence = summary.confidence || {};
   els.decodingPanel.innerHTML = `
     <div class="section">
       <h3>Decoding Summary</h3>
       <div class="decoding-metrics">
-        ${renderDecodingMetric("unknown clusters", summary.unknownClusterCount || clusters.length)}
+        ${renderDecodingMetric((summary.unknownActionCount || 0) > 0 ? "unknown clusters" : "open issue clusters", summary.unknownClusterCount || clusters.length)}
         ${renderDecodingMetric("hypotheses", summary.hypothesisCount || hypotheses.length)}
         ${renderDecodingMetric("format notes", summary.formatNoteCount || notes.length)}
         ${renderDecodingMetric("format-gap actions", summary.formatGapActionCount || 0)}
+        ${renderDecodingMetric("dispatcher no-ops", summary.dispatcherNoopCount || dispatcherNoops.length)}
         ${renderDecodingMetric("unreferenced ED3", summary.unreferencedMacroCount || 0)}
+        ${renderDecodingMetric("ED3 cases", summary.ed3ReachabilityCount || ed3Cases.length)}
+        ${renderDecodingMetric("confidence debt", summary.confidenceDebtCount || debt.length)}
       </div>
       <div class="badge-row">
         ${Object.entries(confidence).slice(0, 6).map(([key, value]) => `<span class="confidence-badge ${escapeHtml(key)}">${escapeHtml(labelize(key))}: ${escapeHtml(value)}</span>`).join("")}
       </div>
     </div>
     <div class="section">
-      <h3>Highest Impact Unknowns</h3>
+      <h3>Confidence Debt</h3>
       <div class="list">
-        ${clusters.slice(0, 24).map((cluster) => renderDecodingButton(cluster)).join("") || `<div class="empty">No unknown clusters for this scenario.</div>`}
+        ${debt.slice(0, 18).map((entry) => renderDecodingButton(entry, { className: "debt" })).join("") || `<div class="empty">No low-confidence semantic debt was emitted.</div>`}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Open Format Questions</h3>
+      <div class="list">
+        ${clusters.slice(0, 24).map((cluster) => renderDecodingButton(cluster)).join("") || `<div class="empty">No open format questions for this scenario.</div>`}
+      </div>
+    </div>
+    <div class="section">
+      <h3>ED3 Reachability</h3>
+      <div class="badge-row">
+        ${Object.entries(ed3Reachability.summary || {}).map(([key, value]) => `<span class="confidence-badge inferred">${escapeHtml(labelize(key))}: ${escapeHtml(value)}</span>`).join("")}
+      </div>
+      <div class="list">
+        ${ed3Cases.filter((entry) => entry.classification !== "reachable-known-path").slice(0, 24).map((entry) => renderDecodingButton(entry, { className: "ed3" })).join("") || `<div class="empty">No unreferenced ED3 rows were classified.</div>`}
+        ${ed3Cases.filter((entry) => entry.classification !== "reachable-known-path").length > 24 ? `<div class="row-meta">Showing 24 of ${ed3Cases.filter((entry) => entry.classification !== "reachable-known-path").length} ED3 cases.</div>` : ""}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Dispatcher No-Ops</h3>
+      <div class="list">
+        ${dispatcherNoops.slice(0, 24).map((entry) => renderDecodingButton(entry, { className: "note" })).join("") || `<div class="empty">No ignored action words were decoded in this scenario.</div>`}
       </div>
     </div>
     <div class="section">

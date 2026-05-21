@@ -54,6 +54,12 @@ packing:
 | Macro/action load | `F:\Realmz\src\realmz_orig\flashrange-loaddoor.c:47` | `loaddoor2(id)` loads a `Data ED3` record, converts it, then preserves the current trigger location/percent fields. |
 | EDCD load | `F:\Realmz\src\realmz_orig\misc.c:560` | `loadextracode(id)` reads five signed shorts from `Data EDCD` and byte-swaps them. |
 | Trigger dispatcher | `F:\Realmz\src\realmz_orig\newland.c:108` | Main opcode switch. This is the authority for action semantics. |
+| Explicit macro entry | `F:\Realmz\src\realmz_orig\newland.c:30` | `newland(..., mode == 1, modecode, ...)` loads `Data ED3` through `loaddoor2(modecode)`. |
+| Global start macro | `F:\Realmz\src\realmz_orig\misc.c:512` | `globalmacro[0]` can run at scenario start. |
+| Global death macro | `F:\Realmz\src\realmz_orig\partyloss.c:21` | `globalmacro[1]` can run before final party-loss handling. |
+| Global quit macro | `F:\Realmz\src\realmz_orig\handlemenuchoice.c:1233` | `globalmacro[2]` can run when ending the current game. |
+| Global shop macro | `F:\Realmz\src\realmz_orig\buttonchoice.c:419` | `globalmacro[4]` can run before shop entry. |
+| Global temple macro | `F:\Realmz\src\realmz_orig\buttonchoice.c:435` | `globalmacro[5]` can run before temple entry. |
 | Random encounter check | `F:\Realmz\src\realmz_orig\textbox-time.c:375` | Uses `randlevel` rectangles, percents, random-door percent slots, battle ranges, sounds, and text. |
 | Timed encounter check | `F:\Realmz\src\realmz_orig\textbox-time.c:238` | Reads generated `CTD3` and can trigger doors from timed conditions. |
 | Dungeon movement/secrets | `F:\Realmz\src\realmz_orig\threed.c:532` | Tests dungeon field bits for collision, secret pass-through, and encounter flags. |
@@ -76,7 +82,8 @@ authored content, runtime state, or both.
 | Opcode battle range edit inverse | `F:\Realmz\src\realmz_orig\newland.c:2299` | Negative opcode path mirrors the random-region mutation behavior. |
 | Opcode landlook/dark edit | `F:\Realmz\src\realmz_orig\newland.c:3450` | Opcode `57` changes rendering metadata and dark state. |
 | Monster death macro | `F:\Realmz\src\realmz_orig\killbody.c:116` | Monster `todoondeath` can load a macro, creating combat-to-script links. |
-| Battle macro | `F:\Realmz\src\realmz_orig\getup.c:78` | Battle `battlemacro` can load an action macro. |
+| Battle macro | `F:\Realmz\src\realmz_orig\getup.c:78` | Negative battle `battlemacro` values load `Data ED3` through `loaddoor2(abs(battlemacro))`; positive values are not promoted by this path. |
+| Runtime copy/replace candidate | `F:\Realmz\src\realmz_orig\newland.c:2693` | EDCD copy/replace paths can move action bytes into runtime destinations, but this is not direct proof that the source ED3 row executes. |
 
 ## Render And Asset Anchors
 
