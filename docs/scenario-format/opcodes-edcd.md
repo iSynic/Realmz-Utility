@@ -83,6 +83,14 @@ runtime table is in `src/realmz-parser.mjs`.
 
 ## Remaining Gaps
 
+- Zero-opcode slots with leftover ids are now preserved as `format_gap`
+  diagnostics instead of being counted as executable unknown opcodes. They
+  remain visible through Decoding and Technical Evidence until fixture or source
+  evidence proves a stronger meaning.
+- `Data ED3` macro records are now promoted to executable script only when they
+  are reachable from decoded triggers, recursive macro calls, battle macros, or
+  monster death hooks. Other non-empty ED3 rows remain raw format evidence under
+  the Decoding workbench instead of inflating unknown-opcode counts.
 - Several low-frequency opcodes still have generic EDCD labels even though they
   now have source-backed opcode names.
 - Individual `PICT`, `cicn`, `STR#`, and other resource-fork entries now exist

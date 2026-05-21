@@ -166,6 +166,7 @@ function summarizeScenario(analysis, root) {
       highRiskOpcodes: analysis.graph?.highRiskOpcodes?.length || 0,
       semanticDiagnostics: analysis.semanticSchema?.diagnostics?.length || 0,
     },
+    decoding: analysis.semanticSchema?.decoding?.summary || null,
     schemaSummary: analysis.semanticSchema?.summary || null,
   };
 }
@@ -189,6 +190,9 @@ function renderMarkdown(summary) {
     links: scenario.schemaSummary?.linkCount || 0,
     diagnostics: scenario.diagnostics.semanticDiagnostics,
     unknownOpcodes: scenario.unknownOpcodes.reduce((sum, item) => sum + item.count, 0),
+    unknownClusters: scenario.decoding?.unknownClusterCount || 0,
+    formatGapActions: scenario.decoding?.formatGapActionCount || 0,
+    unreferencedEd3: scenario.decoding?.unreferencedMacroCount || 0,
     missingExtracodes: scenario.missingExtracodes.length,
     path: scenario.path,
   }));
@@ -204,6 +208,9 @@ function renderMarkdown(summary) {
       diagnostics: scenario.diagnostics.semanticDiagnostics,
       unresolvedRefs: scenario.diagnostics.unresolvedRefs,
       unknownOpcodes: scenario.unknownOpcodes.reduce((sum, item) => sum + item.count, 0),
+      unknownClusters: scenario.decoding?.unknownClusterCount || 0,
+      formatGapActions: scenario.decoding?.formatGapActionCount || 0,
+      unreferencedEd3: scenario.decoding?.unreferencedMacroCount || 0,
       missingExtracodes: scenario.missingExtracodes.length,
       alignmentIssues: scenario.alignmentIssues.length,
     }));
@@ -289,6 +296,8 @@ ${renderTable(summary.aggregate.opcodeUsage.slice(0, 120), [
 
 ## Aggregate Unknown Opcode Usage
 
+Decoding summary: ${summary.aggregate.unknownClusters} clustered unknown/format issues across analyzed scenarios; ${summary.aggregate.formatGapActions} action slots were reclassified as preserved format-gap bytes instead of executable unknown opcodes; ${summary.aggregate.unreferencedMacros} Data ED3 rows were preserved as unreferenced macro/action evidence.
+
 ${renderTable(summary.aggregate.unknownOpcodes.slice(0, 120), [
   { label: "Opcode", value: (row) => row.key },
   { label: "Uses", value: (row) => row.count },
@@ -315,6 +324,9 @@ ${renderTable(anomalyRows, [
   { label: "Diagnostics", value: (row) => row.diagnostics },
   { label: "Unresolved Refs", value: (row) => row.unresolvedRefs },
   { label: "Unknown Opcodes", value: (row) => row.unknownOpcodes },
+  { label: "Unknown Clusters", value: (row) => row.unknownClusters },
+  { label: "Format Gaps", value: (row) => row.formatGapActions },
+  { label: "Unreferenced ED3", value: (row) => row.unreferencedEd3 },
   { label: "Missing EDCD", value: (row) => row.missingExtracodes },
   { label: "Alignment Issues", value: (row) => row.alignmentIssues },
 ])}
@@ -350,6 +362,9 @@ ${renderTable(scenarioRows, [
   { label: "Links", value: (row) => row.links },
   { label: "Diagnostics", value: (row) => row.diagnostics },
   { label: "Unknown Opcodes", value: (row) => row.unknownOpcodes },
+  { label: "Unknown Clusters", value: (row) => row.unknownClusters },
+  { label: "Format Gaps", value: (row) => row.formatGapActions },
+  { label: "Unreferenced ED3", value: (row) => row.unreferencedEd3 },
   { label: "Missing EDCD", value: (row) => row.missingExtracodes },
   { label: "Path", value: (row) => row.path },
 ])}
@@ -390,6 +405,9 @@ async function main() {
   const aggregateEdcdShapes = new Map();
   const aggregateLinks = new Map();
   const aggregateResourceCoverage = new Map();
+  let aggregateUnknownClusters = 0;
+  let aggregateFormatGapActions = 0;
+  let aggregateUnreferencedMacros = 0;
 
   for (const scenario of discovered) {
     const resolved = path.resolve(scenario.path).toLowerCase();
@@ -421,6 +439,9 @@ async function main() {
       for (const link of analysis.semanticSchema?.links || []) {
         increment(aggregateLinks, link.kind);
       }
+      aggregateUnknownClusters += analysis.semanticSchema?.decoding?.summary?.unknownClusterCount || 0;
+      aggregateFormatGapActions += analysis.semanticSchema?.decoding?.summary?.formatGapActionCount || 0;
+      aggregateUnreferencedMacros += analysis.semanticSchema?.decoding?.summary?.unreferencedMacroCount || 0;
     } catch (error) {
       failures.push({
         name: scenario.name,
@@ -449,6 +470,9 @@ async function main() {
       resourceNamingCoverage: sortedResourceCoverage(aggregateResourceCoverage),
       opcodeUsage: sortedCounts(aggregateOpcodes),
       unknownOpcodes: sortedCounts(aggregateUnknownOpcodes),
+      unknownClusters: aggregateUnknownClusters,
+      formatGapActions: aggregateFormatGapActions,
+      unreferencedMacros: aggregateUnreferencedMacros,
       edcdShapes: sortedCounts(aggregateEdcdShapes),
       linkKinds: sortedCounts(aggregateLinks),
     },

@@ -55,6 +55,32 @@ function assertSchemaShape(analysis) {
       throw new Error(`${analysis.scenario.name}: schema.${key} is not an array`);
     }
   }
+  if (!schema.decoding || schema.decoding.schemaVersion !== 1) {
+    throw new Error(`${analysis.scenario.name}: missing semantic decoding v1`);
+  }
+  for (const key of ["coverage", "unknownClusters", "hypotheses", "formatNotes"]) {
+    if (!Array.isArray(schema.decoding[key])) {
+      throw new Error(`${analysis.scenario.name}: schema.decoding.${key} is not an array`);
+    }
+  }
+  if (!schema.decoding.coverage.some((entry) => entry.id === "decoding:coverage:actions")) {
+    throw new Error(`${analysis.scenario.name}: missing action decoding coverage`);
+  }
+  if (!schema.decoding.formatNotes.some((entry) => entry.id?.startsWith("decoding:note:resource:"))) {
+    throw new Error(`${analysis.scenario.name}: missing resource decoding notes`);
+  }
+  const inactiveMacroRecords = schema.records.filter((record) =>
+    record.type === "macro action record" &&
+    record.summary?.active === false &&
+    Array.isArray(record.summary?.actions) &&
+    record.summary.actions.length > 0);
+  const unreferencedMacroDiagnostics = schema.diagnostics.filter((diagnostic) => diagnostic.clusterKey === "format-gap:Data ED3:unreferenced-macro");
+  if (unreferencedMacroDiagnostics.length !== inactiveMacroRecords.length) {
+    throw new Error(`${analysis.scenario.name}: unreferenced Data ED3 diagnostic count does not match inactive macro records`);
+  }
+  if ((schema.decoding.summary?.unreferencedMacroCount || 0) !== unreferencedMacroDiagnostics.length) {
+    throw new Error(`${analysis.scenario.name}: decoding summary unreferenced macro count is stale`);
+  }
   if (!schema.sources.some((source) => source.exists)) {
     throw new Error(`${analysis.scenario.name}: schema has no existing file sources`);
   }
@@ -70,6 +96,10 @@ function assertSchemaShape(analysis) {
     }
   }
   for (const action of analysis.graph?.actions || []) {
+    if (action.category === "format_gap" &&
+        !schema.diagnostics.some((diagnostic) => diagnostic.type === "format-gap" && diagnostic.data?.rawCode === action.rawCode)) {
+      throw new Error(`${analysis.scenario.name}: format gap ${action.rawCode}/${action.id} was not reported as a diagnostic`);
+    }
     if ((action.category === "unknown" || String(action.label || "").startsWith("opcode ")) &&
         !schema.diagnostics.some((diagnostic) => diagnostic.type === "unknown-opcode" && diagnostic.data?.rawCode === action.rawCode)) {
       throw new Error(`${analysis.scenario.name}: unknown opcode ${action.rawCode} was not reported as a diagnostic`);
@@ -77,6 +107,11 @@ function assertSchemaShape(analysis) {
     if (action.missingExtracode &&
         !schema.diagnostics.some((diagnostic) => diagnostic.type === "missing-edcd" && diagnostic.data?.edcdId === action.id)) {
       throw new Error(`${analysis.scenario.name}: missing EDCD row ${action.id} was not reported as a diagnostic`);
+    }
+  }
+  for (const hypothesis of schema.decoding.hypotheses || []) {
+    if (!hypothesis.confidence || !hypothesis.evidenceRef) {
+      throw new Error(`${analysis.scenario.name}: decoding hypothesis ${hypothesis.id} lacks confidence or evidence`);
     }
   }
 }

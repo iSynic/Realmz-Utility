@@ -290,8 +290,17 @@ function parseDoor(buffer, source, levelType, levelIndex, recordIndex) {
     const id = i16(buffer, 24 + slot * 2);
     codes.push(rawCode);
     ids.push(id);
-    const opcode = describeOpcode(rawCode);
     if (rawCode !== 0 || id !== 0) {
+      const opcode = rawCode === 0
+        ? {
+            rawCode,
+            code: 0,
+            label: "padding / inactive action id",
+            category: "format_gap",
+            gosub: false,
+            formatGapReason: "A zero opcode with a leftover id is preserved as authored bytes, but is not a known executable newland action.",
+          }
+        : describeOpcode(rawCode);
       actions.push({ slot, id, ...opcode });
     }
   }
@@ -1722,7 +1731,79 @@ function classifyAction(door, action, extracodeById) {
     }
   }
 
+  if (output.category === "unknown" && Math.abs(output.rawCode) > 127) {
+    output.formatSuspicion = "Opcode is outside the source-backed newland.c dispatcher range and may be packed data, misaligned legacy bytes, or an undocumented extension.";
+  }
+
   return output;
+}
+
+function macroLinksForDoor(door, extracodeById) {
+  const links = [];
+  for (const action of door.actions || []) {
+    const classified = classifyAction(door, action, extracodeById);
+    for (const link of classified.links || []) {
+      if (link.type === "macro" && Number.isFinite(link.id) && link.id >= 0) {
+        links.push(link.id);
+      }
+    }
+  }
+  return links;
+}
+
+function selectActiveDoors(doors, extracodes, records = null) {
+  const extracodeById = new Map(extracodes.map((row) => [row.id, row]));
+  const reachableMacros = new Set();
+  const queue = [];
+  const macroById = new Map(
+    doors
+      .filter((door) => door.source === MACRO_SOURCE && door.actions.length)
+      .map((door) => [door.recordIndex, door])
+  );
+  const enqueueMacro = (id) => {
+    if (!Number.isInteger(id) || !macroById.has(id) || reachableMacros.has(id)) return;
+    reachableMacros.add(id);
+    queue.push(id);
+  };
+
+  for (const door of doors) {
+    if (door.source === MACRO_SOURCE || !door.active) continue;
+    for (const macroId of macroLinksForDoor(door, extracodeById)) {
+      enqueueMacro(macroId);
+    }
+  }
+  for (const battle of records?.battles?.records || []) {
+    if (positiveRef(battle.battleMacro)) {
+      enqueueMacro(battle.battleMacro);
+    }
+  }
+  for (const monster of records?.monsters?.records || []) {
+    if (positiveRef(monster.todoOnDeath)) {
+      enqueueMacro(monster.todoOnDeath);
+    }
+  }
+
+  while (queue.length) {
+    const macro = macroById.get(queue.shift());
+    if (!macro) continue;
+    for (const macroId of macroLinksForDoor(macro, extracodeById)) {
+      enqueueMacro(macroId);
+    }
+  }
+
+  for (const door of doors) {
+    if (door.source !== MACRO_SOURCE) continue;
+    door.reachable = reachableMacros.has(door.recordIndex);
+    if (door.actions.length && !door.reachable) {
+      door.active = false;
+      door.inactiveReason = "Data ED3 row has action-like bytes but is not reachable from any decoded trigger, macro call, battle macro, or monster death hook.";
+    } else {
+      door.active = Boolean(door.actions.length && door.reachable);
+      door.inactiveReason = "";
+    }
+  }
+
+  return doors.filter((door) => door.active);
 }
 
 function scriptNodeIdForDoor(door) {
@@ -2196,13 +2277,13 @@ export async function analyzeScenario(scenarioPath) {
     ...parseDoorFile(dataDDD, "Data DDD", "dungeon"),
     ...parseDoorFile(dataED3, MACRO_SOURCE, "macro"),
   ];
-  const activeDoors = doors.filter((door) => door.active);
   const extracodes = parseExtracodes(dataEDCD);
   const simpleEncounters = parseEncounters(dataED, "simple");
   const complexEncounters = parseEncounters(dataED2, "complex");
+  const records = buildRecords({ dataMD, dataBD, dataSD, dataSD2, dataMD2, dataTD, dataTD2, dataTD3, dataCI, dataMENU, dataSolids });
+  const activeDoors = selectActiveDoors(doors, extracodes, records);
   const graph = buildGraph(activeDoors, extracodes, simpleEncounters, complexEncounters);
   const overlayBoxes = buildOverlayBoxes(activeDoors, randLevels, graph.actions);
-  const records = buildRecords({ dataMD, dataBD, dataSD, dataSD2, dataMD2, dataTD, dataTD2, dataTD3, dataCI, dataMENU, dataSolids });
   const resources = await parseScenarioResources(resolvedPath);
   attachMapNames(records, resources);
   const assets = buildAssetManifest(resolvedPath, levels, randLevels);

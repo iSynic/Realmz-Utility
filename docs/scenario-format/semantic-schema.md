@@ -15,6 +15,7 @@ existing parser output. Existing fields remain in place for UI compatibility.
   links: [],
   evidence: [],
   diagnostics: [],
+  decoding: {},
   summary: {}
 }
 ```
@@ -29,6 +30,7 @@ existing parser output. Existing fields remain in place for UI compatibility.
 | `links` | Typed graph edges: `located_on`, `configures_map`, `shows_message`, `uses_monster`, `calls_battle_macro`, `describes_map`, opcode/control-flow edges, and action links. |
 | `evidence` | Source anchors, generated reports, fixtures, runtime observations, and confidence markers. |
 | `diagnostics` | Unknown/trailing bytes, partial records, unresolved references, malformed containers, and parser confidence gaps. |
+| `decoding` | Additive semantic clarity workbench data: coverage, unknown clusters, hypotheses, and format notes. |
 
 ## Stable ID Conventions
 
@@ -101,6 +103,31 @@ The first version normalizes the surfaces already parsed by the utility:
 - graph/action links, unresolved-reference diagnostics, unknown-opcode
   diagnostics, and missing-EDCD diagnostics
 - monster links to individual `cicn` resource references and death macros
+- decoding coverage and unknown-cluster summaries for the app's Decoding
+  explorer tab
+
+## Decoding Workbench
+
+`semanticSchema.decoding` is optional additive schema v1 data. It does not
+replace raw records or diagnostics. It groups existing evidence into UI-friendly
+surfaces:
+
+- `coverage`: high-level action, EDCD, record, resource, map, encounter, and
+  runtime-cache coverage rows.
+- `unknownClusters`: grouped diagnostics and active unknown action examples,
+  ranked by count and user-facing impact.
+- `hypotheses`: friendly inferred labels with `confidence` and `evidenceRef`.
+  These remain hypotheses until promoted by the evidence rules.
+- `formatNotes`: registry notes for known containers, action semantics, and
+  resource types.
+
+The decoding summary also reports `unreferencedMacroCount` for non-empty
+`Data ED3` rows that are preserved as macro/action bytes but not treated as live
+script. Reachable macro entities are seeded from decoded map triggers, recursive
+macro calls, battle macro fields, and monster death hooks.
+
+Normal inspector views may show friendly labels first, but raw fields and JSON
+stay in Technical Evidence unless the user opens a Decoding detail.
 
 ## Planned Expansion
 

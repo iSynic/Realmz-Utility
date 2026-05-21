@@ -87,6 +87,7 @@ const els = {
   scriptPanel: document.querySelector("#scriptPanel"),
   flagsPanel: document.querySelector("#flagsPanel"),
   dataPanel: document.querySelector("#dataPanel"),
+  decodingPanel: document.querySelector("#decodingPanel"),
   searchPanel: document.querySelector("#searchPanel"),
   filesPanel: document.querySelector("#filesPanel"),
   inspectorBack: document.querySelector("#inspectorBack"),
@@ -708,6 +709,14 @@ function buildWorkspaceSearchEntries() {
     },
     {
       kind: "tab",
+      title: "Decoding",
+      subtitle: "Review semantic coverage, unknown clusters, hypotheses, and format notes",
+      keywords: "decoding unknown opcodes hypotheses coverage evidence semantics format gaps",
+      defaultScore: 86,
+      action: { type: "panel", panel: "decoding" },
+    },
+    {
+      kind: "tab",
       title: "Files",
       subtitle: "View sources, resource types, alignment, and diagnostics",
       keywords: "files resources diagnostics source hashes alignment",
@@ -777,12 +786,36 @@ function buildProjectSearchEntries() {
   for (const diagnostic of schema()?.diagnostics || []) {
     entries.push({
       kind: "diagnostic",
-      title: diagnostic.message || diagnostic.id || diagnostic.type,
+      title: diagnostic.readerTitle || diagnostic.message || diagnostic.id || diagnostic.type,
       subtitle: labelize(diagnostic.type || "diagnostic"),
-      meta: [diagnostic.source, diagnostic.confidence].filter(Boolean).join(" | "),
-      keywords: [diagnostic.id, JSON.stringify(diagnostic.data || {})].join(" "),
+      meta: [diagnostic.source, diagnostic.severity, diagnostic.confidence].filter(Boolean).join(" | "),
+      keywords: [diagnostic.id, diagnostic.readerSummary, JSON.stringify(diagnostic.data || {})].join(" "),
       baseScore: 5,
-      action: { type: "panel", panel: "data" },
+      action: { type: "panel", panel: "decoding" },
+    });
+  }
+
+  const decoding = schema()?.decoding;
+  for (const cluster of decoding?.unknownClusters || []) {
+    entries.push({
+      kind: "unknown cluster",
+      title: cluster.title,
+      subtitle: "Decoding unknown",
+      meta: [cluster.type, cluster.count ? `${cluster.count} examples` : "", cluster.confidence].filter(Boolean).join(" | "),
+      keywords: [cluster.clusterKey, cluster.summary, JSON.stringify(cluster.examples || [])].join(" "),
+      baseScore: 18,
+      action: { type: "decoding", decodingId: cluster.id },
+    });
+  }
+  for (const hypothesis of decoding?.hypotheses || []) {
+    entries.push({
+      kind: "hypothesis",
+      title: hypothesis.title,
+      subtitle: "Decoding hypothesis",
+      meta: [hypothesis.confidence, hypothesis.evidenceRef].filter(Boolean).join(" | "),
+      keywords: [hypothesis.summary, hypothesis.evidenceRef].join(" "),
+      baseScore: 10,
+      action: { type: "decoding", decodingId: hypothesis.id },
     });
   }
 
@@ -906,6 +939,10 @@ async function performProjectSearchAction(action) {
   }
   if (action.type === "schema-record") {
     selectSchemaRecord(action.recordId);
+    return;
+  }
+  if (action.type === "decoding") {
+    selectDecodingItem(action.decodingId, { panel: "decoding" });
     return;
   }
   if (action.type === "entity") {
@@ -1066,6 +1103,18 @@ function doorsFor(level) {
 function actionsForDoor(door) {
   if (!state.data) return [];
   return state.data.graph.actions.filter((action) => action.doorId === door.id);
+}
+
+function macroDoorById(id) {
+  const macroId = Number(id);
+  if (!Number.isFinite(macroId)) return null;
+  return state.data?.doors?.find((door) => door.source === "Data ED3" && door.recordIndex === macroId) || null;
+}
+
+function macroPreviewActions(id, limit = 3) {
+  const door = macroDoorById(id);
+  if (!door) return { door: null, actions: [] };
+  return { door, actions: actionsForDoor(door).slice(0, limit) };
 }
 
 function doorByRecordRef(recordRef) {
@@ -2453,7 +2502,7 @@ function linkedRecordSummary(link) {
   return "";
 }
 
-function actionOutcomeDetails(action) {
+function actionOutcomeDetails(action, options = {}) {
   const details = [];
   const seen = new Set();
   const add = (title, summary = "", options = {}) => {
@@ -2463,7 +2512,29 @@ function actionOutcomeDetails(action) {
     const key = options.key || `${cleanTitle}:${cleanSummary}`;
     if (seen.has(key)) return;
     seen.add(key);
-    details.push({ title: cleanTitle, summary: cleanSummary });
+    details.push({ title: cleanTitle, summary: cleanSummary, ...options });
+  };
+  const addMacro = (id, summary = "Runs additional action slots.") => {
+    const macroId = Number(id);
+    if (!Number.isFinite(macroId)) return;
+    const detail = {
+      title: `Macro ${macroId}`,
+      summary,
+      key: `macro:${macroId}`,
+    };
+    if (options.previewMacros && (options.macroPreviewDepth ?? 1) > 0) {
+      const preview = macroPreviewActions(macroId, options.macroPreviewLimit || 3);
+      detail.macroStatus = preview.door
+        ? preview.actions.length ? "" : "No populated action slots."
+        : "Macro record not decoded.";
+      detail.previewActions = preview.actions;
+    }
+    add(detail.title, detail.summary, detail);
+    const stored = details.find((entry) => entry.key === detail.key);
+    if (stored) {
+      stored.previewActions = detail.previewActions || [];
+      stored.macroStatus = detail.macroStatus || "";
+    }
   };
 
   for (const link of linkedRecordsForAction(action)) {
@@ -2474,7 +2545,7 @@ function actionOutcomeDetails(action) {
 
   for (const link of action.links || []) {
     if (link.type === "macro") {
-      add(`Macro ${link.id}`, link.role ? labelize(link.role) : "Runs additional action slots.", { key: `macro:${link.id}` });
+      addMacro(link.id, link.role ? labelize(link.role) : "Runs additional action slots.");
     } else if (link.type === "quest") {
       add(`Quest flag ${link.id}`, link.role ? labelize(link.role) : "Reads or changes quest state.", { key: `quest:${link.id}` });
     } else if (link.type === "level") {
@@ -2495,6 +2566,43 @@ function actionOutcomeDetails(action) {
   }
 
   return details;
+}
+
+function renderActionPayloadDetail(detail, options = {}) {
+  const previewDepth = Math.max(0, (options.macroPreviewDepth ?? 1) - 1);
+  return `
+    <div class="semantic-payload-row">
+      ${detail.title ? `<span class="semantic-payload-title">${escapeHtml(detail.title)}</span>` : ""}
+      ${detail.summary ? `<span>${escapeHtml(detail.summary)}</span>` : ""}
+      ${detail.previewActions?.length ? `
+        <div class="macro-preview">
+          ${detail.previewActions.map((action) => renderActionPreviewRow(action, {
+            ...options,
+            previewMacros: false,
+            macroPreviewDepth: previewDepth,
+          })).join("")}
+        </div>
+      ` : ""}
+      ${detail.macroStatus ? `<span class="semantic-payload-note">${escapeHtml(detail.macroStatus)}</span>` : ""}
+    </div>
+  `;
+}
+
+function renderActionPreviewRow(action, options = {}) {
+  const target = actionPrimaryTarget(action);
+  const targetLabel = actionTargetLabel(target);
+  const details = actionOutcomeDetails(action, options).slice(0, 2);
+  return `
+    <div class="macro-preview-row">
+      <div class="semantic-title">${escapeHtml(actionReaderSummary(action))}</div>
+      <div class="semantic-meta">${escapeHtml([actionCategoryName(action.category), targetLabel].filter(Boolean).join(" | "))}</div>
+      ${details.length ? `
+        <div class="semantic-payload">
+          ${details.map((detail) => renderActionPayloadDetail(detail, options)).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
 }
 
 function levelForActionLink(link, fallbackLevelType = null) {
@@ -2680,13 +2788,18 @@ function actionSummary(action) {
   return action.label ? `${action.label} (${action.id})` : `Runs opcode ${action.rawCode}/${action.id}.`;
 }
 
-function renderSemanticActions(actions) {
+function renderSemanticActions(actions, options = {}) {
   if (!actions?.length) return `<div class="empty">This trigger has no populated action slots.</div>`;
   return `<div class="semantic-list">${actions.map((action, index) => {
     const questClass = action.category?.startsWith("quest") ? "quest" : action.category;
     const target = actionPrimaryTarget(action);
     const targetLabel = actionTargetLabel(target);
-    const details = actionOutcomeDetails(action);
+    const details = actionOutcomeDetails(action, {
+      previewMacros: true,
+      macroPreviewDepth: 1,
+      macroPreviewLimit: 3,
+      ...options,
+    });
     const tagName = target ? "button" : "div";
     const targetAttr = target ? ` type="button" data-action-index="${index}" title="${escapeHtml(targetLabel)}"` : "";
     const buttonClass = target ? " semantic-button" : "";
@@ -2696,12 +2809,7 @@ function renderSemanticActions(actions) {
         <div class="semantic-meta">${escapeHtml([actionCategoryName(action.category), targetLabel].filter(Boolean).join(" | "))}</div>
         ${details.length ? `
           <div class="semantic-payload">
-            ${details.map((detail) => `
-              <div class="semantic-payload-row">
-                ${detail.title ? `<span class="semantic-payload-title">${escapeHtml(detail.title)}</span>` : ""}
-                ${detail.summary ? `<span>${escapeHtml(detail.summary)}</span>` : ""}
-              </div>
-            `).join("")}
+            ${details.map((detail) => renderActionPayloadDetail(detail, options)).join("")}
           </div>
         ` : ""}
       </${tagName}>
@@ -3015,13 +3123,154 @@ function renderRelatedLinks(entityId) {
   return sections.join("");
 }
 
+function renderLinkedEvidence(entityId) {
+  return `
+    <details class="evidence-details linked-evidence">
+      <summary>Linked Evidence</summary>
+      <div class="evidence-content">
+        <div class="evidence-block">
+          <h4>Outgoing Links</h4>
+          ${renderSchemaLinks(entityId, "outgoing")}
+        </div>
+        <div class="evidence-block">
+          <h4>Incoming Links</h4>
+          ${renderSchemaLinks(entityId, "incoming")}
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+function decodingItems() {
+  const decoding = schema()?.decoding || {};
+  return [
+    ...(decoding.unknownClusters || []),
+    ...(decoding.hypotheses || []),
+    ...(decoding.coverage || []),
+    ...(decoding.formatNotes || []),
+  ];
+}
+
+function decodingItemById(id) {
+  return decodingItems().find((item) => item.id === id) || null;
+}
+
+function confidenceBadge(confidence) {
+  if (!confidence) return "";
+  return `<span class="confidence-badge ${escapeHtml(confidence)}">${escapeHtml(labelize(confidence))}</span>`;
+}
+
+function renderDecodingMetric(label, value, meta = "") {
+  return `
+    <div class="decoding-metric">
+      <strong>${escapeHtml(value ?? 0)}</strong>
+      <span>${escapeHtml(label)}</span>
+      ${meta ? `<small>${escapeHtml(meta)}</small>` : ""}
+    </div>
+  `;
+}
+
+function renderDecodingButton(item, options = {}) {
+  const meta = [
+    item.type ? labelize(item.type) : "",
+    item.count != null ? `${item.count} example${item.count === 1 ? "" : "s"}` : "",
+    item.confidence ? labelize(item.confidence) : "",
+  ].filter(Boolean).join(" | ");
+  return `
+    <button class="row-button decoding-row ${escapeHtml(options.className || "")}" data-decoding-id="${escapeHtml(item.id)}">
+      <span class="row-title">
+        <strong>${escapeHtml(item.title || item.id)}</strong>
+        ${confidenceBadge(item.confidence)}
+      </span>
+      <span class="row-meta">${escapeHtml(item.summary || meta || "")}</span>
+      ${meta && item.summary ? `<span class="row-meta">${escapeHtml(meta)}</span>` : ""}
+    </button>
+  `;
+}
+
+function decodingExampleTarget(example) {
+  const data = example?.data || {};
+  if (data.source && data.recordIndex != null) {
+    const recordId = data.source === "Data ED3"
+      ? `record:${data.source}:macro:${data.recordIndex}`
+      : `record:${data.source}:${data.levelIndex ?? "macro"}:${data.recordIndex}`;
+    if (schemaRecordById(recordId)) return { type: "record", id: recordId };
+  }
+  return null;
+}
+
+function renderDecodingExamples(examples = []) {
+  if (!examples.length) return `<div class="empty">No examples are attached to this decoding item.</div>`;
+  return `<div class="list">${examples.map((example, index) => {
+    const target = decodingExampleTarget(example);
+    const attrs = target ? ` data-schema-record-id="${escapeHtml(target.id)}"` : "";
+    const tag = target ? "button" : "div";
+    const data = example.data || {};
+    const meta = [
+      example.source,
+      data.levelType && data.levelIndex != null ? `${data.levelType} ${data.levelIndex}` : "",
+      data.recordIndex != null ? `record ${data.recordIndex}` : "",
+      data.slot != null ? `slot ${data.slot}` : "",
+      data.rawCode != null ? `code ${data.rawCode}` : "",
+      data.id != null ? `id ${data.id}` : "",
+    ].filter(Boolean).join(" | ");
+    return `
+      <${tag} class="row-button"${attrs}>
+        <span class="row-title"><strong>${escapeHtml(example.readerTitle || example.id || `Example ${index + 1}`)}</strong><span>${escapeHtml(example.message || "")}</span></span>
+        <span class="row-meta">${escapeHtml(meta || formatSummaryValue(data))}</span>
+      </${tag}>
+    `;
+  }).join("")}</div>`;
+}
+
+function renderDecodingDetail(item) {
+  const examples = item.examples || [];
+  return `
+    <div class="section entity-header">
+      <h3>${escapeHtml(item.title || item.id)}</h3>
+      <div class="semantic-summary">${escapeHtml(item.summary || item.clusterKey || item.evidenceRef || "")}</div>
+      <div class="badge-row">
+        ${confidenceBadge(item.confidence)}
+        ${item.severity ? `<span class="confidence-badge severity-${escapeHtml(item.severity)}">${escapeHtml(labelize(item.severity))}</span>` : ""}
+        ${item.userFacingImpact ? `<span class="confidence-badge">${escapeHtml(labelize(item.userFacingImpact))} impact</span>` : ""}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Meaning</h3>
+      ${item.recommendedNextStep ? kv("next step", item.recommendedNextStep) : ""}
+      ${item.clusterKey ? kv("cluster", item.clusterKey) : ""}
+      ${item.evidenceRef ? kv("evidence", item.evidenceRef) : ""}
+      ${item.count != null ? kv("examples", item.count) : ""}
+      ${item.known != null && item.total != null ? kv("coverage", `${item.known}/${item.total}`) : ""}
+    </div>
+    <div class="section">
+      <h3>Examples</h3>
+      ${renderDecodingExamples(examples)}
+    </div>
+    <details class="evidence-details">
+      <summary>Technical Evidence</summary>
+      <div class="evidence-content">
+        <div class="evidence-block">
+          <pre>${escapeHtml(JSON.stringify(item, null, 2))}</pre>
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+function wireDecodingNavigation(root) {
+  for (const button of root.querySelectorAll("[data-decoding-id]")) {
+    button.addEventListener("click", () => selectDecodingItem(button.dataset.decodingId, { panel: "decoding" }));
+  }
+}
+
 function renderDiagnosticsList(diagnostics) {
   if (!diagnostics?.length) return `<div class="empty">No schema diagnostics are attached to this item.</div>`;
   return `<div class="semantic-list">${diagnostics.slice(0, 80).map((diagnostic) => `
     <div class="semantic-line diagnostic-line">
-      <div class="semantic-title">${escapeHtml(labelize(diagnostic.type || "diagnostic"))}</div>
-      <div class="semantic-meta">${escapeHtml(diagnostic.message || "")}</div>
-      ${diagnostic.confidence ? `<div class="semantic-meta">${escapeHtml(diagnostic.confidence)}${diagnostic.source ? ` | ${escapeHtml(diagnostic.source)}` : ""}</div>` : ""}
+      <div class="semantic-title">${escapeHtml(diagnostic.readerTitle || labelize(diagnostic.type || "diagnostic"))} ${confidenceBadge(diagnostic.confidence)}</div>
+      <div class="semantic-meta">${escapeHtml(diagnostic.readerSummary || diagnostic.message || "")}</div>
+      ${diagnostic.confidence ? `<div class="semantic-meta">${escapeHtml([diagnostic.severity, diagnostic.source, diagnostic.clusterKey].filter(Boolean).join(" | "))}</div>` : ""}
     </div>
   `).join("")}${diagnostics.length > 80 ? `<div class="row-meta">Showing 80 of ${diagnostics.length} diagnostics.</div>` : ""}</div>`;
 }
@@ -3312,6 +3561,14 @@ function renderSelectionPanel() {
     renderSchemaRecordDetail(selected.recordId);
     return;
   }
+  if (selected?.type === "decoding") {
+    const item = decodingItemById(selected.decodingId);
+    els.selectionPanel.innerHTML = item
+      ? renderDecodingDetail(item)
+      : `<div class="empty">Decoding item ${escapeHtml(selected.decodingId)} was not found.</div>`;
+    wireSchemaNavigation(els.selectionPanel);
+    return;
+  }
   if (!selected) {
     const mapEntityId = currentMapEntityId();
     if (mapEntityId && entityById(mapEntityId)) {
@@ -3449,6 +3706,8 @@ function renderSelectionPanel() {
 
   if (selected.type === "door") {
     const door = selected.item;
+    const graphActions = actionsForDoor(door);
+    const actions = graphActions.length ? graphActions : door.actions;
     els.selectionPanel.innerHTML = `
       <div class="section">
         <h3>Trigger ${escapeHtml(sourceLabel(door))}</h3>
@@ -3458,10 +3717,11 @@ function renderSelectionPanel() {
         ${kv("source", door.source)}
       </div>
       <div class="section">
-        <h3>Actions</h3>
-        ${renderActionLines(door.actions)}
+        <h3>What It Does</h3>
+        ${renderSemanticActions(actions)}
       </div>
     `;
+    wireSemanticActionButtons(els.selectionPanel, actions, { sourceDoor: door });
     return;
   }
 
@@ -3491,6 +3751,7 @@ function renderScriptPanel() {
   const graph = state.data.scriptGraph || state.data.graph;
   const selectedEntityId = state.selectedItem?.type === "entity" ? state.selectedItem.entityId : state.selectedScriptNode;
   const selectedEntity = entityById(selectedEntityId);
+  let scriptActions = [];
   if (!selectedEntity) {
     const currentBoxes = overlayForLevel(currentLevel()).filter((box) => box.nodeId);
     const schemaData = schema();
@@ -3518,7 +3779,7 @@ function renderScriptPanel() {
     `;
   } else {
     const door = legacyDoorForEntity(selectedEntity);
-    const actions = door ? actionsForDoor(door) : [];
+    scriptActions = door ? actionsForDoor(door) : [];
     els.scriptPanel.innerHTML = `
       <div class="section">
         <h3>${escapeHtml(entityTitle(selectedEntity))}</h3>
@@ -3527,18 +3788,15 @@ function renderScriptPanel() {
         ${kv("confidence", selectedEntity.confidence || "-")}
         ${selectedEntity.recordRef ? kv("record", selectedEntity.recordRef) : ""}
       </div>
-      ${actions.length ? `<div class="section"><h3>Action List</h3>${renderActionLines(actions)}</div>` : ""}
       <div class="section">
-        <h3>Outgoing Links</h3>
-        ${renderSchemaLinks(selectedEntity.id, "outgoing")}
+        <h3>Action List</h3>
+        ${renderSemanticActions(scriptActions)}
       </div>
-      <div class="section">
-        <h3>Incoming Links</h3>
-        ${renderSchemaLinks(selectedEntity.id, "incoming")}
-      </div>
+      ${renderLinkedEvidence(selectedEntity.id)}
     `;
   }
   wireSchemaNavigation(els.scriptPanel);
+  wireSemanticActionButtons(els.scriptPanel, scriptActions, { sourceEntityId: selectedEntityId });
 }
 
 function renderDataPanel() {
@@ -3592,6 +3850,61 @@ function renderDataPanel() {
     </div>
   `;
   wireSchemaNavigation(els.dataPanel);
+}
+
+function renderDecodingPanel() {
+  if (!state.data) {
+    els.decodingPanel.innerHTML = `<div class="empty">No scenario loaded.</div>`;
+    return;
+  }
+  const decoding = schema()?.decoding || {};
+  const summary = decoding.summary || {};
+  const coverage = decoding.coverage || [];
+  const clusters = decoding.unknownClusters || [];
+  const hypotheses = decoding.hypotheses || [];
+  const notes = decoding.formatNotes || [];
+  const confidence = summary.confidence || {};
+  els.decodingPanel.innerHTML = `
+    <div class="section">
+      <h3>Decoding Summary</h3>
+      <div class="decoding-metrics">
+        ${renderDecodingMetric("unknown clusters", summary.unknownClusterCount || clusters.length)}
+        ${renderDecodingMetric("hypotheses", summary.hypothesisCount || hypotheses.length)}
+        ${renderDecodingMetric("format notes", summary.formatNoteCount || notes.length)}
+        ${renderDecodingMetric("format-gap actions", summary.formatGapActionCount || 0)}
+        ${renderDecodingMetric("unreferenced ED3", summary.unreferencedMacroCount || 0)}
+      </div>
+      <div class="badge-row">
+        ${Object.entries(confidence).slice(0, 6).map(([key, value]) => `<span class="confidence-badge ${escapeHtml(key)}">${escapeHtml(labelize(key))}: ${escapeHtml(value)}</span>`).join("")}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Highest Impact Unknowns</h3>
+      <div class="list">
+        ${clusters.slice(0, 24).map((cluster) => renderDecodingButton(cluster)).join("") || `<div class="empty">No unknown clusters for this scenario.</div>`}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Hypotheses</h3>
+      <div class="list">
+        ${hypotheses.slice(0, 18).map((hypothesis) => renderDecodingButton(hypothesis, { className: "hypothesis" })).join("") || `<div class="empty">No decoding hypotheses were emitted.</div>`}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Format Coverage</h3>
+      <div class="list">
+        ${coverage.map((entry) => renderDecodingButton(entry, { className: "coverage" })).join("") || `<div class="empty">No coverage entries were emitted.</div>`}
+      </div>
+    </div>
+    <div class="section">
+      <h3>Format Notes</h3>
+      <div class="list">
+        ${notes.slice(0, 24).map((note) => renderDecodingButton(note, { className: "note" })).join("") || `<div class="empty">No format notes were emitted.</div>`}
+        ${notes.length > 24 ? `<div class="row-meta">Showing 24 of ${notes.length} notes.</div>` : ""}
+      </div>
+    </div>
+  `;
+  wireDecodingNavigation(els.decodingPanel);
 }
 
 function renderSearchPanel() {
@@ -3775,6 +4088,7 @@ function selectionHistoryItemKey(selectedItem) {
   const { type, item } = selectedItem;
   if (type === "entity") return `entity:${selectedItem.entityId || item?.entityId || ""}`;
   if (type === "schema-record") return `schema-record:${selectedItem.recordId || item?.recordId || ""}`;
+  if (type === "decoding") return `decoding:${selectedItem.decodingId || ""}`;
   if (type === "overlay") return `overlay:${item.box?.id || item.id || ""}`;
   if (type === "record") return `record:${item.groupKey || ""}:${item.kind || ""}:${item.id ?? ""}:${item.sourceOverlay?.box?.id || ""}`;
   if (type === "door") return `door:${item.recordRef || item.nodeId || sourceLabel(item)}`;
@@ -3844,6 +4158,7 @@ function restoreSelectionHistory(offset) {
   renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
+  renderDecodingPanel();
   activateInspectorPanel(snapshot.panel || "selection");
   updateInspectorNav();
 }
@@ -3878,6 +4193,22 @@ function selectSchemaRecord(recordId, options = {}) {
   renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
+  renderOverlay();
+  if (options.history !== false) {
+    rememberSelection(panel);
+  }
+}
+
+function selectDecodingItem(decodingId, options = {}) {
+  if (!decodingItemById(decodingId)) return;
+  const panel = options.panel || activeInspectorPanelName();
+  state.selectedItem = { type: "decoding", decodingId };
+  state.selectedScriptNode = null;
+  if (options.panel) activateInspectorPanel(options.panel);
+  renderExplorerSelectionPanel();
+  renderSelectionPanel();
+  renderScriptPanel();
+  renderDecodingPanel();
   renderOverlay();
   if (options.history !== false) {
     rememberSelection(panel);
@@ -3974,6 +4305,7 @@ function renderAll() {
   renderScriptPanel();
   renderFlagsPanel();
   renderDataPanel();
+  renderDecodingPanel();
   renderSearchPanel();
   renderFilesPanel();
   updateInspectorNav();
