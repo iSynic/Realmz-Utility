@@ -66,8 +66,6 @@ const els = {
   rootPath: document.querySelector("#rootPath"),
   locateScenarios: document.querySelector("#locateScenarios"),
   scenarioTitle: document.querySelector("#scenarioTitle"),
-  scenarioPath: document.querySelector("#scenarioPath"),
-  summary: document.querySelector("#summary"),
   app: document.querySelector("#app"),
   sidebarToggle: document.querySelector("#sidebarToggle"),
   levelSelect: document.querySelector("#levelSelect"),
@@ -2099,22 +2097,9 @@ function renderHeader() {
   const data = state.data;
   if (!data) {
     els.scenarioTitle.textContent = "No scenario loaded";
-    els.scenarioPath.textContent = "";
-    els.summary.innerHTML = "";
     return;
   }
   els.scenarioTitle.textContent = data.scenario.name;
-  els.scenarioPath.textContent = data.scenario.path;
-  els.summary.innerHTML = [
-    pill("levels", data.counts.levels),
-    pill("triggers", data.counts.activeDoors),
-    pill("random rects", data.counts.randomRects),
-    pill("actions", data.counts.actions),
-    pill("quest flags", data.counts.questFlags),
-    pill("encounters", `${data.counts.simpleEncounters}/${data.counts.complexEncounters}`),
-    pill("script edges", data.counts.scriptEdges ?? 0),
-    pill("overlays", data.counts.overlayBoxes ?? 0),
-  ].join("");
 }
 
 function renderLevelTabs() {
