@@ -1,7 +1,7 @@
 {
   "name": "realmz-scenario-utility",
   "productName": "Realmz Scenario Utility",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Desktop utility for inspecting Realmz scenario data.",
   "author": "Realmz Scenario Utility contributors",
   "private": true,

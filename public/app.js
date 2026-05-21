@@ -19,6 +19,7 @@ const state = {
   hoverTile: null,
   renderMode: "real",
   useRealmzOrder: true,
+  overlayBucketOpen: {},
   tileAtlasCache: new Map(),
   iconCache: new Map(),
   pictureCache: new Map(),
@@ -1222,7 +1223,7 @@ function loadIconImage(iconId) {
 
 function loadPictureImage(pictureId) {
   if (!Number.isInteger(pictureId)) return null;
-  const cacheKey = String(pictureId);
+  const cacheKey = `${state.selectedScenarioPath || "base"}:${pictureId}`;
   const cached = state.pictureCache.get(cacheKey);
   if (cached) return cached;
   const entry = { status: "loading", image: null, error: null, promise: null };
@@ -1244,7 +1245,9 @@ function loadPictureImage(pictureId) {
       resolve(entry);
     };
   });
-  image.src = `/api/asset/picture?id=${encodeURIComponent(pictureId)}`;
+  const params = new URLSearchParams({ id: String(pictureId) });
+  if (state.selectedScenarioPath) params.set("scenarioPath", state.selectedScenarioPath);
+  image.src = `/api/asset/picture?${params.toString()}`;
   return entry;
 }
 
@@ -1627,6 +1630,8 @@ function categoryDefinition(category) {
   return overlayDefinitions[category] || overlayDefinitions.unknown;
 }
 
+const overlayCategoryOrder = ["random", "encounter", "text", "entrance", "map mutation", "quest", "battle", "unknown"];
+
 function recordShortId(recordRef) {
   return String(recordRef ?? "").replace(/^.*:/, "") || "-";
 }
@@ -1647,6 +1652,51 @@ function boxTitle(box) {
     ? `${Math.round(bounds.left + 0.5)},${Math.round(bounds.top + 0.5)}`
     : `${bounds.left},${bounds.top} - ${bounds.right},${bounds.bottom}`;
   return `${definition.name}${ref && ref !== "-" ? ` ${ref}` : ""} @ ${location}`;
+}
+
+function compactBoxTitle(box) {
+  const bounds = box.bounds;
+  const ref = box.label || recordShortId(box.recordRef);
+  const location = bounds.width <= 1.2 && bounds.height <= 1.2
+    ? `tile ${Math.round(bounds.left + 0.5)}, ${Math.round(bounds.top + 0.5)}`
+    : `${bounds.left},${bounds.top}-${bounds.right - 1},${bounds.bottom - 1}`;
+  return `${ref && ref !== "-" ? ref : categoryName(box.category)} @ ${location}`;
+}
+
+function overlayBucketKey(category) {
+  return category || "unknown";
+}
+
+function overlayBucketSortValue(category) {
+  const index = overlayCategoryOrder.indexOf(overlayBucketKey(category));
+  return index === -1 ? overlayCategoryOrder.length : index;
+}
+
+function groupedVisibleOverlays(overlays) {
+  const groups = new Map();
+  for (const box of overlays) {
+    const key = overlayBucketKey(box.category);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(box);
+  }
+  return [...groups.entries()]
+    .map(([category, boxes]) => ({
+      category,
+      definition: categoryDefinition(category),
+      boxes: boxes.sort((a, b) => String(a.label || a.id).localeCompare(String(b.label || b.id), undefined, { numeric: true })),
+      selected: boxes.some((box) => isBoxSelected(box)),
+    }))
+    .sort((a, b) => overlayBucketSortValue(a.category) - overlayBucketSortValue(b.category)
+      || a.definition.shortName.localeCompare(b.definition.shortName));
+}
+
+function isOverlayBucketOpen(group) {
+  const key = overlayBucketKey(group.category);
+  if (Object.prototype.hasOwnProperty.call(state.overlayBucketOpen, key)) {
+    return state.overlayBucketOpen[key];
+  }
+  if (group.selected) return true;
+  return group.boxes.length <= 6;
 }
 
 function doorDestinationLabel(door) {
@@ -2131,6 +2181,7 @@ function renderExplorerSelectionPanel() {
   const doors = doorsFor(level);
   const overlays = overlayForLevel(level);
   const visibleOverlays = overlays.filter((box) => categoryEnabled(box.category) || isBoxHighlighted(box));
+  const overlayGroups = groupedVisibleOverlays(visibleOverlays);
   els.explorerSelectionPanel.innerHTML = `
     <div class="section">
       <h3>Current Map</h3>
@@ -2146,22 +2197,44 @@ function renderExplorerSelectionPanel() {
     </div>
     <div class="section">
       <h3>Visible Overlays</h3>
-      <div class="list">
-        ${visibleOverlays.slice(0, 90).map((box) => {
-          const definition = categoryDefinition(box.category);
-          const selected = isBoxSelected(box) ? " active" : "";
+      <div class="overlay-bucket-list">
+        ${overlayGroups.map((group) => {
+          const open = isOverlayBucketOpen(group);
+          const active = group.selected ? " active" : "";
           return `
-            <button class="row-button${selected}" data-overlay-id="${escapeHtml(box.id)}">
-              <span class="row-title"><strong>${escapeHtml(boxTitle(box))}</strong><span>${escapeHtml(definition.shortName)}</span></span>
-              <span class="row-meta">${escapeHtml(`${formatBounds(box.bounds)} | record ${recordShortId(box.recordRef)}`)}</span>
-            </button>
+            <div class="overlay-bucket${active}">
+              <button class="overlay-bucket-toggle" type="button" data-overlay-bucket="${escapeHtml(group.category)}" aria-expanded="${open}">
+                <span class="bucket-caret" aria-hidden="true">${open ? "v" : ">"}</span>
+                <strong>${escapeHtml(group.definition.shortName)}</strong>
+                <span>${group.boxes.length}</span>
+              </button>
+              ${open ? `
+                <div class="overlay-bucket-items">
+                  ${group.boxes.map((box) => {
+                    const selected = isBoxSelected(box) ? " active" : "";
+                    return `
+                      <button class="row-button overlay-row${selected}" data-overlay-id="${escapeHtml(box.id)}">
+                        <span class="row-title"><strong>${escapeHtml(compactBoxTitle(box))}</strong><span>${escapeHtml(recordShortId(box.recordRef))}</span></span>
+                        <span class="row-meta">${escapeHtml(formatBounds(box.bounds))}</span>
+                      </button>
+                    `;
+                  }).join("")}
+                </div>
+              ` : ""}
+            </div>
           `;
         }).join("") || `<div class="empty">No visible overlays on this map.</div>`}
-        ${visibleOverlays.length > 90 ? `<div class="row-meta">Showing 90 of ${visibleOverlays.length} visible overlays.</div>` : ""}
       </div>
     </div>
   `;
   wireSchemaNavigation(els.explorerSelectionPanel);
+  for (const button of els.explorerSelectionPanel.querySelectorAll("[data-overlay-bucket]")) {
+    button.addEventListener("click", () => {
+      const key = overlayBucketKey(button.dataset.overlayBucket);
+      state.overlayBucketOpen[key] = button.getAttribute("aria-expanded") !== "true";
+      renderExplorerSelectionPanel();
+    });
+  }
   for (const button of els.explorerSelectionPanel.querySelectorAll("[data-overlay-id]")) {
     button.addEventListener("click", () => {
       const box = overlays.find((entry) => entry.id === button.dataset.overlayId);
@@ -3004,10 +3077,12 @@ function renderResourcePreview(entity) {
     `;
   }
   if (type === "PICT") {
+    const params = new URLSearchParams({ id: String(id) });
+    if (state.selectedScenarioPath) params.set("scenarioPath", state.selectedScenarioPath);
     return `
       <div class="resource-preview-wrap">
-        <img class="resource-preview picture-preview" alt="PICT ${escapeHtml(id)}" src="/api/asset/picture?id=${encodeURIComponent(id)}">
-        <div class="row-meta">Preview is available when this PICT is in the shared decoded picture cache.</div>
+        <img class="resource-preview picture-preview" alt="PICT ${escapeHtml(id)}" src="/api/asset/picture?${params.toString()}">
+        <div class="row-meta">Decoded from the scenario or base resource fork when available.</div>
       </div>
     `;
   }
@@ -3875,6 +3950,7 @@ function clearScenarioState() {
   state.selectedScriptNode = null;
   state.highlightedQuest = null;
   state.hoverTile = null;
+  state.overlayBucketOpen = {};
   clearSelectionHistory();
   state.tileAtlasCache.clear();
   state.iconCache.clear();

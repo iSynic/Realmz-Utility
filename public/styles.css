@@ -183,11 +183,27 @@ label {
   z-index: 2;
   grid-column: 3;
   grid-row: 1;
+  overflow: hidden;
   border-left: 1px solid var(--line-warm);
   background:
+    linear-gradient(90deg, rgba(8, 10, 9, 0.76), rgba(8, 10, 9, 0.1) 46%, rgba(8, 10, 9, 0.5)),
+    linear-gradient(180deg, rgba(255, 246, 215, 0.08), rgba(0, 0, 0, 0.3)),
+    url("/assets/realmz-header-art.webp") center / cover no-repeat,
     linear-gradient(180deg, rgba(107, 182, 199, 0.052), rgba(0, 0, 0, 0)),
     rgba(8, 10, 9, 0.16);
   box-shadow: inset 1px 0 0 rgba(255, 246, 215, 0.035);
+}
+
+.header-inspector-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 246, 215, 0.08), transparent 38%),
+    radial-gradient(circle at 76% 40%, rgba(240, 200, 109, 0.14), transparent 34%);
+  mix-blend-mode: screen;
+  opacity: 0.65;
+  pointer-events: none;
 }
 
 .brand-title {
@@ -292,11 +308,13 @@ select {
   opacity: 0.42;
 }
 
-.explorer-header {
+.explorer-header,
+.inspector-header {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 9px;
+  min-height: 59px;
   padding: 10px;
   border-bottom: 1px solid var(--line-soft);
   background:
@@ -304,19 +322,22 @@ select {
     rgba(13, 17, 16, 0.5);
 }
 
-.explorer-header .icon-button {
+.explorer-header .icon-button,
+.inspector-header .icon-button {
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
 }
 
-.explorer-title {
+.explorer-title,
+.inspector-title {
   min-width: 0;
   display: grid;
   gap: 2px;
 }
 
-.explorer-title strong {
+.explorer-title strong,
+.inspector-title strong {
   overflow: hidden;
   color: var(--text-strong);
   font-size: 13px;
@@ -1209,19 +1230,9 @@ input[type="range"] {
 }
 
 .inspector-nav {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   flex: 0 0 auto;
   display: flex;
   gap: 6px;
-  padding: 10px 10px 0;
-  background: linear-gradient(180deg, var(--panel), rgba(21, 27, 25, 0.88));
-}
-
-.inspector-nav .icon-button {
-  width: 32px;
-  height: 28px;
 }
 
 .detail-panel {
@@ -1311,16 +1322,101 @@ input[type="range"] {
 }
 
 .explorer-panel .row-button {
-  padding: 7px 8px;
+  border-radius: 4px;
+  padding: 5px 6px;
 }
 
 .explorer-panel .row-title {
-  font-size: 12px;
+  gap: 6px;
+  font-size: 11px;
 }
 
 .explorer-panel .row-title span,
 .explorer-panel .row-meta {
   font-size: 10px;
+}
+
+.explorer-panel .row-meta {
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
+.overlay-bucket-list {
+  display: grid;
+  gap: 6px;
+}
+
+.overlay-bucket {
+  border: 1px solid rgba(63, 73, 66, 0.78);
+  border-radius: 5px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 246, 215, 0.03), rgba(0, 0, 0, 0.01)),
+    rgba(13, 17, 16, 0.72);
+}
+
+.overlay-bucket.active {
+  border-color: rgba(212, 166, 79, 0.72);
+}
+
+.overlay-bucket-toggle {
+  width: 100%;
+  min-height: 28px;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background:
+    linear-gradient(90deg, rgba(107, 182, 199, 0.09), rgba(0, 0, 0, 0)),
+    rgba(20, 27, 24, 0.84);
+  color: var(--text);
+  cursor: pointer;
+  padding: 5px 7px;
+  text-align: left;
+}
+
+.overlay-bucket-toggle:hover {
+  background:
+    linear-gradient(90deg, rgba(212, 166, 79, 0.13), rgba(107, 182, 199, 0.04)),
+    #171d1a;
+}
+
+.overlay-bucket-toggle strong {
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overlay-bucket-toggle span:last-child {
+  min-width: 22px;
+  border: 1px solid rgba(103, 89, 65, 0.88);
+  border-radius: 999px;
+  color: var(--parchment);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.bucket-caret {
+  color: var(--accent-2);
+  font-family: "Cascadia Mono", ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 10px;
+}
+
+.overlay-bucket-items {
+  display: grid;
+  gap: 3px;
+  padding: 4px;
+}
+
+.explorer-panel .overlay-row {
+  border-color: rgba(63, 73, 66, 0.62);
+  background:
+    linear-gradient(180deg, rgba(255, 246, 215, 0.035), rgba(0, 0, 0, 0.01)),
+    rgba(17, 23, 20, 0.78);
 }
 
 .empty {

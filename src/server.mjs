@@ -6,6 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { decodeIconPng } from "./icon-importer.mjs";
+import { decodePicturePng } from "./picture-importer.mjs";
 import { analyzeScenario, discoverScenarios } from "./realmz-parser.mjs";
 import { exportTileAtlas, exportTileAtlases, tileAtlasCachePath, tilemapSourceForLandlook } from "./tile-importer.mjs";
 
@@ -229,6 +230,23 @@ async function servePicture(res, url) {
   const id = Number(url.searchParams.get("id"));
   if (!Number.isInteger(id)) {
     sendError(res, 400, "Missing integer picture id");
+    return;
+  }
+
+  const scenarioPath = url.searchParams.get("scenarioPath") || url.searchParams.get("path");
+  const decoded = await decodePicturePng({
+    referenceRoot: defaultReferenceRoot,
+    scenarioPath,
+    assetRoot: rootDir,
+    id,
+  });
+  if (decoded) {
+    res.writeHead(200, {
+      "content-type": "image/png",
+      "cache-control": "no-store",
+      "x-realmz-picture-source": decoded.source,
+    });
+    res.end(decoded.png);
     return;
   }
 
