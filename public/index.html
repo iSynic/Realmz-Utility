@@ -14,17 +14,12 @@
             <h1>Realmz Scenario Utility</h1>
             <button id="sidebarToggle" class="icon-button" type="button" title="Collapse scenario panel" aria-label="Collapse scenario panel" aria-expanded="true">&lt;</button>
           </div>
-          <div id="status" class="status">Starting...</div>
-        </div>
-
-        <form id="rootForm" class="path-form">
-          <label for="rootPath">Scenario folder</label>
-          <div class="inline-row">
-            <input id="rootPath" type="text" autocomplete="off" spellcheck="false" placeholder="Choose one scenario folder..." />
-            <button id="locateScenarios" class="tool-button path-browse" type="button" title="Choose scenario folder">Browse</button>
-            <button class="icon-button" title="Open scenario folder" aria-label="Open scenario folder">↻</button>
+          <div class="brand-action-row">
+            <div id="status" class="status">Starting...</div>
+            <button id="locateScenarios" class="tool-button brand-folder-button" type="button" title="Choose scenario folder">Browse</button>
           </div>
-        </form>
+          <input id="rootPath" type="hidden" />
+        </div>
 
         <div class="scenario-list" id="scenarioList"></div>
       </aside>

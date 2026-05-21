@@ -135,10 +135,9 @@ function getTauriInvoke() {
 
 function updateLauncherControls() {
   const hasDesktopBridge = Boolean(getTauriInvoke());
-  els.rootForm.classList.toggle("has-folder-picker", hasDesktopBridge);
   if (els.locateScenarios) {
     els.locateScenarios.hidden = false;
-    els.locateScenarios.title = hasDesktopBridge ? "Choose scenario folder" : "Browse local folders";
+    els.locateScenarios.title = hasDesktopBridge ? "Choose scenario folder" : "Browse scenario folders";
   }
   if (els.exportMap) {
     els.exportMap.hidden = !hasDesktopBridge;
@@ -3754,7 +3753,7 @@ async function openScenarioFromInput() {
   const scenarioPath = els.rootPath.value.trim();
   if (!scenarioPath) {
     clearScenarioState();
-    setStatus("Choose a scenario folder to begin.");
+    setStatus("Choose a folder to begin.");
     renderAll();
     return;
   }
@@ -3989,7 +3988,7 @@ function wireEvents() {
     setOverlayFilterMenu(false);
   });
 
-  els.rootForm.addEventListener("submit", (event) => {
+  els.rootForm?.addEventListener("submit", (event) => {
     event.preventDefault();
     openScenarioFromInput().catch((error) => setStatus(error.message));
   });
@@ -4145,7 +4144,7 @@ async function init() {
   }
   els.rootPath.value = "";
   clearScenarioState();
-  setStatus("Choose a scenario folder to begin.");
+  setStatus("Choose a folder to begin.");
   renderAll();
 }
 
