@@ -425,8 +425,9 @@ function renderReaderSummary(entity) {
   const skip = new Set([
     "actions",
     "actionCount",
-    "nameHints",
+    "labelSource",
     "render",
+    "tilesetClue",
     "levelType",
     "levelIndex",
     "x",
@@ -500,7 +501,6 @@ function entityButtonMeta(entity) {
   const summary = entity?.summary || {};
   if (entity.type === "message" && summary.preview) return truncateText(summary.preview, 140);
   if (entity.type === "battle" && summary.monsters) return `Monsters: ${formatSummaryValue(summary.monsters)}`;
-  if (entity.type === "map" && summary.nameHints?.length) return formatSummaryValue(summary.nameHints);
   return entityLocationSummary(entity) || entityReadableType(entity);
 }
 
@@ -740,9 +740,9 @@ function buildProjectSearchEntries() {
       subtitle: `Open ${level.type} level ${level.index}`,
       meta: [
         level.nameSource,
-        (level.nameHints || []).map((hint) => hint.name).slice(0, 4).join(" / "),
+        tilesetClueLabel(level) ? `tileset: ${tilesetClueLabel(level)}` : "",
       ].filter(Boolean).join(" | "),
-      keywords: [entityId, levelTitle(level, { long: true }), level.name, JSON.stringify(level.nameHints || [])].join(" "),
+      keywords: [entityId, levelTitle(level, { long: true }), level.name, tilesetClueLabel(level)].join(" "),
       baseScore: 12,
       action: entityById(entityId) ? { type: "entity", entityId } : { type: "level", levelId: level.id },
     });
@@ -957,17 +957,7 @@ function levelCode(level) {
 
 function levelTitle(level, options = {}) {
   if (!level) return "Level";
-  if (!level.name) {
-    const hints = (level.nameHints || []).map((hint) => hint.name).filter(Boolean);
-    if (hints.length && !options.long) {
-      const shown = hints.slice(0, 2).join(" / ");
-      return `${levelCode(level)}: ${shown}${hints.length > 2 ? "..." : ""}`;
-    }
-    if (hints.length && options.long) {
-      return `${level.type} level ${level.index} (${hints.slice(0, 3).join(" / ")}${hints.length > 3 ? "..." : ""})`;
-    }
-    return options.long ? `${level.type} level ${level.index}` : levelCode(level);
-  }
+  if (!level.name) return levelFallbackTitle(level);
   return options.long ? `${level.name} (${level.type} ${level.index})` : `${level.name} (${levelCode(level)})`;
 }
 
@@ -988,6 +978,32 @@ function renderLandlookForLevel(level) {
     return level.renderLandlook;
   }
   return Number.isInteger(rand?.landlook) ? rand.landlook : null;
+}
+
+function levelFallbackTitle(level) {
+  if (!level) return "Level";
+  const kind = level.type === "land" ? "Land" : "Dungeon";
+  if (isDungeonTopdownLevel(level)) {
+    return `${kind} ${level.index}, PICT ${level.renderPictureId || DUNGEON_TINY_PICTURE_ID}`;
+  }
+  const landlook = renderLandlookForLevel(level);
+  return Number.isInteger(landlook) ? `${kind} ${level.index}, Look ${landlook}` : `${kind} ${level.index}`;
+}
+
+function tilesetClueLabel(level) {
+  return tilesetClueValue(level?.tilesetClue);
+}
+
+function tilesetClueValue(clue) {
+  if (!clue) return "";
+  return [clue.label, clue.sourceResource].filter(Boolean).join(" / ");
+}
+
+function levelEvidenceMeta(level) {
+  const entries = [];
+  const tilesetClue = tilesetClueLabel(level);
+  if (tilesetClue) entries.push(tilesetClue);
+  return entries.length ? ` (${entries.join("; ")})` : "";
 }
 
 function atlasForLevel(level) {
@@ -1022,12 +1038,15 @@ function renderTilesetLabel(level) {
   }
   const renderLandlook = renderLandlookForLevel(level);
   const label = level?.renderTileset || (Number.isInteger(renderLandlook) ? `look ${renderLandlook}` : "decoded colors");
-  return Number.isInteger(renderLandlook) && !label.includes(String(renderLandlook))
+  const base = Number.isInteger(renderLandlook) && !label.includes(String(renderLandlook))
     ? `${label} (landlook ${renderLandlook})`
     : label;
+  const clue = tilesetClueLabel(level);
+  return clue ? `${base} (${clue})` : base;
 }
 
 function levelLookMeta(level) {
+  if (!level?.name) return "";
   const rand = randLevelFor(level);
   if (!rand) return "";
   if (isDungeonTopdownLevel(level)) {
@@ -2192,6 +2211,7 @@ function renderExplorerSelectionPanel() {
       ${kv("source", level.source || "-")}
       ${kv("tiles", `${level.width} x ${level.height}`)}
       ${kv("landlook", rand ? rand.landlook : "-")}
+      ${tilesetClueLabel(level) ? kv("tileset clue", tilesetClueLabel(level)) : ""}
       ${kv("triggers", doors.length)}
       ${kv("overlays", overlays.length)}
     </div>
@@ -2261,7 +2281,7 @@ function renderLevelTabs() {
   els.levelSelect.disabled = false;
   els.levelSelect.innerHTML = state.data.levels
     .map((level) => {
-      const meta = levelLookMeta(level);
+      const meta = level.name ? levelLookMeta(level) : levelEvidenceMeta(level);
       return `<option value="${escapeHtml(level.id)}">${escapeHtml(`${levelTitle(level)}${meta}`)}</option>`;
     })
     .join("");
@@ -2433,22 +2453,48 @@ function linkedRecordSummary(link) {
   return "";
 }
 
-function renderLinkedRecordButtons(actions) {
-  const links = [];
-  for (const action of actions || []) {
-    for (const link of linkedRecordsForAction(action)) {
-      if (!links.some((entry) => entry.key === link.key)) {
-        links.push({ ...link, action });
-      }
+function actionOutcomeDetails(action) {
+  const details = [];
+  const seen = new Set();
+  const add = (title, summary = "", options = {}) => {
+    const cleanTitle = String(title || "").trim();
+    const cleanSummary = String(summary || "").trim();
+    if (!cleanTitle && !cleanSummary) return;
+    const key = options.key || `${cleanTitle}:${cleanSummary}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    details.push({ title: cleanTitle, summary: cleanSummary });
+  };
+
+  for (const link of linkedRecordsForAction(action)) {
+    add(recordButtonTitle(link.groupKey, link.kind, link.id), linkedRecordSummary(link), {
+      key: `record:${link.groupKey}:${link.kind || ""}:${link.id}`,
+    });
+  }
+
+  for (const link of action.links || []) {
+    if (link.type === "macro") {
+      add(`Macro ${link.id}`, link.role ? labelize(link.role) : "Runs additional action slots.", { key: `macro:${link.id}` });
+    } else if (link.type === "quest") {
+      add(`Quest flag ${link.id}`, link.role ? labelize(link.role) : "Reads or changes quest state.", { key: `quest:${link.id}` });
+    } else if (link.type === "level") {
+      const level = levelForActionLink(link, action.levelType);
+      add(level ? levelTitle(level) : `${link.levelType || "level"} ${link.id}`, "Destination level.", {
+        key: `level:${link.levelType || action.levelType || ""}:${link.id}`,
+      });
+    } else if (link.type === "flow") {
+      add("Script flow", link.role || "Changes script flow.", { key: `flow:${link.role || ""}` });
     }
   }
-  if (!links.length) return `<div class="empty">No linked records were decoded from these actions.</div>`;
-  return `<div class="list">${links.map((link) => `
-    <button class="row-button" data-record-group="${escapeHtml(link.groupKey)}" data-record-kind="${escapeHtml(link.kind || "")}" data-record-id="${escapeHtml(link.id)}">
-      <span class="row-title"><strong>${escapeHtml(recordButtonTitle(link.groupKey, link.kind, link.id))}</strong><span>slot ${escapeHtml(link.action.slot)}</span></span>
-      <span class="row-meta">${escapeHtml(linkedRecordSummary(link))}</span>
-    </button>
-  `).join("")}</div>`;
+
+  if (!details.length) {
+    const summary = actionSummary(action);
+    if (summary && summary !== actionReaderSummary(action)) {
+      add("Decoded effect", summary, { key: "summary" });
+    }
+  }
+
+  return details;
 }
 
 function levelForActionLink(link, fallbackLevelType = null) {
@@ -2574,22 +2620,6 @@ function wireSemanticActionButtons(root, actions, context = {}) {
   }
 }
 
-function wireRecordLinkButtons(root, context = {}) {
-  for (const button of root.querySelectorAll("[data-record-group][data-record-id]")) {
-    button.addEventListener("click", () => {
-      const item = {
-        groupKey: button.dataset.recordGroup,
-        kind: button.dataset.recordKind || null,
-        id: Number(button.dataset.recordId),
-        ...context,
-      };
-      const targetId = entityIdForRecordSelection(item);
-      if (targetId && selectSchemaTarget(targetId)) return;
-      selectItem("record", item, { normalize: false });
-    });
-  }
-}
-
 function actionSummary(action) {
   const code = action.code;
   if (action.extracodeUsage?.summary) return action.extracodeUsage.summary;
@@ -2656,6 +2686,7 @@ function renderSemanticActions(actions) {
     const questClass = action.category?.startsWith("quest") ? "quest" : action.category;
     const target = actionPrimaryTarget(action);
     const targetLabel = actionTargetLabel(target);
+    const details = actionOutcomeDetails(action);
     const tagName = target ? "button" : "div";
     const targetAttr = target ? ` type="button" data-action-index="${index}" title="${escapeHtml(targetLabel)}"` : "";
     const buttonClass = target ? " semantic-button" : "";
@@ -2663,6 +2694,16 @@ function renderSemanticActions(actions) {
       <${tagName} class="semantic-line${buttonClass} ${escapeHtml(questClass || "")}"${targetAttr}>
         <div class="semantic-title">${escapeHtml(actionReaderSummary(action))}</div>
         <div class="semantic-meta">${escapeHtml([actionCategoryName(action.category), targetLabel].filter(Boolean).join(" | "))}</div>
+        ${details.length ? `
+          <div class="semantic-payload">
+            ${details.map((detail) => `
+              <div class="semantic-payload-row">
+                ${detail.title ? `<span class="semantic-payload-title">${escapeHtml(detail.title)}</span>` : ""}
+                ${detail.summary ? `<span>${escapeHtml(detail.summary)}</span>` : ""}
+              </div>
+            `).join("")}
+          </div>
+        ` : ""}
       </${tagName}>
     `;
   }).join("")}</div>`;
@@ -3150,10 +3191,13 @@ function renderEntitySpecialSections(entity, context = null) {
     const level = currentLevel();
     const isCurrent = entity.id === currentMapEntityId();
     const rand = isCurrent ? randLevelFor(level) : null;
+    const summary = entity.summary || {};
+    const tilesetClue = isCurrent ? tilesetClueLabel(level) : tilesetClueValue(summary.tilesetClue);
     return `
       <div class="section">
         <h3>Map Rendering</h3>
         ${isCurrent ? kv("render tileset", renderTilesetLabel(level)) : kv("selected level", "Open this map to inspect live render state.")}
+        ${tilesetClue ? kv("tileset clue", tilesetClue) : ""}
         ${isCurrent ? kv(isDungeonTopdownLevel(level) ? "render art" : "tile atlas", atlasStatusForLevel(level)) : ""}
         ${isCurrent && rand ? kv("dark/LOS", `${rand.isdark ? "dark" : "lit"} / ${rand.uselos ? "LOS" : "no LOS"}`) : ""}
       </div>
@@ -3227,7 +3271,7 @@ function renderEntityDetail(entityId, context = null) {
     </div>
     ${renderReaderSummary(entity)}
     ${renderEntitySpecialSections(entity, context)}
-    ${renderRelatedLinks(entity.id)}
+    ${(entity.type === "trigger" || entity.type === "macro") ? "" : renderRelatedLinks(entity.id)}
     ${diagnostics.length ? `
       <div class="section">
         <h3>Needs Attention</h3>
@@ -3284,11 +3328,11 @@ function renderSelectionPanel() {
         <h3>${escapeHtml(levelTitle(level, { long: true }))}</h3>
         ${kv("source", level?.source || "-")}
         ${level?.nameSource ? kv("name source", level.nameSource) : ""}
-        ${level?.nameHints?.length ? kv("map name hints", level.nameHints.map((hint) => hint.name).slice(0, 5).join(" / ")) : ""}
         ${kv("tiles", level ? `${level.width} x ${level.height}` : "-")}
         ${kv("tile range", level ? `${level.min} to ${level.max}` : "-")}
         ${kv("landlook metadata", rand ? rand.landlook : "-")}
         ${kv("render tileset", level ? renderTilesetLabel(level) : "-")}
+        ${tilesetClueLabel(level) ? kv("tileset clue", tilesetClueLabel(level)) : ""}
         ${level?.renderTilesetSource ? kv("render source", level.renderTilesetSource) : ""}
         ${kv(isDungeonTopdownLevel(level) ? "render art" : "tile atlas", level ? atlasStatusForLevel(level) : "-")}
         ${kv("dark/LOS", rand ? `${rand.isdark ? "dark" : "lit"} / ${rand.uselos ? "LOS" : "no LOS"}` : "-")}
@@ -3345,10 +3389,6 @@ function renderSelectionPanel() {
           ${kv("activation", door.percent ? `${door.percent}% chance` : "always or scenario-defined")}
           ${renderSemanticActions(actions)}
         </div>
-        <div class="section">
-          <h3>Leads To</h3>
-          ${renderLinkedRecordButtons(actions)}
-        </div>
       ` : ""}
       ${!door && !random ? `
         <div class="section">
@@ -3392,7 +3432,6 @@ function renderSelectionPanel() {
         </div>
       </details>
     `;
-    wireRecordLinkButtons(els.selectionPanel, { sourceOverlay: selected.item });
     wireSemanticActionButtons(els.selectionPanel, actions, { sourceOverlay: selected.item });
     for (const button of els.selectionPanel.querySelectorAll("[data-overlay-id]")) {
       button.addEventListener("click", () => {

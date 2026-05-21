@@ -78,6 +78,24 @@ function byteRange(start, length) {
   return { start, length, endExclusive: start + length };
 }
 
+function titleCaseLevelType(type) {
+  return type === "land" ? "Land" : "Dungeon";
+}
+
+function randLevelFor(randLevels, level) {
+  return (randLevels || []).find((entry) => entry.levelType === level?.type && entry.levelIndex === level?.index) || null;
+}
+
+function fallbackMapLabel(level, randLevels) {
+  const base = `${titleCaseLevelType(level.type)} ${level.index}`;
+  if (level.renderKind === "dungeon-topdown" || (level.type === "dungeon" && Number.isInteger(level.renderPictureId))) {
+    return `${base}, PICT ${level.renderPictureId || 302}`;
+  }
+  const randLevel = randLevelFor(randLevels, level);
+  const landlook = Number.isInteger(level.renderLandlook) ? level.renderLandlook : randLevel?.landlook;
+  return Number.isInteger(landlook) ? `${base}, Look ${landlook}` : base;
+}
+
 function mapEntityId(levelType, levelIndex) {
   return `map:${levelType}:${levelIndex}`;
 }
@@ -566,6 +584,7 @@ export function buildSemanticSchema({
 
   for (const level of levels || []) {
     const source = level.type === "land" ? "Data LD" : "Data DL";
+    const mapLabel = level.displayName || level.name || fallbackMapLabel(level, randLevels);
     output.records.push({
       id: `record:${source}:${level.index}`,
       source: sourceId(source),
@@ -583,8 +602,8 @@ export function buildSemanticSchema({
     output.entities.push({
       id: mapEntityId(level.type, level.index),
       type: "map",
-      label: level.displayName || level.name || `${level.type} level ${level.index}`,
-      confidence: level.nameSource ? "source-backed" : "fixture-backed",
+      label: mapLabel,
+      confidence: level.nameSource ? "source-backed" : "confirmed",
       source,
       recordRef: `record:${source}:${level.index}`,
       summary: {
@@ -592,7 +611,8 @@ export function buildSemanticSchema({
         levelIndex: level.index,
         width: MAP_SIZE,
         height: MAP_SIZE,
-        nameHints: level.nameHints || [],
+        labelSource: level.nameSource || "Data field index and Data RD/RDD landlook",
+        tilesetClue: level.tilesetClue || null,
         render: level.render || null,
       },
     });

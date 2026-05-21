@@ -1591,6 +1591,26 @@ input[type="range"] {
   word-break: break-word;
 }
 
+.semantic-payload {
+  display: grid;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.semantic-payload-row {
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.semantic-payload-title {
+  color: var(--text-strong);
+  font-size: 12px;
+  font-weight: 760;
+}
+
 .compact-list {
   margin-top: 8px;
 }

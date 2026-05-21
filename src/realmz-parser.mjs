@@ -29,51 +29,16 @@ const MENU_BYTES = 502;
 const MAP_NAME_RESOURCE_IDS = [-102, -101];
 const DUNGEON_TINY_PICT_ID = 302;
 
-const knownLevelNames = new Map([
-  ["city of bywater", {
-    land: new Map([
-      [0, "Bywater"],
-      [1, "Underdark"],
-      [2, "Caves"],
-      [3, "Waterford"],
-      [4, "Tavern"],
-      [5, "Interiors"],
-      [6, "Brothel / Archives / Temple"],
-      [7, "Waterford interiors"],
-      [8, "Dogre castle"],
-    ]),
-    dungeon: new Map([
-      [0, "Dungeons"],
-      [1, "Dogre castle basement"],
-    ]),
-  }],
-  ["prelude to pestilence", {
-    land: new Map([
-      [0, "Mountain View"],
-      [1, "Caves"],
-      [2, "Fingertip mountains"],
-      [3, "Berhune castle"],
-      [4, "Sewer"],
-    ]),
-    dungeon: new Map([
-      [0, "Dungeons"],
-    ]),
-  }],
-  ["assault on giant mountain", {
-    land: new Map([
-      [0, "Northgate"],
-      [1, "Caves"],
-      [2, "Grim Mountains"],
-      [3, "Hill giants"],
-      [4, "Gnaths"],
-      [5, "Citadels"],
-      [6, "Citadels"],
-    ]),
-    dungeon: new Map([
-      [0, "Dungeon"],
-      [1, "Dungeon"],
-    ]),
-  }],
+const landlookTilesetClues = new Map([
+  [0, { label: "Data P BD", sourceResource: "PICT 300", note: "standard look 0 tile atlas" }],
+  [3, { label: "Data SUB BD", sourceResource: "PICT 303", note: "subterranean tile atlas" }],
+  [4, { label: "Data Castle BD", sourceResource: "PICT 304", note: "castle/interior tile atlas" }],
+  [5, { label: "Data Desert BD", sourceResource: "PICT 305", note: "desert tile atlas" }],
+  [6, { label: "Data Custom 1 BD", sourceResource: "PICT 306", note: "scenario custom tile atlas 1" }],
+  [7, { label: "Data Custom 2 BD", sourceResource: "PICT 307", note: "scenario custom tile atlas 2" }],
+  [8, { label: "Data Custom 3 BD", sourceResource: "PICT 308", note: "scenario custom tile atlas 3" }],
+  [9, { label: "Data Swamp BD", sourceResource: "PICT 309", note: "swamp tile atlas" }],
+  [10, { label: "Data Snow BD", sourceResource: "PICT 310", note: "snow tile atlas" }],
 ]);
 
 const overlayCategories = new Set(["quest", "encounter", "random", "entrance", "map mutation", "battle", "text", "unknown"]);
@@ -444,19 +409,6 @@ function parseFields(buffer, source, levelType) {
     });
   }
   return levels;
-}
-
-function attachKnownLevelNames(levels, scenarioName) {
-  const names = knownLevelNames.get(scenarioName.toLowerCase());
-  if (!names) {
-    return;
-  }
-  for (const level of levels) {
-    const name = names[level.type]?.get(level.index);
-    if (!name) continue;
-    level.name = name;
-    level.nameSource = "Realmz Wiki area page";
-  }
 }
 
 function parseRandLevels(buffer, source, levelType) {
@@ -892,35 +844,6 @@ function attachMapNames(records, resources) {
     record.primaryName = entry.primaryName;
     record.secondaryName = entry.secondaryName;
     record.nameSource = "Scenario.rsrc STR# Map Names";
-  }
-}
-
-function mapRecordLevelKey(record) {
-  if (!record || !Number.isInteger(record.level) || record.level < 0 || record.level >= 100) {
-    return null;
-  }
-  return `${record.isDungeon ? "dungeon" : "land"}:${record.level}`;
-}
-
-function attachLevelNameHints(levels, records) {
-  const levelsByKey = new Map(levels.map((level) => [level.id, level]));
-  for (const record of records?.maps?.records || []) {
-    const name = cleanResourceName(record.name);
-    const key = name ? mapRecordLevelKey(record) : null;
-    const level = key ? levelsByKey.get(key) : null;
-    if (!level) continue;
-    if (!level.nameHints) {
-      level.nameHints = [];
-    }
-    if (!level.nameHints.some((hint) => hint.name === name)) {
-      level.nameHints.push({
-        name,
-        source: "Scenario.rsrc STR# Map Names",
-        mapRecord: record.id,
-        startX: record.startX,
-        startY: record.startY,
-      });
-    }
   }
 }
 
@@ -2154,15 +2077,18 @@ function attachLevelRenderInfo(levels, randLevels) {
       level.renderPictureId = DUNGEON_TINY_PICT_ID;
       level.renderTilesetSource = "Data DL bitfield rendered with tiny sprites from Realmz PICT 302";
     } else if (Number.isInteger(rand?.landlook) && rand.landlook >= 0) {
+      const tilesetClue = landlookTilesetClues.get(rand.landlook) || null;
       level.renderKind = "landlook";
       level.renderLandlook = rand.landlook;
       level.renderTileset = `look ${rand.landlook}`;
       level.renderTilesetSource = "Data RD landlook";
+      level.tilesetClue = tilesetClue ? { landlook: rand.landlook, ...tilesetClue } : null;
     } else {
       level.renderKind = "decoded";
       level.renderLandlook = null;
       level.renderTileset = "decoded colors";
       level.renderTilesetSource = "no known tile atlas";
+      level.tilesetClue = null;
     }
   }
 }
@@ -2175,6 +2101,7 @@ function buildAssetManifest(scenarioPath, levels, randLevels) {
   return {
     tileAtlases: landlooks.map((landlook) => ({
       landlook,
+      tilesetClue: landlookTilesetClues.get(landlook) || null,
       sourceResource: `PICT ${300 + landlook}`,
       availability: "fallback",
       available: false,
@@ -2259,7 +2186,6 @@ export async function analyzeScenario(scenarioPath) {
     ...parseFields(dataLD, "Data LD", "land"),
     ...parseFields(dataDL, "Data DL", "dungeon"),
   ];
-  attachKnownLevelNames(levels, path.basename(resolvedPath));
   const randLevels = [
     ...parseRandLevels(dataRD, "Data RD", "land"),
     ...parseRandLevels(dataRDD, "Data RDD", "dungeon"),
@@ -2279,7 +2205,6 @@ export async function analyzeScenario(scenarioPath) {
   const records = buildRecords({ dataMD, dataBD, dataSD, dataSD2, dataMD2, dataTD, dataTD2, dataTD3, dataCI, dataMENU, dataSolids });
   const resources = await parseScenarioResources(resolvedPath);
   attachMapNames(records, resources);
-  attachLevelNameHints(levels, records);
   const assets = buildAssetManifest(resolvedPath, levels, randLevels);
 
   const trackedFiles = [
