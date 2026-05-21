@@ -1211,7 +1211,7 @@ export function buildSemanticSchema({
       summary: {
         prompt: encounter.prompt,
         maxTimes: encounter.maxTimes,
-        text: encounter.text?.filter(Boolean).map(cleanText).slice(0, 4),
+        text: encounter.text?.filter(Boolean).map(cleanText),
       },
     });
   }
@@ -1227,7 +1227,7 @@ export function buildSemanticSchema({
         prompt: encounter.prompt,
         maxTimes: encounter.maxTimes,
         thief: encounter.thief,
-        text: encounter.text?.filter(Boolean).map(cleanText).slice(0, 5),
+        text: encounter.text?.filter(Boolean).map(cleanText),
       },
     });
   }

@@ -415,11 +415,30 @@ function formatSummaryValue(value) {
   return truncateText(value, 260);
 }
 
+function isTextSummaryField(key, value) {
+  return String(key).toLowerCase() === "text" &&
+    Array.isArray(value) &&
+    value.some((entry) => String(entry || "").trim());
+}
+
+function renderSummaryField(key, value) {
+  const label = labelize(key);
+  if (isTextSummaryField(key, value)) {
+    return `
+      <div class="kv text-summary">
+        <span>${escapeHtml(label)}</span>
+        <div class="record-text">${escapeHtml(value.filter(Boolean).join("\n"))}</div>
+      </div>
+    `;
+  }
+  return kv(label, formatSummaryValue(value));
+}
+
 function renderSummaryKv(summary, options = {}) {
   const skip = new Set(options.skip || []);
   const entries = Object.entries(summary || {}).filter(([key, value]) => !skip.has(key) && value != null && value !== "");
   if (!entries.length) return `<div class="empty">No decoded summary fields.</div>`;
-  return entries.map(([key, value]) => kv(labelize(key), formatSummaryValue(value))).join("");
+  return entries.map(([key, value]) => renderSummaryField(key, value)).join("");
 }
 
 function renderReaderSummary(entity) {
@@ -451,7 +470,7 @@ function renderReaderSummary(entity) {
   return `
     <div class="section">
       <h3>Details</h3>
-      ${entries.map(([key, value]) => kv(labelize(key), formatSummaryValue(value))).join("")}
+      ${entries.map(([key, value]) => renderSummaryField(key, value)).join("")}
     </div>
   `;
 }

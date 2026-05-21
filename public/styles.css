@@ -1458,6 +1458,15 @@ input[type="range"] {
   word-break: break-word;
 }
 
+.kv.text-summary {
+  align-items: start;
+}
+
+.kv.text-summary .record-text {
+  margin-top: 0;
+  min-width: 0;
+}
+
 .list {
   display: grid;
   gap: 7px;
