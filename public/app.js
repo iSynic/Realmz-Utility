@@ -65,7 +65,6 @@ const els = {
   rootForm: document.querySelector("#rootForm"),
   rootPath: document.querySelector("#rootPath"),
   locateScenarios: document.querySelector("#locateScenarios"),
-  scenarioList: document.querySelector("#scenarioList"),
   scenarioTitle: document.querySelector("#scenarioTitle"),
   scenarioPath: document.querySelector("#scenarioPath"),
   summary: document.querySelector("#summary"),
@@ -78,7 +77,8 @@ const els = {
   overlaySvg: document.querySelector("#overlaySvg"),
   tileStatus: document.querySelector("#tileStatus"),
   mapHud: document.querySelector("#mapHud"),
-  selectionPanel: document.querySelector("#selectionPanel"),
+  selectionPanel: document.querySelector("#detailPanel"),
+  explorerSelectionPanel: document.querySelector("#explorerSelectionPanel"),
   scriptPanel: document.querySelector("#scriptPanel"),
   flagsPanel: document.querySelector("#flagsPanel"),
   dataPanel: document.querySelector("#dataPanel"),
@@ -2045,23 +2045,61 @@ async function exportCurrentMap() {
   }
 }
 
-function renderScenarioList() {
-  if (state.data?.scenario) {
-    els.scenarioList.innerHTML = `
-      <div class="scenario-item active scenario-current">
-        <strong>Open Scenario</strong>
-        ${escapeHtml(state.data.scenario.name)}
-        <span>${escapeHtml(state.data.scenario.path)}</span>
-      </div>
-    `;
+function renderExplorerSelectionPanel() {
+  if (!els.explorerSelectionPanel) return;
+  if (!state.data) {
+    els.explorerSelectionPanel.innerHTML = `<div class="empty">Choose a scenario folder to browse maps, triggers, records, and resources.</div>`;
     return;
   }
-  els.scenarioList.innerHTML = `
-    <div class="scenario-item scenario-current scenario-empty">
-      <strong>No Scenario Open</strong>
-      Choose a single scenario folder to inspect its maps, triggers, records, and resources.
+
+  const level = currentLevel();
+  if (!level) {
+    els.explorerSelectionPanel.innerHTML = `<div class="empty">No map is selected.</div>`;
+    return;
+  }
+
+  const mapEntityId = currentMapEntityId();
+  const rand = randLevelFor(level);
+  const doors = doorsFor(level);
+  const overlays = overlayForLevel(level);
+  const visibleOverlays = overlays.filter((box) => categoryEnabled(box.category) || isBoxHighlighted(box));
+  els.explorerSelectionPanel.innerHTML = `
+    <div class="section">
+      <h3>Current Map</h3>
+      ${mapEntityId && entityById(mapEntityId) ? renderSchemaTargetButton(mapEntityId, {
+        role: "detail",
+        meta: levelTitle(level, { long: true }),
+      }) : ""}
+      ${kv("source", level.source || "-")}
+      ${kv("tiles", `${level.width} x ${level.height}`)}
+      ${kv("landlook", rand ? rand.landlook : "-")}
+      ${kv("triggers", doors.length)}
+      ${kv("overlays", overlays.length)}
+    </div>
+    <div class="section">
+      <h3>Visible Overlays</h3>
+      <div class="list">
+        ${visibleOverlays.slice(0, 90).map((box) => {
+          const definition = categoryDefinition(box.category);
+          const selected = isBoxSelected(box) ? " active" : "";
+          return `
+            <button class="row-button${selected}" data-overlay-id="${escapeHtml(box.id)}">
+              <span class="row-title"><strong>${escapeHtml(boxTitle(box))}</strong><span>${escapeHtml(definition.shortName)}</span></span>
+              <span class="row-meta">${escapeHtml(`${formatBounds(box.bounds)} | record ${recordShortId(box.recordRef)}`)}</span>
+            </button>
+          `;
+        }).join("") || `<div class="empty">No visible overlays on this map.</div>`}
+        ${visibleOverlays.length > 90 ? `<div class="row-meta">Showing 90 of ${visibleOverlays.length} visible overlays.</div>` : ""}
+      </div>
     </div>
   `;
+  wireSchemaNavigation(els.explorerSelectionPanel);
+  for (const button of els.explorerSelectionPanel.querySelectorAll("[data-overlay-id]")) {
+    button.addEventListener("click", () => {
+      const box = overlays.find((entry) => entry.id === button.dataset.overlayId);
+      selectOverlayBox(box);
+    });
+  }
 }
 
 function renderHeader() {
@@ -3409,14 +3447,16 @@ function renderFilesPanel() {
 }
 
 function activeInspectorPanelName() {
-  const active = document.querySelector(".panel.active");
+  const active = document.querySelector(".explorer-panel.active");
+  if (active?.id === "explorerSelectionPanel") return "selection";
   return active?.id?.replace(/Panel$/, "") || "selection";
 }
 
 function activateInspectorPanel(name) {
-  document.querySelectorAll(".tab").forEach((entry) => entry.classList.toggle("active", entry.dataset.panel === name));
-  document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-  document.querySelector(`#${name}Panel`)?.classList.add("active");
+  const panelId = name === "selection" ? "explorerSelectionPanel" : `${name}Panel`;
+  document.querySelectorAll(".explorer-tab").forEach((entry) => entry.classList.toggle("active", entry.dataset.panel === name));
+  document.querySelectorAll(".explorer-panel").forEach((panel) => panel.classList.remove("active"));
+  document.querySelector(`#${panelId}`)?.classList.add("active");
   updateInspectorNav();
 }
 
@@ -3491,6 +3531,7 @@ function restoreSelectionHistory(offset) {
   state.selectedScriptNode = snapshot.selectedScriptNode;
   renderLevelTabs();
   drawMap();
+  renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
   activateInspectorPanel(snapshot.panel || "selection");
@@ -3500,32 +3541,36 @@ function restoreSelectionHistory(offset) {
 function selectEntity(entityId, options = {}) {
   const entity = entityById(entityId);
   if (!entity) return;
+  const panel = options.panel || activeInspectorPanelName();
   state.selectedItem = { type: "entity", entityId, context: options.context || null };
   state.selectedScriptNode = scriptNodeById(entityId) ? entityId : null;
   if (entity.type === "quest flag") {
     const id = Number(entity.id.replace(/^quest-flag:/, ""));
     state.highlightedQuest = Number.isFinite(id) ? id : state.highlightedQuest;
   }
-  activateInspectorPanel(options.panel || "selection");
+  if (options.panel) activateInspectorPanel(options.panel);
+  renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
   renderFlagsPanel();
   renderOverlay();
   if (options.history !== false) {
-    rememberSelection(options.panel || "selection");
+    rememberSelection(panel);
   }
 }
 
 function selectSchemaRecord(recordId, options = {}) {
   if (!schemaRecordById(recordId)) return;
+  const panel = options.panel || activeInspectorPanelName();
   state.selectedItem = { type: "schema-record", recordId, context: options.context || null };
   state.selectedScriptNode = null;
-  activateInspectorPanel(options.panel || "selection");
+  if (options.panel) activateInspectorPanel(options.panel);
+  renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
   renderOverlay();
   if (options.history !== false) {
-    rememberSelection(options.panel || "selection");
+    rememberSelection(panel);
   }
 }
 
@@ -3568,6 +3613,7 @@ function selectItem(type, item, options = {}) {
     state.selectedScriptNode = null;
   }
   activateInspectorPanel("selection");
+  renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
   renderOverlay();
@@ -3602,17 +3648,18 @@ function selectScriptNode(nodeId) {
   }
   renderLevelTabs();
   drawMap();
+  renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
   rememberSelection(activeInspectorPanelName());
 }
 
 function renderAll() {
-  renderScenarioList();
   renderHeader();
   renderLevelTabs();
   updateOverlayFilterSummary();
   drawMap();
+  renderExplorerSelectionPanel();
   renderSelectionPanel();
   renderScriptPanel();
   renderFlagsPanel();
@@ -3805,7 +3852,6 @@ async function loadScenario(scenarioPath) {
   state.pictureCache.clear();
   state.secretWalkableCache.clear();
   setStatus("Analyzing scenario...");
-  renderScenarioList();
   state.data = await api(`/api/analyze?path=${encodeURIComponent(scenarioPath)}`);
   state.selectedScenarioPath = state.data.scenario.path;
   state.scenarioFolderInitialPath = state.data.scenario.path;
@@ -3815,6 +3861,7 @@ async function loadScenario(scenarioPath) {
   state.schemaIndex = buildSchemaIndex(state.data.semanticSchema);
   state.selectedLevelId = state.data.levels[0]?.id || null;
   setStatus(`Loaded ${state.data.scenario.name}`);
+  activateInspectorPanel("selection");
   renderAll();
 }
 
@@ -4015,7 +4062,7 @@ function wireEvents() {
     state.sidebarCollapsed = !state.sidebarCollapsed;
     els.app.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
     els.sidebarToggle.textContent = state.sidebarCollapsed ? ">" : "<";
-    els.sidebarToggle.title = state.sidebarCollapsed ? "Expand scenario panel" : "Collapse scenario panel";
+    els.sidebarToggle.title = state.sidebarCollapsed ? "Expand explorer" : "Collapse explorer";
     els.sidebarToggle.setAttribute("aria-label", els.sidebarToggle.title);
     els.sidebarToggle.setAttribute("aria-expanded", String(!state.sidebarCollapsed));
   });
@@ -4032,7 +4079,7 @@ function wireEvents() {
   els.inspectorBack.addEventListener("click", () => restoreSelectionHistory(-1));
   els.inspectorForward.addEventListener("click", () => restoreSelectionHistory(1));
 
-  for (const tab of document.querySelectorAll(".tab")) {
+  for (const tab of document.querySelectorAll(".explorer-tab")) {
     tab.addEventListener("click", () => {
       activateInspectorPanel(tab.dataset.panel);
     });

@@ -8,11 +8,10 @@
   </head>
   <body>
     <div id="app" class="shell">
-      <aside class="sidebar">
-        <div class="brand">
+      <header class="app-header">
+        <div class="brand global-brand">
           <div class="brand-title">
             <h1>Realmz Scenario Utility</h1>
-            <button id="sidebarToggle" class="icon-button" type="button" title="Collapse scenario panel" aria-label="Collapse scenario panel" aria-expanded="true">&lt;</button>
           </div>
           <div class="brand-action-row">
             <div id="status" class="status">Starting...</div>
@@ -21,10 +20,6 @@
           <input id="rootPath" type="hidden" />
         </div>
 
-        <div class="scenario-list" id="scenarioList"></div>
-      </aside>
-
-      <main class="main">
         <section class="topbar">
           <div>
             <div class="eyebrow">Scenario</div>
@@ -37,7 +32,34 @@
           </button>
           <div id="summary" class="summary"></div>
         </section>
+      </header>
 
+      <div class="app-body">
+        <aside class="sidebar">
+          <div class="explorer-header">
+            <button id="sidebarToggle" class="icon-button" type="button" title="Collapse explorer" aria-label="Collapse explorer" aria-expanded="true">&lt;</button>
+            <div class="explorer-title">
+              <div class="eyebrow">Explorer</div>
+              <strong>Navigator</strong>
+            </div>
+          </div>
+          <div class="tabs explorer-tabs" role="tablist" aria-label="Explorer sections">
+            <button class="tab explorer-tab active" data-panel="selection">Selection</button>
+            <button class="tab explorer-tab" data-panel="script">Script</button>
+            <button class="tab explorer-tab" data-panel="flags">Flags</button>
+            <button class="tab explorer-tab" data-panel="data">Data</button>
+            <button class="tab explorer-tab" data-panel="search">Search</button>
+            <button class="tab explorer-tab" data-panel="files">Files</button>
+          </div>
+          <div id="explorerSelectionPanel" class="panel explorer-panel active"></div>
+          <div id="scriptPanel" class="panel explorer-panel"></div>
+          <div id="flagsPanel" class="panel explorer-panel"></div>
+          <div id="dataPanel" class="panel explorer-panel"></div>
+          <div id="searchPanel" class="panel explorer-panel"></div>
+          <div id="filesPanel" class="panel explorer-panel"></div>
+        </aside>
+
+        <main class="main">
         <section class="workspace">
           <div class="map-panel">
             <div class="toolbar">
@@ -135,23 +157,11 @@
               <button id="inspectorBack" class="icon-button" type="button" title="Back" aria-label="Back" disabled>&lt;</button>
               <button id="inspectorForward" class="icon-button" type="button" title="Forward" aria-label="Forward" disabled>&gt;</button>
             </div>
-            <div class="tabs" role="tablist">
-              <button class="tab active" data-panel="selection">Selection</button>
-              <button class="tab" data-panel="script">Script</button>
-              <button class="tab" data-panel="flags">Flags</button>
-              <button class="tab" data-panel="data">Data</button>
-              <button class="tab" data-panel="search">Search</button>
-              <button class="tab" data-panel="files">Files</button>
-            </div>
-            <div id="selectionPanel" class="panel active"></div>
-            <div id="scriptPanel" class="panel"></div>
-            <div id="flagsPanel" class="panel"></div>
-            <div id="dataPanel" class="panel"></div>
-            <div id="searchPanel" class="panel"></div>
-            <div id="filesPanel" class="panel"></div>
+            <div id="detailPanel" class="detail-panel"></div>
           </aside>
         </section>
-      </main>
+        </main>
+      </div>
     </div>
     <div id="projectSearchOverlay" class="project-search-overlay" hidden>
       <div class="project-search-dialog" role="dialog" aria-modal="true" aria-labelledby="projectSearchTitle">
