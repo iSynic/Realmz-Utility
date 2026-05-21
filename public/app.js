@@ -181,7 +181,10 @@ async function api(path) {
   const response = await fetch(path);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || `${response.status} ${response.statusText}`);
+    const error = new Error(body.error || `${response.status} ${response.statusText}`);
+    error.status = response.status;
+    error.path = path;
+    throw error;
   }
   return response.json();
 }
@@ -190,9 +193,16 @@ async function apiPost(path) {
   const response = await fetch(path, { method: "POST" });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || body.status || `${response.status} ${response.statusText}`);
+    const error = new Error(body.error || body.status || `${response.status} ${response.statusText}`);
+    error.status = response.status;
+    error.path = path;
+    throw error;
   }
   return response.json();
+}
+
+function isUnknownApiEndpoint(error) {
+  return error?.status === 404 && /unknown api endpoint/i.test(error.message || "");
 }
 
 async function rememberScenarioFolder(folderPath) {
@@ -3638,6 +3648,26 @@ async function folderList(folderPath) {
   return api(`/api/folders?path=${encodeURIComponent(folderPath || "")}`);
 }
 
+async function legacyScenarioFolderList(folderPath) {
+  const root = folderPath || state.config?.defaultScenarioRoot || "";
+  const data = await api(`/api/scenarios?root=${encodeURIComponent(root)}`);
+  return {
+    path: data.root || root,
+    exists: true,
+    isDirectory: true,
+    isScenarioFolder: false,
+    scenarioCount: data.scenarios?.length || 0,
+    parent: null,
+    entries: (data.scenarios || []).map((scenario) => ({
+      name: scenario.name,
+      path: scenario.path,
+      isScenarioFolder: true,
+      scenarioCount: 0,
+    })),
+    legacyScenarioDiscovery: true,
+  };
+}
+
 function setFolderPickerOpen(open) {
   if (!els.folderPickerOverlay) return;
   els.folderPickerOverlay.hidden = !open;
@@ -3662,14 +3692,25 @@ async function browseFolder(folderPath) {
   els.folderPickerOpen.disabled = true;
   els.folderPickerList.innerHTML = "";
   try {
-    const info = await folderList(folderPath || state.config?.defaultScenarioRoot || "");
+    let info;
+    try {
+      info = await folderList(folderPath || state.config?.defaultScenarioRoot || "");
+    } catch (error) {
+      if (!isUnknownApiEndpoint(error)) {
+        throw error;
+      }
+      info = await legacyScenarioFolderList(folderPath || state.config?.defaultScenarioRoot || "");
+    }
     els.folderPickerPath.value = info.path || folderPath || "";
-    els.folderPickerOpen.disabled = !info.isScenarioFolder;
-    const summary = info.isScenarioFolder
-      ? "This folder looks like a Realmz scenario and can be opened."
-      : info.scenarioCount
-        ? `This is a container with ${info.scenarioCount} scenario folder${info.scenarioCount === 1 ? "" : "s"}. Choose one below.`
-        : "Choose a folder that contains Realmz scenario data.";
+    const canOpenLegacyPath = info.legacyScenarioDiscovery && !info.scenarioCount && Boolean(els.folderPickerPath.value.trim());
+    els.folderPickerOpen.disabled = !info.isScenarioFolder && !canOpenLegacyPath;
+    const summary = info.legacyScenarioDiscovery
+      ? "The running server needs a restart for folder browsing. Showing known scenario folders from the older API."
+      : info.isScenarioFolder
+        ? "This folder looks like a Realmz scenario and can be opened."
+        : info.scenarioCount
+          ? `This is a container with ${info.scenarioCount} scenario folder${info.scenarioCount === 1 ? "" : "s"}. Choose one below.`
+          : "Choose a folder that contains Realmz scenario data.";
     els.folderPickerStatus.textContent = summary;
     const parentButton = info.parent && info.parent !== info.path ? `
       <button class="folder-picker-row parent" type="button" data-folder-path="${escapeHtml(info.parent)}">
@@ -3678,14 +3719,22 @@ async function browseFolder(folderPath) {
       </button>
     ` : "";
     const entries = (info.entries || []).map((entry) => `
-      <button class="folder-picker-row ${entry.isScenarioFolder ? "scenario" : ""}" type="button" data-folder-path="${escapeHtml(entry.path)}">
+      <button class="folder-picker-row ${entry.isScenarioFolder ? "scenario" : ""}" type="button" data-folder-path="${escapeHtml(entry.path)}" data-open-scenario="${info.legacyScenarioDiscovery && entry.isScenarioFolder ? "true" : "false"}">
         <strong>${escapeHtml(entry.name)}</strong>
         <span>${escapeHtml(entry.isScenarioFolder ? "Scenario folder" : entry.scenarioCount ? `${entry.scenarioCount} scenarios inside` : entry.path)}</span>
       </button>
     `).join("");
     els.folderPickerList.innerHTML = parentButton + entries || `<div class="empty">No folders were found here.</div>`;
     for (const button of els.folderPickerList.querySelectorAll("[data-folder-path]")) {
-      button.addEventListener("click", () => browseFolder(button.dataset.folderPath));
+      button.addEventListener("click", () => {
+        if (button.dataset.openScenario === "true") {
+          els.rootPath.value = button.dataset.folderPath;
+          closeFolderPicker();
+          openScenarioFromInput().catch((error) => setStatus(error.message));
+          return;
+        }
+        browseFolder(button.dataset.folderPath);
+      });
     }
   } catch (error) {
     els.folderPickerStatus.textContent = `Unable to read folder: ${error.message || error}`;
@@ -3711,7 +3760,17 @@ async function openScenarioFromInput() {
   }
 
   setStatus("Checking scenario folder...");
-  const info = await scenarioPathInfo(scenarioPath);
+  let info;
+  try {
+    info = await scenarioPathInfo(scenarioPath);
+  } catch (error) {
+    if (isUnknownApiEndpoint(error)) {
+      state.scenarioFolderInitialPath = scenarioPath;
+      await loadScenario(scenarioPath);
+      return;
+    }
+    throw error;
+  }
   state.scenarioFolderInitialPath = info.path || scenarioPath;
   if (!info.exists) {
     setStatus(`Folder not found: ${scenarioPath}`);
