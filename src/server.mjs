@@ -1,4 +1,5 @@
 import http from "node:http";
+import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -280,6 +281,112 @@ async function importTileAtlases(res, url) {
   sendJson(res, 200, { scenarioPath: path.resolve(scenarioPath), results });
 }
 
+function runPicker(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      env: options.env || process.env,
+      windowsHide: true,
+    });
+    const cancelCodes = new Set(options.cancelCodes || []);
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout?.setEncoding("utf8");
+    child.stderr?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      const output = stdout.trim();
+      if (code === 0) {
+        resolve(output || null);
+        return;
+      }
+      if (cancelCodes.has(code)) {
+        resolve(null);
+        return;
+      }
+      reject(new Error(stderr.trim() || `${command} exited with code ${code}`));
+    });
+  });
+}
+
+function pickerInitialPath(initialPath) {
+  if (!initialPath) return defaultScenarioRoot;
+  const resolvedPath = path.resolve(initialPath);
+  if (existsSync(resolvedPath)) return resolvedPath;
+  const parentPath = path.dirname(resolvedPath);
+  return existsSync(parentPath) ? parentPath : defaultScenarioRoot;
+}
+
+function hasNativeFolderPicker() {
+  return process.platform === "win32" || process.platform === "darwin" || process.platform === "linux";
+}
+
+function pickFolderWindows(initialPath) {
+  const script = `
+Add-Type -AssemblyName System.Windows.Forms
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = "Open Realmz scenario folder"
+$dialog.ShowNewFolderButton = $false
+$initialPath = [Environment]::GetEnvironmentVariable("RSU_INITIAL_PATH")
+if ($initialPath -and (Test-Path -LiteralPath $initialPath)) {
+  $dialog.SelectedPath = $initialPath
+}
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+  Write-Output $dialog.SelectedPath
+}
+`;
+  return runPicker("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-Command", script], {
+    env: { ...process.env, RSU_INITIAL_PATH: initialPath || "" },
+  });
+}
+
+function escapeAppleScriptString(value) {
+  return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function pickFolderMac(initialPath) {
+  const prompt = "Open Realmz scenario folder";
+  const defaultLocation = existsSync(initialPath)
+    ? ` default location POSIX file "${escapeAppleScriptString(initialPath)}"`
+    : "";
+  const script = `POSIX path of (choose folder with prompt "${prompt}"${defaultLocation})`;
+  return runPicker("osascript", ["-e", script], { cancelCodes: [1] });
+}
+
+async function pickFolderLinux(initialPath) {
+  const zenityArgs = ["--file-selection", "--directory", "--title=Open Realmz scenario folder"];
+  if (initialPath && existsSync(initialPath)) {
+    zenityArgs.push(`--filename=${initialPath.endsWith(path.sep) ? initialPath : `${initialPath}${path.sep}`}`);
+  }
+  try {
+    return await runPicker("zenity", zenityArgs, { cancelCodes: [1] });
+  } catch (error) {
+    if (error && error.code !== "ENOENT") throw error;
+  }
+  return runPicker("kdialog", ["--getexistingdirectory", initialPath || os.homedir(), "--title", "Open Realmz scenario folder"], { cancelCodes: [1] });
+}
+
+async function pickFolder(initialPath) {
+  const resolvedInitialPath = pickerInitialPath(initialPath);
+  if (process.platform === "win32") {
+    return pickFolderWindows(resolvedInitialPath);
+  }
+  if (process.platform === "darwin") {
+    return pickFolderMac(resolvedInitialPath);
+  }
+  if (process.platform === "linux") {
+    return pickFolderLinux(resolvedInitialPath);
+  }
+  throw new Error("Native folder picker is not available on this platform.");
+}
+
 async function pathInfo(targetPath) {
   const resolvedPath = path.resolve(targetPath || defaultScenarioRoot);
   const info = {
@@ -349,6 +456,19 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/folders") {
     sendJson(res, 200, await folderList(url.searchParams.get("path")));
+    return;
+  }
+
+  if (url.pathname === "/api/pick-folder") {
+    if (url.searchParams.get("check") === "1") {
+      sendJson(res, 200, { available: hasNativeFolderPicker(), platform: process.platform });
+      return;
+    }
+    if (req.method !== "POST") {
+      sendError(res, 405, "Use POST to open the folder picker");
+      return;
+    }
+    sendJson(res, 200, { path: await pickFolder(url.searchParams.get("initialPath")) });
     return;
   }
 

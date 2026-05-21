@@ -115,14 +115,6 @@ const els = {
   projectSearchResults: document.querySelector("#projectSearchResults"),
   projectSearchSubtitle: document.querySelector("#projectSearchSubtitle"),
   projectSearchFooter: document.querySelector("#projectSearchFooter"),
-  folderPickerOverlay: document.querySelector("#folderPickerOverlay"),
-  folderPickerClose: document.querySelector("#folderPickerClose"),
-  folderPickerCancel: document.querySelector("#folderPickerCancel"),
-  folderPickerPath: document.querySelector("#folderPickerPath"),
-  folderPickerPathLabel: document.querySelector("#folderPickerPathLabel"),
-  folderPickerStatus: document.querySelector("#folderPickerStatus"),
-  folderPickerList: document.querySelector("#folderPickerList"),
-  folderPickerOpen: document.querySelector("#folderPickerOpen"),
 };
 
 function setStatus(text) {
@@ -137,7 +129,7 @@ function updateLauncherControls() {
   const hasDesktopBridge = Boolean(getTauriInvoke());
   if (els.locateScenarios) {
     els.locateScenarios.hidden = false;
-    els.locateScenarios.title = hasDesktopBridge ? "Choose scenario folder" : "Browse scenario folders";
+    els.locateScenarios.title = hasDesktopBridge ? "Choose scenario folder" : "Choose scenario folder from filesystem";
   }
   if (els.exportMap) {
     els.exportMap.hidden = !hasDesktopBridge;
@@ -3690,113 +3682,17 @@ async function scenarioPathInfo(folderPath) {
   return api(`/api/path-info?path=${encodeURIComponent(folderPath || "")}`);
 }
 
-async function folderList(folderPath) {
-  return api(`/api/folders?path=${encodeURIComponent(folderPath || "")}`);
-}
-
-async function legacyScenarioFolderList(folderPath) {
-  const root = folderPath || state.config?.defaultScenarioRoot || "";
-  const data = await api(`/api/scenarios?root=${encodeURIComponent(root)}`);
-  return {
-    path: data.root || root,
-    exists: true,
-    isDirectory: true,
-    isScenarioFolder: false,
-    scenarioCount: data.scenarios?.length || 0,
-    parent: null,
-    entries: (data.scenarios || []).map((scenario) => ({
-      name: scenario.name,
-      path: scenario.path,
-      isScenarioFolder: true,
-      scenarioCount: 0,
-    })),
-    legacyScenarioDiscovery: true,
-  };
-}
-
-function setFolderPickerOpen(open) {
-  if (!els.folderPickerOverlay) return;
-  els.folderPickerOverlay.hidden = !open;
-}
-
-function closeFolderPicker() {
-  setFolderPickerOpen(false);
-}
-
-function folderPickerInitialPath() {
-  return els.rootPath.value.trim() || state.scenarioFolderInitialPath || state.config?.defaultScenarioRoot || "";
-}
-
-async function openFolderPicker(initialPath = folderPickerInitialPath()) {
-  setFolderPickerOpen(true);
-  await browseFolder(initialPath);
-}
-
-async function browseFolder(folderPath) {
-  if (!els.folderPickerOverlay) return;
-  els.folderPickerStatus.textContent = "Reading folders...";
-  els.folderPickerOpen.disabled = true;
-  els.folderPickerList.innerHTML = "";
+async function pickScenarioFolderWithLocalServer(initialPath) {
   try {
-    let info;
-    try {
-      info = await folderList(folderPath || state.config?.defaultScenarioRoot || "");
-    } catch (error) {
-      if (!isUnknownApiEndpoint(error)) {
-        throw error;
-      }
-      info = await legacyScenarioFolderList(folderPath || state.config?.defaultScenarioRoot || "");
-    }
-    els.folderPickerPath.value = info.path || folderPath || "";
-    if (els.folderPickerPathLabel) {
-      els.folderPickerPathLabel.textContent = info.path || folderPath || "";
-    }
-    const canOpenLegacyPath = info.legacyScenarioDiscovery && !info.scenarioCount && Boolean(els.folderPickerPath.value.trim());
-    els.folderPickerOpen.disabled = !info.isScenarioFolder && !canOpenLegacyPath;
-    const summary = info.legacyScenarioDiscovery
-      ? "The running server needs a restart for folder browsing. Showing known scenario folders from the older API."
-      : info.isScenarioFolder
-        ? "This folder looks like a Realmz scenario and can be opened."
-        : info.scenarioCount
-          ? `This is a container with ${info.scenarioCount} scenario folder${info.scenarioCount === 1 ? "" : "s"}. Choose one below.`
-          : "Choose a folder that contains Realmz scenario data.";
-    els.folderPickerStatus.textContent = summary;
-    const parentButton = info.parent && info.parent !== info.path ? `
-      <button class="folder-picker-row parent" type="button" data-folder-path="${escapeHtml(info.parent)}">
-        <strong>..</strong>
-        <span>${escapeHtml(info.parent)}</span>
-      </button>
-    ` : "";
-    const entries = (info.entries || []).map((entry) => `
-      <button class="folder-picker-row ${entry.isScenarioFolder ? "scenario" : ""}" type="button" data-folder-path="${escapeHtml(entry.path)}" data-open-scenario="${info.legacyScenarioDiscovery && entry.isScenarioFolder ? "true" : "false"}">
-        <strong>${escapeHtml(entry.name)}</strong>
-        <span>${escapeHtml(entry.isScenarioFolder ? "Scenario folder" : entry.scenarioCount ? `${entry.scenarioCount} scenarios inside` : entry.path)}</span>
-      </button>
-    `).join("");
-    els.folderPickerList.innerHTML = parentButton + entries || `<div class="empty">No folders were found here.</div>`;
-    for (const button of els.folderPickerList.querySelectorAll("[data-folder-path]")) {
-      button.addEventListener("click", () => {
-        if (button.dataset.openScenario === "true") {
-          els.rootPath.value = button.dataset.folderPath;
-          closeFolderPicker();
-          openScenarioFromInput().catch((error) => setStatus(error.message));
-          return;
-        }
-        browseFolder(button.dataset.folderPath);
-      });
-    }
+    const query = initialPath ? `?initialPath=${encodeURIComponent(initialPath)}` : "";
+    const result = await apiPost(`/api/pick-folder${query}`);
+    return result.path || null;
   } catch (error) {
-    els.folderPickerStatus.textContent = `Unable to read folder: ${error.message || error}`;
-    els.folderPickerList.innerHTML = "";
+    if (isUnknownApiEndpoint(error)) {
+      throw new Error("Restart the local server to enable filesystem browsing.");
+    }
+    throw error;
   }
-}
-
-async function openFolderPickerSelection() {
-  const folderPath = els.folderPickerPath.value.trim();
-  if (!folderPath) return;
-  els.rootPath.value = folderPath;
-  closeFolderPicker();
-  await openScenarioFromInput();
 }
 
 async function openScenarioFromInput() {
@@ -3893,16 +3789,14 @@ async function importTilemaps() {
 
 async function locateScenarioFolder() {
   const invoke = getTauriInvoke();
-  if (!invoke) {
-    await openFolderPicker();
-    return;
-  }
 
   els.locateScenarios.disabled = true;
   setStatus("Choosing scenario folder...");
   try {
     const initialPath = els.rootPath.value.trim() || state.scenarioFolderInitialPath || state.config?.defaultScenarioRoot || null;
-    const selectedPath = await invoke("pick_scenarios_folder", { initialPath });
+    const selectedPath = invoke
+      ? await invoke("pick_scenarios_folder", { initialPath })
+      : await pickScenarioFolderWithLocalServer(initialPath);
     if (selectedPath) {
       els.rootPath.value = selectedPath;
       await openScenarioFromInput();
@@ -4024,8 +3918,6 @@ function wireEvents() {
     if ((event.ctrlKey || event.metaKey) && event.code === "Space") {
       event.preventDefault();
       openProjectSearch();
-    } else if (event.key === "Escape" && !els.folderPickerOverlay?.hidden) {
-      closeFolderPicker();
     } else if (event.key === "Escape" && !els.overlayFilterMenu?.hidden) {
       setOverlayFilterMenu(false);
     } else {
@@ -4044,14 +3936,6 @@ function wireEvents() {
   });
   els.locateScenarios?.addEventListener("click", () => {
     locateScenarioFolder();
-  });
-  els.folderPickerClose?.addEventListener("click", closeFolderPicker);
-  els.folderPickerCancel?.addEventListener("click", closeFolderPicker);
-  els.folderPickerOpen?.addEventListener("click", () => {
-    openFolderPickerSelection().catch((error) => setStatus(error.message));
-  });
-  els.folderPickerOverlay?.addEventListener("click", (event) => {
-    if (event.target === els.folderPickerOverlay) closeFolderPicker();
   });
 
   els.sidebarToggle.addEventListener("click", () => {
