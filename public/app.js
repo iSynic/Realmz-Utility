@@ -2393,8 +2393,17 @@ function encounterById(kind, id) {
   return state.data?.encounters?.[kind]?.find((record) => record.id === id) || null;
 }
 
+function messageRecordId(id) {
+  const value = Number(id);
+  return Number.isFinite(value) ? Math.abs(value) : id;
+}
+
+function signedMessageNote(id) {
+  return Number(id) < 0 ? ` (authored as ${id}; no click pause)` : "";
+}
+
 function textPreview(id) {
-  const record = recordById("strings", id);
+  const record = recordById("strings", messageRecordId(id));
   return record?.preview ? `: "${record.preview}"` : "";
 }
 
@@ -2446,7 +2455,7 @@ function linkSummary(link) {
   if (link.type === "macro") return `${link.role || "branches"} to macro ${link.id}`;
   if (link.type === "extracode") return `uses action-data row ${link.id}`;
   if (link.type === "encounter") return `${link.role || "opens"} ${link.kind} encounter ${link.id}${encounterPreview(link.kind, link.id)}`;
-  if (link.type === "text") return `${link.role || "shows message"} ${link.id}${textPreview(link.id)}`;
+  if (link.type === "text") return `${link.role || "shows message"} ${link.id}${link.signedId != null && link.signedId !== link.id ? ` (authored as ${link.signedId})` : ""}${textPreview(link.id)}`;
   if (link.type === "battle") return `${link.role || "starts battle"} ${link.id}${battlePreview(link.id)}`;
   if (link.type === "shop") return `${link.role || "opens shop"} ${link.id}${shopPreview(link.id)}`;
   if (link.type === "treasure") return `${link.role || "uses treasure"} ${link.id}${treasurePreview(link.id)}`;
@@ -2466,7 +2475,7 @@ function linkedRecordsForAction(action) {
     links.push({ key, groupKey, id, ...options });
   };
 
-  if (action.code === 1) add("strings", action.id);
+  if (action.code === 1 || action.code === 62) add("strings", messageRecordId(action.id), { rawId: action.id });
   if ([2, 48, 56, 107].includes(action.code) && !action.extracode) add("battles", action.id);
   if (action.code === 4) add("encounter", action.id, { kind: "simple" });
   if (action.code === 5) add("encounter", action.id, { kind: "complex" });
@@ -2478,7 +2487,7 @@ function linkedRecordsForAction(action) {
   for (const link of action.links || []) {
     if (link.type === "encounter") add("encounter", link.id, { kind: link.kind });
     if (link.type === "extracode") add("extracode", link.id);
-    if (link.type === "text") add("strings", link.id);
+    if (link.type === "text") add("strings", messageRecordId(link.id), { rawId: link.signedId ?? link.id });
     if (link.type === "battle") add("battles", link.id);
     if (link.type === "shop") add("shops", link.id);
     if (link.type === "treasure") add("treasure", link.id);
@@ -2492,7 +2501,8 @@ function linkedRecordsForAction(action) {
 function linkedRecordSummary(link) {
   if (link.groupKey === "strings") {
     const record = recordById("strings", link.id);
-    return record?.preview || "Message text was not decoded.";
+    const note = link.rawId != null && link.rawId !== link.id ? signedMessageNote(link.rawId) : "";
+    return record?.preview ? `${record.preview}${note}` : `Message text was not decoded.${note}`;
   }
   if (link.groupKey === "encounter") {
     const encounter = encounterById(link.kind, link.id);
@@ -2634,7 +2644,7 @@ function levelForActionLink(link, fallbackLevelType = null) {
 
 function recordTargetFromLink(link) {
   if (!link) return null;
-  if (link.type === "text") return { type: "record", groupKey: "strings", id: link.id };
+  if (link.type === "text") return { type: "record", groupKey: "strings", id: messageRecordId(link.id) };
   if (link.type === "encounter") return { type: "record", groupKey: "encounter", kind: link.kind || "simple", id: link.id };
   if (link.type === "battle") return { type: "record", groupKey: "battles", id: link.id };
   if (link.type === "shop") return { type: "record", groupKey: "shops", id: link.id };
@@ -2668,8 +2678,8 @@ function actionPrimaryTarget(action) {
     const levelTarget = actionLevelTarget(action);
     if (levelTarget) return levelTarget;
   }
-  if (action.code === 1 && Number.isFinite(action.id) && action.id > 0) {
-    return { type: "record", groupKey: "strings", id: action.id };
+  if ((action.code === 1 || action.code === 62) && Number.isFinite(action.id) && Math.abs(action.id) > 0) {
+    return { type: "record", groupKey: "strings", id: Math.abs(action.id) };
   }
   if (action.code === 3 && Number.isFinite(action.id)) {
     return { type: "record", groupKey: "extracode", id: action.id };
@@ -2750,7 +2760,7 @@ function wireSemanticActionButtons(root, actions, context = {}) {
 function actionSummary(action) {
   const code = action.code;
   if (action.extracodeUsage?.summary) return action.extracodeUsage.summary;
-  if (code === 1) return `Shows message ${action.id}${textPreview(action.id)}`;
+  if (code === 1) return `Shows message ${messageRecordId(action.id)}${signedMessageNote(action.id)}${textPreview(action.id)}`;
   if (code === 2) return `Starts battle ${action.id}${battlePreview(action.id)}`;
   if (code === 3) return `Presents a player choice and follows the matching branch.`;
   if (code === 4) return `Opens simple encounter ${action.id}${encounterPreview("simple", action.id)}`;

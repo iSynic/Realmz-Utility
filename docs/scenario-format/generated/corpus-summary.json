@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-21T14:24:27.673Z",
+  "generatedAt": "2026-05-21T14:52:30.083Z",
   "roots": {
     "requested": [
       "F:\\Realmz\\base\\Realmz\\Scenarios",
@@ -1079,7 +1079,7 @@
       },
       {
         "key": "shows message",
-        "count": 36657
+        "count": 45356
       },
       {
         "key": "keepcodes",
@@ -1147,7 +1147,7 @@
       },
       {
         "key": "choice prompt",
-        "count": 3476
+        "count": 3506
       },
       {
         "key": "choice result",
@@ -1195,7 +1195,7 @@
       },
       {
         "key": "pre-battle message",
-        "count": 1367
+        "count": 1379
       },
       {
         "key": "opcode 7 action-data link",
@@ -1254,16 +1254,16 @@
         "count": 370
       },
       {
+        "key": "dungeon move message",
+        "count": 353
+      },
+      {
         "key": "opens shop",
         "count": 341
       },
       {
         "key": "mutates timed encounter",
         "count": 336
-      },
-      {
-        "key": "dungeon move message",
-        "count": 308
       },
       {
         "key": "simple encounter jump",
@@ -1366,12 +1366,12 @@
         "count": 168
       },
       {
-        "key": "copy into door 78",
+        "key": "arrival message",
         "count": 166
       },
       {
-        "key": "arrival message",
-        "count": 165
+        "key": "copy into door 78",
+        "count": 166
       },
       {
         "key": "copy into door 3",
@@ -1662,6 +1662,10 @@
         "count": 56
       },
       {
+        "key": "damage/heal message",
+        "count": 53
+      },
+      {
         "key": "branch on range of quest flags",
         "count": 52
       },
@@ -1683,10 +1687,6 @@
       },
       {
         "key": "copy into door 93",
-        "count": 50
-      },
-      {
-        "key": "damage/heal message",
         "count": 50
       },
       {
@@ -2227,7 +2227,7 @@
         },
         {
           "key": "shows message",
-          "count": 103
+          "count": 108
         },
         {
           "key": "keepcodes",
@@ -2390,7 +2390,7 @@
         "unreferencedMacroCount": 32,
         "confidence": {
           "confirmed": 14,
-          "source-backed": 2722,
+          "source-backed": 2727,
           "fixture-backed": 162,
           "unknown": 3,
           "inferred": 33
@@ -2400,7 +2400,7 @@
         "sourceCount": 24,
         "recordCount": 1128,
         "entityCount": 793,
-        "linkCount": 918,
+        "linkCount": 923,
         "diagnosticCount": 59
       }
     },
@@ -2850,12 +2850,12 @@
           "count": 952
         },
         {
-          "key": "uses_monster",
-          "count": 570
+          "key": "shows message",
+          "count": 711
         },
         {
-          "key": "shows message",
-          "count": 560
+          "key": "uses_monster",
+          "count": 570
         },
         {
           "key": "located_on",
@@ -3022,7 +3022,7 @@
         "unreferencedMacroCount": 157,
         "confidence": {
           "confirmed": 24,
-          "source-backed": 11561,
+          "source-backed": 11712,
           "fixture-backed": 181,
           "unknown": 4,
           "inferred": 160
@@ -3032,7 +3032,7 @@
         "sourceCount": 24,
         "recordCount": 5244,
         "entityCount": 2494,
-        "linkCount": 3998,
+        "linkCount": 4149,
         "diagnosticCount": 157
       }
     },
@@ -3482,12 +3482,12 @@
           "count": 952
         },
         {
-          "key": "uses_monster",
-          "count": 570
+          "key": "shows message",
+          "count": 711
         },
         {
-          "key": "shows message",
-          "count": 560
+          "key": "uses_monster",
+          "count": 570
         },
         {
           "key": "located_on",
@@ -3654,7 +3654,7 @@
         "unreferencedMacroCount": 157,
         "confidence": {
           "confirmed": 24,
-          "source-backed": 11561,
+          "source-backed": 11712,
           "fixture-backed": 181,
           "unknown": 4,
           "inferred": 160
@@ -3664,7 +3664,7 @@
         "sourceCount": 24,
         "recordCount": 5244,
         "entityCount": 2494,
-        "linkCount": 3998,
+        "linkCount": 4149,
         "diagnosticCount": 157
       }
     },
@@ -4538,7 +4538,7 @@
         },
         {
           "key": "shows message",
-          "count": 635
+          "count": 820
         },
         {
           "key": "located_on",
@@ -4677,16 +4677,16 @@
           "count": 10
         },
         {
+          "key": "choice prompt",
+          "count": 8
+        },
+        {
           "key": "pre-battle message",
           "count": 8
         },
         {
           "key": "gives or displays map",
           "count": 7
-        },
-        {
-          "key": "choice prompt",
-          "count": 6
         },
         {
           "key": "copy into door 10",
@@ -4709,7 +4709,7 @@
         "unreferencedMacroCount": 139,
         "confidence": {
           "confirmed": 32,
-          "source-backed": 37238,
+          "source-backed": 37426,
           "fixture-backed": 228,
           "unknown": 3,
           "inferred": 141
@@ -4719,7 +4719,7 @@
         "sourceCount": 24,
         "recordCount": 29390,
         "entityCount": 2792,
-        "linkCount": 5283,
+        "linkCount": 5471,
         "diagnosticCount": 140
       }
     },
@@ -5183,7 +5183,7 @@
         },
         {
           "key": "shows message",
-          "count": 635
+          "count": 820
         },
         {
           "key": "located_on",
@@ -5322,16 +5322,16 @@
           "count": 10
         },
         {
+          "key": "choice prompt",
+          "count": 8
+        },
+        {
           "key": "pre-battle message",
           "count": 8
         },
         {
           "key": "gives or displays map",
           "count": 7
-        },
-        {
-          "key": "choice prompt",
-          "count": 6
         },
         {
           "key": "copy into door 10",
@@ -5354,7 +5354,7 @@
         "unreferencedMacroCount": 139,
         "confidence": {
           "confirmed": 32,
-          "source-backed": 37238,
+          "source-backed": 37426,
           "fixture-backed": 228,
           "unknown": 3,
           "inferred": 141
@@ -5364,7 +5364,7 @@
         "sourceCount": 24,
         "recordCount": 29390,
         "entityCount": 2792,
-        "linkCount": 5283,
+        "linkCount": 5471,
         "diagnosticCount": 140
       }
     },
@@ -5807,12 +5807,12 @@
           "count": 1104
         },
         {
-          "key": "located_on",
-          "count": 678
+          "key": "shows message",
+          "count": 754
         },
         {
-          "key": "shows message",
-          "count": 623
+          "key": "located_on",
+          "count": 678
         },
         {
           "key": "uses_monster",
@@ -5912,7 +5912,7 @@
         },
         {
           "key": "choice prompt",
-          "count": 14
+          "count": 16
         },
         {
           "key": "spawns monster",
@@ -5951,15 +5951,15 @@
           "count": 6
         },
         {
+          "key": "dungeon move message",
+          "count": 5
+        },
+        {
           "key": "battle outcome check range end",
           "count": 4
         },
         {
           "key": "branch on allies in party true branch",
-          "count": 4
-        },
-        {
-          "key": "branch on possession II",
           "count": 4
         }
       ],
@@ -5979,7 +5979,7 @@
         "unreferencedMacroCount": 149,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 15020,
+          "source-backed": 15154,
           "fixture-backed": 76,
           "unknown": 4,
           "inferred": 154
@@ -5989,7 +5989,7 @@
         "sourceCount": 24,
         "recordCount": 8101,
         "entityCount": 2442,
-        "linkCount": 4550,
+        "linkCount": 4684,
         "diagnosticCount": 150
       }
     },
@@ -6432,12 +6432,12 @@
           "count": 1104
         },
         {
-          "key": "located_on",
-          "count": 678
+          "key": "shows message",
+          "count": 754
         },
         {
-          "key": "shows message",
-          "count": 623
+          "key": "located_on",
+          "count": 678
         },
         {
           "key": "uses_monster",
@@ -6537,7 +6537,7 @@
         },
         {
           "key": "choice prompt",
-          "count": 14
+          "count": 16
         },
         {
           "key": "spawns monster",
@@ -6576,15 +6576,15 @@
           "count": 6
         },
         {
+          "key": "dungeon move message",
+          "count": 5
+        },
+        {
           "key": "battle outcome check range end",
           "count": 4
         },
         {
           "key": "branch on allies in party true branch",
-          "count": 4
-        },
-        {
-          "key": "branch on possession II",
           "count": 4
         }
       ],
@@ -6604,7 +6604,7 @@
         "unreferencedMacroCount": 149,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 15020,
+          "source-backed": 15154,
           "fixture-backed": 76,
           "unknown": 4,
           "inferred": 154
@@ -6614,7 +6614,7 @@
         "sourceCount": 24,
         "recordCount": 8101,
         "entityCount": 2442,
-        "linkCount": 4550,
+        "linkCount": 4684,
         "diagnosticCount": 150
       }
     },
@@ -7035,16 +7035,16 @@
           "count": 888
         },
         {
+          "key": "shows message",
+          "count": 456
+        },
+        {
           "key": "uses_monster",
           "count": 427
         },
         {
           "key": "located_on",
           "count": 385
-        },
-        {
-          "key": "shows message",
-          "count": 355
         },
         {
           "key": "keepcodes",
@@ -7207,7 +7207,7 @@
         "unreferencedMacroCount": 73,
         "confidence": {
           "confirmed": 26,
-          "source-backed": 8183,
+          "source-backed": 8285,
           "fixture-backed": 290,
           "unknown": 5,
           "inferred": 76
@@ -7217,7 +7217,7 @@
         "sourceCount": 24,
         "recordCount": 3231,
         "entityCount": 1957,
-        "linkCount": 3284,
+        "linkCount": 3386,
         "diagnosticCount": 74
       }
     },
@@ -7843,7 +7843,7 @@
         "unreferencedMacroCount": 56,
         "confidence": {
           "confirmed": 42,
-          "source-backed": 12829,
+          "source-backed": 12832,
           "fixture-backed": 533,
           "unknown": 4,
           "inferred": 58
@@ -7853,7 +7853,7 @@
         "sourceCount": 24,
         "recordCount": 4590,
         "entityCount": 2913,
-        "linkCount": 5872,
+        "linkCount": 5875,
         "diagnosticCount": 57
       }
     },
@@ -8325,7 +8325,7 @@
         },
         {
           "key": "shows message",
-          "count": 827
+          "count": 927
         },
         {
           "key": "located_on",
@@ -8496,7 +8496,7 @@
         "unreferencedMacroCount": 174,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 10646,
+          "source-backed": 10746,
           "fixture-backed": 577,
           "unknown": 5,
           "inferred": 177
@@ -8506,7 +8506,7 @@
         "sourceCount": 24,
         "recordCount": 3979,
         "entityCount": 2860,
-        "linkCount": 4380,
+        "linkCount": 4480,
         "diagnosticCount": 175
       }
     },
@@ -8978,7 +8978,7 @@
         },
         {
           "key": "shows message",
-          "count": 827
+          "count": 927
         },
         {
           "key": "located_on",
@@ -9149,7 +9149,7 @@
         "unreferencedMacroCount": 174,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 10646,
+          "source-backed": 10746,
           "fixture-backed": 577,
           "unknown": 5,
           "inferred": 177
@@ -9159,7 +9159,7 @@
         "sourceCount": 24,
         "recordCount": 3979,
         "entityCount": 2860,
-        "linkCount": 4380,
+        "linkCount": 4480,
         "diagnosticCount": 175
       }
     },
@@ -9606,7 +9606,7 @@
         },
         {
           "key": "shows message",
-          "count": 256
+          "count": 288
         },
         {
           "key": "member_of_resource_type",
@@ -9675,6 +9675,10 @@
         {
           "key": "sets flag false",
           "count": 11
+        },
+        {
+          "key": "dungeon move message",
+          "count": 10
         },
         {
           "key": "extend door codes",
@@ -9747,10 +9751,6 @@
         {
           "key": "ability check success branch",
           "count": 2
-        },
-        {
-          "key": "choice result",
-          "count": 2
         }
       ],
       "diagnostics": {
@@ -9769,7 +9769,7 @@
         "unreferencedMacroCount": 37,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 6299,
+          "source-backed": 6339,
           "fixture-backed": 521,
           "unknown": 4,
           "inferred": 39
@@ -9779,7 +9779,7 @@
         "sourceCount": 24,
         "recordCount": 2638,
         "entityCount": 1642,
-        "linkCount": 2534,
+        "linkCount": 2574,
         "diagnosticCount": 40
       }
     },
@@ -10212,16 +10212,16 @@
           "count": 1890
         },
         {
+          "key": "shows message",
+          "count": 934
+        },
+        {
           "key": "keepcodes",
           "count": 625
         },
         {
           "key": "located_on",
           "count": 543
-        },
-        {
-          "key": "shows message",
-          "count": 396
         },
         {
           "key": "uses_monster",
@@ -10384,7 +10384,7 @@
         "unreferencedMacroCount": 297,
         "confidence": {
           "confirmed": 34,
-          "source-backed": 14397,
+          "source-backed": 14942,
           "fixture-backed": 652,
           "unknown": 3,
           "inferred": 303
@@ -10394,7 +10394,7 @@
         "sourceCount": 24,
         "recordCount": 5581,
         "entityCount": 3352,
-        "linkCount": 6122,
+        "linkCount": 6667,
         "diagnosticCount": 297
       }
     },
@@ -10827,16 +10827,16 @@
           "count": 1890
         },
         {
+          "key": "shows message",
+          "count": 934
+        },
+        {
           "key": "keepcodes",
           "count": 625
         },
         {
           "key": "located_on",
           "count": 543
-        },
-        {
-          "key": "shows message",
-          "count": 396
         },
         {
           "key": "uses_monster",
@@ -10999,7 +10999,7 @@
         "unreferencedMacroCount": 297,
         "confidence": {
           "confirmed": 34,
-          "source-backed": 14397,
+          "source-backed": 14942,
           "fixture-backed": 652,
           "unknown": 3,
           "inferred": 303
@@ -11009,7 +11009,7 @@
         "sourceCount": 24,
         "recordCount": 5581,
         "entityCount": 3352,
-        "linkCount": 6122,
+        "linkCount": 6667,
         "diagnosticCount": 297
       }
     },
@@ -11479,7 +11479,7 @@
         },
         {
           "key": "shows message",
-          "count": 1271
+          "count": 1568
         },
         {
           "key": "located_on",
@@ -11650,7 +11650,7 @@
         "unreferencedMacroCount": 253,
         "confidence": {
           "confirmed": 32,
-          "source-backed": 18681,
+          "source-backed": 18978,
           "fixture-backed": 1476,
           "unknown": 8,
           "inferred": 254
@@ -11660,7 +11660,7 @@
         "sourceCount": 24,
         "recordCount": 6693,
         "entityCount": 4758,
-        "linkCount": 8698,
+        "linkCount": 8995,
         "diagnosticCount": 263
       }
     },
@@ -12130,7 +12130,7 @@
         },
         {
           "key": "shows message",
-          "count": 1271
+          "count": 1568
         },
         {
           "key": "located_on",
@@ -12301,7 +12301,7 @@
         "unreferencedMacroCount": 253,
         "confidence": {
           "confirmed": 32,
-          "source-backed": 18681,
+          "source-backed": 18978,
           "fixture-backed": 1476,
           "unknown": 8,
           "inferred": 254
@@ -12311,7 +12311,7 @@
         "sourceCount": 24,
         "recordCount": 6693,
         "entityCount": 4758,
-        "linkCount": 8698,
+        "linkCount": 8995,
         "diagnosticCount": 263
       }
     },
@@ -12797,7 +12797,7 @@
         },
         {
           "key": "shows message",
-          "count": 603
+          "count": 714
         },
         {
           "key": "located_on",
@@ -12936,6 +12936,10 @@
           "count": 12
         },
         {
+          "key": "dungeon move message",
+          "count": 12
+        },
+        {
           "key": "opcode 7 action-data link",
           "count": 12
         },
@@ -12945,10 +12949,6 @@
         },
         {
           "key": "copy into door 85",
-          "count": 10
-        },
-        {
-          "key": "party condition branch",
           "count": 10
         }
       ],
@@ -12968,7 +12968,7 @@
         "unreferencedMacroCount": 352,
         "confidence": {
           "confirmed": 20,
-          "source-backed": 80095,
+          "source-backed": 80212,
           "fixture-backed": 914,
           "unknown": 7,
           "inferred": 361
@@ -12978,7 +12978,7 @@
         "sourceCount": 24,
         "recordCount": 69250,
         "entityCount": 4109,
-        "linkCount": 7645,
+        "linkCount": 7762,
         "diagnosticCount": 354
       }
     },
@@ -13401,7 +13401,7 @@
         },
         {
           "key": "shows message",
-          "count": 395
+          "count": 451
         },
         {
           "key": "located_on",
@@ -13572,7 +13572,7 @@
         "unreferencedMacroCount": 23,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 6226,
+          "source-backed": 6282,
           "fixture-backed": 450,
           "unknown": 5,
           "inferred": 24
@@ -13582,7 +13582,7 @@
         "sourceCount": 24,
         "recordCount": 2581,
         "entityCount": 1524,
-        "linkCount": 2568,
+        "linkCount": 2624,
         "diagnosticCount": 24
       }
     },
@@ -14027,12 +14027,12 @@
           "count": 794
         },
         {
-          "key": "uses_monster",
-          "count": 489
+          "key": "shows message",
+          "count": 556
         },
         {
-          "key": "shows message",
-          "count": 474
+          "key": "uses_monster",
+          "count": 489
         },
         {
           "key": "located_on",
@@ -14199,7 +14199,7 @@
         "unreferencedMacroCount": 133,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 11186,
+          "source-backed": 11268,
           "fixture-backed": 449,
           "unknown": 4,
           "inferred": 135
@@ -14209,7 +14209,7 @@
         "sourceCount": 24,
         "recordCount": 5609,
         "entityCount": 2456,
-        "linkCount": 3568,
+        "linkCount": 3650,
         "diagnosticCount": 133
       }
     },
@@ -14504,7 +14504,7 @@
         },
         {
           "key": "shows message",
-          "count": 120
+          "count": 124
         },
         {
           "key": "uses_icon_resource",
@@ -14631,7 +14631,7 @@
         "unreferencedMacroCount": 15,
         "confidence": {
           "confirmed": 16,
-          "source-backed": 2549,
+          "source-backed": 2553,
           "fixture-backed": 292,
           "unknown": 4,
           "inferred": 17
@@ -14641,7 +14641,7 @@
         "sourceCount": 24,
         "recordCount": 1218,
         "entityCount": 792,
-        "linkCount": 818,
+        "linkCount": 822,
         "diagnosticCount": 16
       }
     },
@@ -15140,12 +15140,12 @@
           "count": 860
         },
         {
-          "key": "uses_monster",
-          "count": 554
+          "key": "shows message",
+          "count": 599
         },
         {
-          "key": "shows message",
-          "count": 481
+          "key": "uses_monster",
+          "count": 554
         },
         {
           "key": "located_on",
@@ -15312,7 +15312,7 @@
         "unreferencedMacroCount": 108,
         "confidence": {
           "confirmed": 30,
-          "source-backed": 9672,
+          "source-backed": 9791,
           "fixture-backed": 642,
           "unknown": 6,
           "inferred": 124
@@ -15322,7 +15322,7 @@
         "sourceCount": 24,
         "recordCount": 4064,
         "entityCount": 2554,
-        "linkCount": 3684,
+        "linkCount": 3803,
         "diagnosticCount": 124
       }
     },
@@ -15821,7 +15821,7 @@
         },
         {
           "key": "shows message",
-          "count": 647
+          "count": 747
         },
         {
           "key": "located_on",
@@ -15940,6 +15940,10 @@
           "count": 11
         },
         {
+          "key": "pre-battle message",
+          "count": 11
+        },
+        {
           "key": "branch on possession II",
           "count": 10
         },
@@ -15970,10 +15974,6 @@
         {
           "key": "gosub",
           "count": 6
-        },
-        {
-          "key": "opens shop",
-          "count": 6
         }
       ],
       "diagnostics": {
@@ -15992,7 +15992,7 @@
         "unreferencedMacroCount": 307,
         "confidence": {
           "confirmed": 36,
-          "source-backed": 12977,
+          "source-backed": 13083,
           "fixture-backed": 1002,
           "unknown": 6,
           "inferred": 316
@@ -16002,7 +16002,7 @@
         "sourceCount": 24,
         "recordCount": 6001,
         "entityCount": 3314,
-        "linkCount": 4667,
+        "linkCount": 4773,
         "diagnosticCount": 316
       }
     },
@@ -16501,7 +16501,7 @@
         },
         {
           "key": "shows message",
-          "count": 647
+          "count": 747
         },
         {
           "key": "located_on",
@@ -16620,6 +16620,10 @@
           "count": 11
         },
         {
+          "key": "pre-battle message",
+          "count": 11
+        },
+        {
           "key": "branch on possession II",
           "count": 10
         },
@@ -16650,10 +16654,6 @@
         {
           "key": "gosub",
           "count": 6
-        },
-        {
-          "key": "opens shop",
-          "count": 6
         }
       ],
       "diagnostics": {
@@ -16672,7 +16672,7 @@
         "unreferencedMacroCount": 307,
         "confidence": {
           "confirmed": 36,
-          "source-backed": 12977,
+          "source-backed": 13083,
           "fixture-backed": 1002,
           "unknown": 6,
           "inferred": 316
@@ -16682,7 +16682,7 @@
         "sourceCount": 24,
         "recordCount": 6001,
         "entityCount": 3314,
-        "linkCount": 4667,
+        "linkCount": 4773,
         "diagnosticCount": 316
       }
     },
@@ -17295,16 +17295,16 @@
           "count": 786
         },
         {
+          "key": "shows message",
+          "count": 384
+        },
+        {
           "key": "keepcodes",
           "count": 293
         },
         {
           "key": "located_on",
           "count": 263
-        },
-        {
-          "key": "shows message",
-          "count": 202
         },
         {
           "key": "uses_icon_resource",
@@ -17407,6 +17407,10 @@
           "count": 10
         },
         {
+          "key": "choice prompt",
+          "count": 8
+        },
+        {
           "key": "copy into door 21",
           "count": 8
         },
@@ -17441,10 +17445,6 @@
         {
           "key": "copy into door 95",
           "count": 6
-        },
-        {
-          "key": "random message range end",
-          "count": 6
         }
       ],
       "diagnostics": {
@@ -17463,7 +17463,7 @@
         "unreferencedMacroCount": 188,
         "confidence": {
           "confirmed": 18,
-          "source-backed": 8418,
+          "source-backed": 8604,
           "fixture-backed": 167,
           "unknown": 3,
           "inferred": 191
@@ -17473,7 +17473,7 @@
         "sourceCount": 24,
         "recordCount": 2867,
         "entityCount": 1934,
-        "linkCount": 3769,
+        "linkCount": 3955,
         "diagnosticCount": 189
       }
     },
@@ -17872,16 +17872,16 @@
           "count": 786
         },
         {
+          "key": "shows message",
+          "count": 384
+        },
+        {
           "key": "keepcodes",
           "count": 293
         },
         {
           "key": "located_on",
           "count": 263
-        },
-        {
-          "key": "shows message",
-          "count": 202
         },
         {
           "key": "uses_icon_resource",
@@ -17984,6 +17984,10 @@
           "count": 10
         },
         {
+          "key": "choice prompt",
+          "count": 8
+        },
+        {
           "key": "copy into door 21",
           "count": 8
         },
@@ -18018,10 +18022,6 @@
         {
           "key": "copy into door 95",
           "count": 6
-        },
-        {
-          "key": "random message range end",
-          "count": 6
         }
       ],
       "diagnostics": {
@@ -18040,7 +18040,7 @@
         "unreferencedMacroCount": 188,
         "confidence": {
           "confirmed": 18,
-          "source-backed": 8418,
+          "source-backed": 8604,
           "fixture-backed": 167,
           "unknown": 3,
           "inferred": 191
@@ -18050,7 +18050,7 @@
         "sourceCount": 24,
         "recordCount": 2867,
         "entityCount": 1934,
-        "linkCount": 3769,
+        "linkCount": 3955,
         "diagnosticCount": 189
       }
     },
@@ -18531,12 +18531,12 @@
           "count": 3572
         },
         {
-          "key": "located_on",
-          "count": 1281
+          "key": "shows message",
+          "count": 1487
         },
         {
-          "key": "shows message",
-          "count": 967
+          "key": "located_on",
+          "count": 1281
         },
         {
           "key": "uses_monster",
@@ -18659,6 +18659,10 @@
           "count": 20
         },
         {
+          "key": "dungeon move message",
+          "count": 19
+        },
+        {
           "key": "configures_map",
           "count": 15
         },
@@ -18681,10 +18685,6 @@
         {
           "key": "arrival message",
           "count": 12
-        },
-        {
-          "key": "calls_death_macro",
-          "count": 12
         }
       ],
       "diagnostics": {
@@ -18703,7 +18703,7 @@
         "unreferencedMacroCount": 223,
         "confidence": {
           "confirmed": 34,
-          "source-backed": 21487,
+          "source-backed": 22026,
           "fixture-backed": 891,
           "unknown": 6,
           "inferred": 224
@@ -18713,7 +18713,7 @@
         "sourceCount": 24,
         "recordCount": 6713,
         "entityCount": 4980,
-        "linkCount": 10685,
+        "linkCount": 11224,
         "diagnosticCount": 226
       }
     },
@@ -19087,7 +19087,7 @@
         },
         {
           "key": "shows message",
-          "count": 135
+          "count": 156
         },
         {
           "key": "uses_icon_resource",
@@ -19230,7 +19230,7 @@
         "unreferencedMacroCount": 14,
         "confidence": {
           "confirmed": 26,
-          "source-backed": 3649,
+          "source-backed": 3670,
           "fixture-backed": 1040,
           "unknown": 5,
           "inferred": 17
@@ -19240,7 +19240,7 @@
         "sourceCount": 24,
         "recordCount": 2010,
         "entityCount": 1086,
-        "linkCount": 1591,
+        "linkCount": 1612,
         "diagnosticCount": 14
       }
     },
@@ -19627,7 +19627,7 @@
         },
         {
           "key": "shows message",
-          "count": 396
+          "count": 397
         },
         {
           "key": "keepcodes",
@@ -19738,6 +19738,10 @@
           "count": 1
         },
         {
+          "key": "dungeon move message",
+          "count": 1
+        },
+        {
           "key": "random region battle range",
           "count": 1
         },
@@ -19762,7 +19766,7 @@
         "unreferencedMacroCount": 29,
         "confidence": {
           "confirmed": 26,
-          "source-backed": 27674,
+          "source-backed": 27676,
           "fixture-backed": 482,
           "unknown": 3,
           "inferred": 44
@@ -19772,7 +19776,7 @@
         "sourceCount": 24,
         "recordCount": 23675,
         "entityCount": 1601,
-        "linkCount": 2882,
+        "linkCount": 2884,
         "diagnosticCount": 33
       }
     },
@@ -20219,12 +20223,12 @@
           "count": 1102
         },
         {
-          "key": "located_on",
-          "count": 678
+          "key": "shows message",
+          "count": 755
         },
         {
-          "key": "shows message",
-          "count": 625
+          "key": "located_on",
+          "count": 678
         },
         {
           "key": "uses_monster",
@@ -20324,7 +20328,7 @@
         },
         {
           "key": "choice prompt",
-          "count": 14
+          "count": 16
         },
         {
           "key": "calls_battle_macro",
@@ -20363,15 +20367,15 @@
           "count": 6
         },
         {
+          "key": "dungeon move message",
+          "count": 5
+        },
+        {
           "key": "battle outcome check range end",
           "count": 4
         },
         {
           "key": "branch on allies in party true branch",
-          "count": 4
-        },
-        {
-          "key": "branch on possession II",
           "count": 4
         }
       ],
@@ -20391,7 +20395,7 @@
         "unreferencedMacroCount": 150,
         "confidence": {
           "confirmed": 28,
-          "source-backed": 15261,
+          "source-backed": 15394,
           "fixture-backed": 76,
           "unknown": 4,
           "inferred": 155
@@ -20401,7 +20405,7 @@
         "sourceCount": 24,
         "recordCount": 8217,
         "entityCount": 2557,
-        "linkCount": 4560,
+        "linkCount": 4693,
         "diagnosticCount": 151
       }
     },
@@ -21251,7 +21255,7 @@
         },
         {
           "key": "shows message",
-          "count": 187
+          "count": 245
         },
         {
           "key": "located_on",
@@ -21338,6 +21342,10 @@
           "count": 6
         },
         {
+          "key": "damage/heal message",
+          "count": 6
+        },
+        {
           "key": "copy into door 2",
           "count": 4
         },
@@ -21348,10 +21356,6 @@
         {
           "key": "item possession true branch",
           "count": 4
-        },
-        {
-          "key": "damage/heal message",
-          "count": 3
         },
         {
           "key": "forcebranch",
@@ -21422,7 +21426,7 @@
         "unreferencedMacroCount": 61,
         "confidence": {
           "confirmed": 18,
-          "source-backed": 18510,
+          "source-backed": 18571,
           "fixture-backed": 518,
           "unknown": 4,
           "inferred": 63
@@ -21432,7 +21436,7 @@
         "sourceCount": 24,
         "recordCount": 16143,
         "entityCount": 1162,
-        "linkCount": 1711,
+        "linkCount": 1772,
         "diagnosticCount": 61
       }
     },
@@ -21922,7 +21926,7 @@
         },
         {
           "key": "shows message",
-          "count": 3219
+          "count": 3889
         },
         {
           "key": "keepcodes",
@@ -22093,7 +22097,7 @@
         "unreferencedMacroCount": 1023,
         "confidence": {
           "confirmed": 52,
-          "source-backed": 61842,
+          "source-backed": 62512,
           "fixture-backed": 884,
           "unknown": 6,
           "inferred": 1024
@@ -22103,7 +22107,7 @@
         "sourceCount": 24,
         "recordCount": 25214,
         "entityCount": 8514,
-        "linkCount": 29018,
+        "linkCount": 29688,
         "diagnosticCount": 1025
       }
     },
@@ -22593,7 +22597,7 @@
         },
         {
           "key": "shows message",
-          "count": 3219
+          "count": 3889
         },
         {
           "key": "keepcodes",
@@ -22764,7 +22768,7 @@
         "unreferencedMacroCount": 1023,
         "confidence": {
           "confirmed": 52,
-          "source-backed": 61842,
+          "source-backed": 62512,
           "fixture-backed": 884,
           "unknown": 6,
           "inferred": 1024
@@ -22774,7 +22778,7 @@
         "sourceCount": 24,
         "recordCount": 25214,
         "entityCount": 8514,
-        "linkCount": 29018,
+        "linkCount": 29688,
         "diagnosticCount": 1025
       }
     },
@@ -23260,7 +23264,7 @@
       "linkKinds": [
         {
           "key": "shows message",
-          "count": 206
+          "count": 216
         },
         {
           "key": "uses action-data row",
@@ -23435,7 +23439,7 @@
         "unreferencedMacroCount": 18,
         "confidence": {
           "confirmed": 10,
-          "source-backed": 2755,
+          "source-backed": 2765,
           "fixture-backed": 86,
           "unknown": 2,
           "inferred": 28
@@ -23445,7 +23449,7 @@
         "sourceCount": 24,
         "recordCount": 972,
         "entityCount": 827,
-        "linkCount": 1023,
+        "linkCount": 1033,
         "diagnosticCount": 22
       }
     },
@@ -23904,7 +23908,7 @@
         },
         {
           "key": "shows message",
-          "count": 484
+          "count": 719
         },
         {
           "key": "located_on",
@@ -24075,7 +24079,7 @@
         "unreferencedMacroCount": 220,
         "confidence": {
           "confirmed": 26,
-          "source-backed": 14825,
+          "source-backed": 15060,
           "fixture-backed": 430,
           "unknown": 4,
           "inferred": 221
@@ -24085,7 +24089,7 @@
         "sourceCount": 24,
         "recordCount": 8164,
         "entityCount": 2737,
-        "linkCount": 4341,
+        "linkCount": 4576,
         "diagnosticCount": 225
       }
     },
@@ -24544,7 +24548,7 @@
         },
         {
           "key": "shows message",
-          "count": 484
+          "count": 719
         },
         {
           "key": "located_on",
@@ -24715,7 +24719,7 @@
         "unreferencedMacroCount": 220,
         "confidence": {
           "confirmed": 26,
-          "source-backed": 14825,
+          "source-backed": 15060,
           "fixture-backed": 430,
           "unknown": 4,
           "inferred": 221
@@ -24725,7 +24729,7 @@
         "sourceCount": 24,
         "recordCount": 8164,
         "entityCount": 2737,
-        "linkCount": 4341,
+        "linkCount": 4576,
         "diagnosticCount": 225
       }
     },
@@ -25222,12 +25226,12 @@
           "count": 12372
         },
         {
-          "key": "keepcodes",
-          "count": 3897
+          "key": "shows message",
+          "count": 4219
         },
         {
-          "key": "shows message",
-          "count": 3610
+          "key": "keepcodes",
+          "count": 3897
         },
         {
           "key": "located_on",
@@ -25394,7 +25398,7 @@
         "unreferencedMacroCount": 1689,
         "confidence": {
           "confirmed": 52,
-          "source-backed": 126311,
+          "source-backed": 126920,
           "fixture-backed": 1728,
           "unknown": 8,
           "inferred": 1690
@@ -25404,7 +25408,7 @@
         "sourceCount": 24,
         "recordCount": 76428,
         "entityCount": 10583,
-        "linkCount": 41002,
+        "linkCount": 41611,
         "diagnosticCount": 1737
       }
     },
@@ -25901,12 +25905,12 @@
           "count": 12372
         },
         {
-          "key": "keepcodes",
-          "count": 3897
+          "key": "shows message",
+          "count": 4219
         },
         {
-          "key": "shows message",
-          "count": 3610
+          "key": "keepcodes",
+          "count": 3897
         },
         {
           "key": "located_on",
@@ -26073,7 +26077,7 @@
         "unreferencedMacroCount": 1689,
         "confidence": {
           "confirmed": 52,
-          "source-backed": 126311,
+          "source-backed": 126920,
           "fixture-backed": 1728,
           "unknown": 8,
           "inferred": 1690
@@ -26083,7 +26087,7 @@
         "sourceCount": 24,
         "recordCount": 76428,
         "entityCount": 10583,
-        "linkCount": 41002,
+        "linkCount": 41611,
         "diagnosticCount": 1737
       }
     },
@@ -26517,12 +26521,12 @@
           "count": 1364
         },
         {
-          "key": "uses_monster",
-          "count": 416
+          "key": "shows message",
+          "count": 580
         },
         {
-          "key": "shows message",
-          "count": 361
+          "key": "uses_monster",
+          "count": 416
         },
         {
           "key": "located_on",
@@ -26689,7 +26693,7 @@
         "unreferencedMacroCount": 1666,
         "confidence": {
           "confirmed": 38,
-          "source-backed": 12452,
+          "source-backed": 12671,
           "fixture-backed": 428,
           "unknown": 3,
           "inferred": 1668
@@ -26699,7 +26703,7 @@
         "sourceCount": 24,
         "recordCount": 6461,
         "entityCount": 2357,
-        "linkCount": 4068,
+        "linkCount": 4287,
         "diagnosticCount": 1667
       }
     },
@@ -27133,12 +27137,12 @@
           "count": 1364
         },
         {
-          "key": "uses_monster",
-          "count": 416
+          "key": "shows message",
+          "count": 580
         },
         {
-          "key": "shows message",
-          "count": 361
+          "key": "uses_monster",
+          "count": 416
         },
         {
           "key": "located_on",
@@ -27305,7 +27309,7 @@
         "unreferencedMacroCount": 1666,
         "confidence": {
           "confirmed": 38,
-          "source-backed": 12452,
+          "source-backed": 12671,
           "fixture-backed": 428,
           "unknown": 3,
           "inferred": 1668
@@ -27315,7 +27319,7 @@
         "sourceCount": 24,
         "recordCount": 6461,
         "entityCount": 2357,
-        "linkCount": 4068,
+        "linkCount": 4287,
         "diagnosticCount": 1667
       }
     },
@@ -27813,7 +27817,7 @@
         },
         {
           "key": "shows message",
-          "count": 2338
+          "count": 2646
         },
         {
           "key": "located_on",
@@ -27980,7 +27984,7 @@
         "unreferencedMacroCount": 935,
         "confidence": {
           "confirmed": 52,
-          "source-backed": 47462,
+          "source-backed": 47770,
           "fixture-backed": 1780,
           "unknown": 7,
           "inferred": 936
@@ -27990,7 +27994,7 @@
         "sourceCount": 24,
         "recordCount": 12866,
         "entityCount": 8026,
-        "linkCount": 28355,
+        "linkCount": 28663,
         "diagnosticCount": 952
       }
     },
@@ -28488,7 +28492,7 @@
         },
         {
           "key": "shows message",
-          "count": 2338
+          "count": 2646
         },
         {
           "key": "located_on",
@@ -28655,7 +28659,7 @@
         "unreferencedMacroCount": 935,
         "confidence": {
           "confirmed": 52,
-          "source-backed": 47462,
+          "source-backed": 47770,
           "fixture-backed": 1780,
           "unknown": 7,
           "inferred": 936
@@ -28665,7 +28669,7 @@
         "sourceCount": 24,
         "recordCount": 12866,
         "entityCount": 8026,
-        "linkCount": 28355,
+        "linkCount": 28663,
         "diagnosticCount": 952
       }
     }

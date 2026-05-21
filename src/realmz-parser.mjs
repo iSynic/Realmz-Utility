@@ -973,7 +973,9 @@ function addLink(output, link) {
 }
 
 function addMessageLink(output, id, role = "shows message") {
-  addLink(output, { type: "text", id, role });
+  const recordId = Math.abs(id);
+  if (!positiveRef(recordId)) return;
+  addLink(output, { type: "text", id: recordId, signedId: id, role });
 }
 
 function addBattleLinks(output, low, high = 0, role = "starts battle") {
