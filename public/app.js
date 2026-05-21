@@ -2316,6 +2316,129 @@ function renderLinkedRecordButtons(actions) {
   `).join("")}</div>`;
 }
 
+function levelForActionLink(link, fallbackLevelType = null) {
+  if (!link || link.type !== "level") return null;
+  const levelType = link.levelType || fallbackLevelType;
+  return state.data?.levels?.find((level) => level.type === levelType && level.index === link.id)
+    || state.data?.levels?.find((level) => level.id === `${levelType}:${link.id}`)
+    || null;
+}
+
+function recordTargetFromLink(link) {
+  if (!link) return null;
+  if (link.type === "text") return { type: "record", groupKey: "strings", id: link.id };
+  if (link.type === "encounter") return { type: "record", groupKey: "encounter", kind: link.kind || "simple", id: link.id };
+  if (link.type === "battle") return { type: "record", groupKey: "battles", id: link.id };
+  if (link.type === "shop") return { type: "record", groupKey: "shops", id: link.id };
+  if (link.type === "treasure") return { type: "record", groupKey: "treasure", id: link.id };
+  if (link.type === "time") return { type: "record", groupKey: "time", id: link.id };
+  if (link.type === "map") return { type: "record", groupKey: "maps", id: link.id };
+  if (link.type === "extracode") return { type: "record", groupKey: "extracode", id: link.id };
+  if (link.type === "macro") return { type: "entity", entityId: `macro:${link.id}` };
+  if (link.type === "quest") return { type: "entity", entityId: `quest-flag:${link.id}` };
+  return null;
+}
+
+function actionLevelTarget(action) {
+  const link = (action.links || []).find((entry) => entry.type === "level");
+  const level = levelForActionLink(link, action.levelType);
+  if (!level) return null;
+  const values = action.extracode || [];
+  const hasCoordinates = [20, 45, 61].includes(action.code) && Number.isFinite(values[1]) && Number.isFinite(values[2]);
+  return {
+    type: "level",
+    levelId: level.id,
+    entityId: `map:${level.type}:${level.index}`,
+    x: hasCoordinates ? values[1] : null,
+    y: hasCoordinates ? values[2] : null,
+  };
+}
+
+function actionPrimaryTarget(action) {
+  if (!action) return null;
+  if ([12, 13, 20, 23, -23, 45, 57, 61].includes(action.code)) {
+    const levelTarget = actionLevelTarget(action);
+    if (levelTarget) return levelTarget;
+  }
+  if (action.code === 1 && Number.isFinite(action.id) && action.id > 0) {
+    return { type: "record", groupKey: "strings", id: action.id };
+  }
+  if (action.code === 3 && Number.isFinite(action.id)) {
+    return { type: "record", groupKey: "extracode", id: action.id };
+  }
+  for (const type of ["text", "encounter", "battle", "shop", "treasure", "map", "macro", "quest", "extracode", "time"]) {
+    const target = recordTargetFromLink((action.links || []).find((link) => link.type === type));
+    if (target) return target;
+  }
+  if (action.extracode && Number.isFinite(action.id)) {
+    return { type: "record", groupKey: "extracode", id: action.id };
+  }
+  return null;
+}
+
+function actionTargetLabel(target) {
+  if (!target) return "";
+  if (target.type === "level") {
+    const level = state.data?.levels?.find((entry) => entry.id === target.levelId);
+    const destination = Number.isFinite(target.x) && Number.isFinite(target.y) ? ` at x ${target.x}, y ${target.y}` : "";
+    return `Open destination ${level ? levelTitle(level) : target.levelId}${destination}`;
+  }
+  if (target.type === "entity") {
+    const entity = entityById(target.entityId);
+    return `Open ${entity ? entityTitle(entity) : target.entityId}`;
+  }
+  if (target.type === "record") {
+    return `Open ${recordButtonTitle(target.groupKey, target.kind, target.id)}`;
+  }
+  return "";
+}
+
+function openActionTarget(action, context = {}) {
+  const target = actionPrimaryTarget(action);
+  if (!target) return;
+  if (target.type === "level") {
+    state.selectedLevelId = target.levelId;
+    state.selectedItem = null;
+    state.selectedScriptNode = null;
+    renderLevelTabs();
+    drawMap();
+    if (target.entityId && entityById(target.entityId)) {
+      selectEntity(target.entityId, { panel: "selection", context: { action } });
+    } else {
+      renderAll();
+      activateInspectorPanel("selection");
+    }
+    if (Number.isFinite(target.x) && Number.isFinite(target.y)) {
+      setStatus(`Showing destination ${target.x}, ${target.y}.`);
+    }
+    return;
+  }
+  if (target.type === "entity" && entityById(target.entityId)) {
+    selectEntity(target.entityId, { panel: "selection", context: { action } });
+    return;
+  }
+  if (target.type === "record") {
+    const item = {
+      groupKey: target.groupKey,
+      kind: target.kind || null,
+      id: target.id,
+      ...context,
+    };
+    const targetId = entityIdForRecordSelection(item);
+    if (targetId && selectSchemaTarget(targetId)) return;
+    selectItem("record", item, { normalize: false });
+  }
+}
+
+function wireSemanticActionButtons(root, actions, context = {}) {
+  for (const button of root.querySelectorAll("[data-action-index]")) {
+    button.addEventListener("click", () => {
+      const action = actions[Number(button.dataset.actionIndex)];
+      openActionTarget(action, context);
+    });
+  }
+}
+
 function wireRecordLinkButtons(root, context = {}) {
   for (const button of root.querySelectorAll("[data-record-group][data-record-id]")) {
     button.addEventListener("click", () => {
@@ -2394,13 +2517,18 @@ function actionSummary(action) {
 
 function renderSemanticActions(actions) {
   if (!actions?.length) return `<div class="empty">This trigger has no populated action slots.</div>`;
-  return `<div class="semantic-list">${actions.map((action) => {
+  return `<div class="semantic-list">${actions.map((action, index) => {
     const questClass = action.category?.startsWith("quest") ? "quest" : action.category;
+    const target = actionPrimaryTarget(action);
+    const targetLabel = actionTargetLabel(target);
+    const tagName = target ? "button" : "div";
+    const targetAttr = target ? ` type="button" data-action-index="${index}" title="${escapeHtml(targetLabel)}"` : "";
+    const buttonClass = target ? " semantic-button" : "";
     return `
-      <div class="semantic-line ${escapeHtml(questClass || "")}">
+      <${tagName} class="semantic-line${buttonClass} ${escapeHtml(questClass || "")}"${targetAttr}>
         <div class="semantic-title">${escapeHtml(actionReaderSummary(action))}</div>
-        ${action.category ? `<div class="semantic-meta">${escapeHtml(actionCategoryName(action.category))}</div>` : ""}
-      </div>
+        <div class="semantic-meta">${escapeHtml([actionCategoryName(action.category), targetLabel].filter(Boolean).join(" | "))}</div>
+      </${tagName}>
     `;
   }).join("")}</div>`;
 }
@@ -2953,6 +3081,8 @@ function renderEntityDetail(entityId, context = null) {
   }
   const record = entityRecord(entity);
   const diagnostics = diagnosticsForEntity(entity);
+  const door = entity.type === "trigger" || entity.type === "macro" ? legacyDoorForEntity(entity) : null;
+  const actions = door ? actionsForDoor(door) : [];
   els.selectionPanel.innerHTML = `
     <div class="section entity-header">
       <h3>${escapeHtml(entityTitle(entity))}</h3>
@@ -2970,6 +3100,7 @@ function renderEntityDetail(entityId, context = null) {
     ${renderTechnicalEvidence(entity, record, diagnostics)}
   `;
   wireSchemaNavigation(els.selectionPanel);
+  wireSemanticActionButtons(els.selectionPanel, actions, context || {});
   for (const button of els.selectionPanel.querySelectorAll("[data-overlay-id]")) {
     button.addEventListener("click", () => {
       const allBoxes = context?.allBoxesAtPoint || context?.alternateBoxes || [];
@@ -3125,6 +3256,7 @@ function renderSelectionPanel() {
       </details>
     `;
     wireRecordLinkButtons(els.selectionPanel, { sourceOverlay: selected.item });
+    wireSemanticActionButtons(els.selectionPanel, actions, { sourceOverlay: selected.item });
     for (const button of els.selectionPanel.querySelectorAll("[data-overlay-id]")) {
       button.addEventListener("click", () => {
         const boxAtPoint = selected.item.allBoxesAtPoint?.find((entry) => entry.id === button.dataset.overlayId)
